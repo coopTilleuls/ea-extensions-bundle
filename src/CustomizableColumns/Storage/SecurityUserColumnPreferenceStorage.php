@@ -10,7 +10,14 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 
-final class DoctrineColumnPreferenceStorage implements ColumnPreferenceStorageInterface
+/**
+ * Default storage: owner = current Security user's identifier. Named after that resolution
+ * strategy (not "Doctrine") because the persistence backend is the uninteresting axis here —
+ * almost any implementation will use Doctrine; what actually varies between projects is what
+ * determines the "owner" (e.g. cgt-cogitiel keys by "active responsibility" instead of by
+ * plain user — a UserResponsabiliteStructureColumnPreferenceStorage there, not this one).
+ */
+final class SecurityUserColumnPreferenceStorage implements ColumnPreferenceStorageInterface
 {
     public function __construct(
         private readonly ColumnPreferenceRepository $repository,
@@ -26,7 +33,7 @@ final class DoctrineColumnPreferenceStorage implements ColumnPreferenceStorageIn
             return null;
         }
 
-        return $this->repository->findOneByOwnerAndController($ownerId, $crudControllerFqcn)?->getColumns();
+        return $this->repository->findOneByOwner($ownerId)?->getColumnsForController($crudControllerFqcn);
     }
 
     public function saveColumns(Request $request, string $crudControllerFqcn, array $columns): void
@@ -36,13 +43,13 @@ final class DoctrineColumnPreferenceStorage implements ColumnPreferenceStorageIn
             return;
         }
 
-        $preference = $this->repository->findOneByOwnerAndController($ownerId, $crudControllerFqcn);
+        $preference = $this->repository->findOneByOwner($ownerId);
         if (null === $preference) {
-            $preference = new ColumnPreference($ownerId, $crudControllerFqcn);
+            $preference = new ColumnPreference($ownerId);
             $this->entityManager->persist($preference);
         }
 
-        $preference->setColumns($columns);
+        $preference->setColumnsForController($crudControllerFqcn, $columns);
         $this->entityManager->flush();
     }
 

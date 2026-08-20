@@ -83,18 +83,25 @@ final class ColumnPreferenceController
         $crudControllerFqcn = $this->getCrudControllerFqcn($request);
 
         [$lockedColumns] = $this->getConfiguration($crudControllerFqcn);
+        $availableProperties = array_keys($this->availableColumnsResolver->resolve($crudControllerFqcn, $request));
 
-        $submittedColumns = array_keys($request->request->all('columns'));
-        $columns = array_values(array_unique(array_merge($lockedColumns, $submittedColumns)));
+        $submittedFields = $request->request->all('columns');
+        $save = '1' === ($submittedFields['save'] ?? null);
+        unset($submittedFields['save']);
 
-        $this->storage->saveColumns($request, $crudControllerFqcn, $columns);
+        $submittedColumns = array_keys($submittedFields);
+        $columns = array_values(array_intersect(array_unique(array_merge($lockedColumns, $submittedColumns)), $availableProperties));
+
+        if ($save) {
+            $this->storage->saveColumns($request, $crudControllerFqcn, $columns);
+        }
 
         $redirectUrl = $request->query->getString('redirectUrl');
         if ('' === $redirectUrl || !$this->isSameOrigin($request, $redirectUrl)) {
             throw new NotFoundHttpException('Missing or invalid redirect URL.');
         }
 
-        return new RedirectResponse($redirectUrl);
+        return new RedirectResponse($this->appendColumnsQueryParam($redirectUrl, $columns));
     }
 
     private function isSameOrigin(Request $request, string $url): bool
@@ -102,6 +109,32 @@ final class ColumnPreferenceController
         $host = parse_url($url, PHP_URL_HOST);
 
         return null === $host || $host === $request->getHost();
+    }
+
+    /**
+     * Merges the resolved columns into the redirect URL's query string, leaving the rest of the
+     * URL (scheme, host, port, path) untouched — rebuilding it from parse_url() parts would drop
+     * the port instead.
+     *
+     * @param list<string> $columns
+     */
+    private function appendColumnsQueryParam(string $redirectUrl, array $columns): string
+    {
+        if ([] === $columns) {
+            return $redirectUrl;
+        }
+
+        $fragment = '';
+        if (false !== $hashPosition = strpos($redirectUrl, '#')) {
+            $fragment = substr($redirectUrl, $hashPosition);
+            $redirectUrl = substr($redirectUrl, 0, $hashPosition);
+        }
+
+        [$beforeQuery, $existingQuery] = 2 === count($split = explode('?', $redirectUrl, 2)) ? $split : [$split[0], ''];
+        parse_str($existingQuery, $query);
+        $query[ColumnSelectionResolver::QUERY_PARAM] = implode(',', $columns);
+
+        return $beforeQuery.'?'.http_build_query($query).$fragment;
     }
 
     private function getCrudControllerFqcn(Request $request): string

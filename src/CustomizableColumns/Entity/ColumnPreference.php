@@ -7,9 +7,14 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Entity;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Repository\ColumnPreferenceRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+/**
+ * One row per owner (not per owner+controller) — mirrors cgt-cogitiel's own shape, where the
+ * whole column configuration for a user/responsibility is a single JSONB map keyed by
+ * CrudController FQCN.
+ */
 #[ORM\Entity(repositoryClass: ColumnPreferenceRepository::class)]
 #[ORM\Table(name: 'ea_extensions_column_preference')]
-#[ORM\UniqueConstraint(name: 'ea_extensions_column_preference_owner_controller', columns: ['owner_id', 'controller_fqcn'])]
+#[ORM\UniqueConstraint(name: 'ea_extensions_column_preference_owner', columns: ['owner_id'])]
 class ColumnPreference
 {
     #[ORM\Id]
@@ -17,22 +22,18 @@ class ColumnPreference
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
 
-    #[ORM\Column(name: 'owner_id', type: 'string', length: 255)]
+    #[ORM\Column(name: 'owner_id', type: 'string', length: 255, unique: true)]
     private string $ownerId;
 
-    #[ORM\Column(name: 'controller_fqcn', type: 'string', length: 255)]
-    private string $controllerFqcn;
-
     /**
-     * @var list<string>
+     * @var array<string, list<string>> CrudController FQCN => ordered property list
      */
     #[ORM\Column(type: 'json')]
-    private array $columns = [];
+    private array $columnsByController = [];
 
-    public function __construct(string $ownerId, string $controllerFqcn)
+    public function __construct(string $ownerId)
     {
         $this->ownerId = $ownerId;
-        $this->controllerFqcn = $controllerFqcn;
     }
 
     public function getId(): ?int
@@ -45,24 +46,19 @@ class ColumnPreference
         return $this->ownerId;
     }
 
-    public function getControllerFqcn(): string
-    {
-        return $this->controllerFqcn;
-    }
-
     /**
-     * @return list<string>
+     * @return list<string>|null
      */
-    public function getColumns(): array
+    public function getColumnsForController(string $controllerFqcn): ?array
     {
-        return $this->columns;
+        return $this->columnsByController[$controllerFqcn] ?? null;
     }
 
     /**
      * @param list<string> $columns
      */
-    public function setColumns(array $columns): void
+    public function setColumnsForController(string $controllerFqcn, array $columns): void
     {
-        $this->columns = $columns;
+        $this->columnsByController[$controllerFqcn] = $columns;
     }
 }

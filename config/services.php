@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Controller\ColumnPreferenceController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Storage\ColumnPreferenceStorageInterface;
-use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Storage\DoctrineColumnPreferenceStorage;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Storage\SecurityUserColumnPreferenceStorage;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return static function (ContainerConfigurator $container): void {
@@ -23,5 +23,5 @@ return static function (ContainerConfigurator $container): void {
         ->public()
     ;
 
-    $services->alias(ColumnPreferenceStorageInterface::class, DoctrineColumnPreferenceStorage::class);
+    $services->alias(ColumnPreferenceStorageInterface::class, SecurityUserColumnPreferenceStorage::class);
 };

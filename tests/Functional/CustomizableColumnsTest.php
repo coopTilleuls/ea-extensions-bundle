@@ -88,7 +88,7 @@ final class CustomizableColumnsTest extends AbstractFunctionalTestCase
         self::assertGreaterThan(0, $crawler->filter('input[type="checkbox"][checked]')->count());
     }
 
-    public function testSavingColumnsPersistsAndAppliesOnTheNextRequestWithoutOverride(): void
+    public function testApplyingColumnsWithoutTheSaveSwitchIsTransientOnly(): void
     {
         $this->persistFixtureEntity();
         $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
@@ -104,7 +104,38 @@ final class CustomizableColumnsTest extends AbstractFunctionalTestCase
             ['columns' => ['note' => '1', 'title' => '1']],
         );
 
-        self::assertResponseRedirects($redirectUrl);
+        $location = $this->client->getResponse()->headers->get('Location');
+        self::assertNotNull($location);
+        self::assertStringContainsString(ColumnSelectionResolver::QUERY_PARAM.'=note%2Ctitle', $location);
+
+        $crawler = $this->client->request('GET', $location);
+        self::assertResponseIsSuccessful();
+        self::assertSame(['note', 'title'], $this->getColumnProperties($crawler));
+
+        // No "save" switch was submitted, so a fresh request without the override falls back to the default set.
+        $crawler = $this->client->request('GET', $redirectUrl);
+        self::assertResponseIsSuccessful();
+        self::assertSame(['id', 'title', 'description', 'note'], $this->getColumnProperties($crawler));
+    }
+
+    public function testCheckingTheSaveSwitchPersistsAndAppliesOnTheNextRequestWithoutOverride(): void
+    {
+        $this->persistFixtureEntity();
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $redirectUrl = $this->crudUrl(FixtureCrudController::class);
+
+        $this->client->request(
+            'POST',
+            '/_ea-extensions/customizable-columns/save?'.http_build_query([
+                'crudControllerFqcn' => FixtureCrudController::class,
+                'redirectUrl' => $redirectUrl,
+            ]),
+            ['columns' => ['note' => '1', 'title' => '1', 'save' => '1']],
+        );
+
+        $location = $this->client->getResponse()->headers->get('Location');
+        self::assertNotNull($location);
 
         $crawler = $this->client->request('GET', $redirectUrl);
 

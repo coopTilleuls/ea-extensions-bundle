@@ -18,8 +18,8 @@ class ColumnPreferenceRepository extends ServiceEntityRepository
         parent::__construct($registry, ColumnPreference::class);
     }
 
-    public function findOneByOwnerAndController(string $ownerId, string $controllerFqcn): ?ColumnPreference
+    public function findOneByOwner(string $ownerId): ?ColumnPreference
     {
-        return $this->findOneBy(['ownerId' => $ownerId, 'controllerFqcn' => $controllerFqcn]);
+        return $this->findOneBy(['ownerId' => $ownerId]);
     }
 }
