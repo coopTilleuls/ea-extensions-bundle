@@ -28,6 +28,11 @@ final class Kernel extends BaseKernel
         $container->extension('framework', [
             'test' => true,
             'secret' => 'test',
+            'http_method_override' => false,
+            'handle_all_throwables' => true,
+            'php_errors' => [
+                'log' => true,
+            ],
         ]);
     }
 
