@@ -17,10 +17,19 @@ This bundle is not published on Packagist. Add the VCS repository to your `compo
 }
 ```
 
-Then require it:
+Then require it. This bundle has no tagged release yet (branches only), so with the
+default `minimum-stability: stable`, a plain `composer require` fails with:
+
+```
+Could not find a version of package coop-tilleuls/ea-extensions-bundle matching your
+minimum-stability (stable). Require it with an explicit version constraint allowing
+its desired stability.
+```
+
+Pin an explicit dev-branch constraint instead:
 
 ```bash
-composer require coop-tilleuls/ea-extensions-bundle
+composer require coop-tilleuls/ea-extensions-bundle:dev-main
 ```
 
 If Symfony Flex doesn't register it automatically, add it to `config/bundles.php`:
