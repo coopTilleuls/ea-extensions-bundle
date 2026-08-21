@@ -11,9 +11,18 @@ coop_tilleuls_ea_extensions:
 
 ## Consumer app setup (one-time)
 
-1. Import the bundle's routes in `config/routes.php` (or `.yaml`):
+1. Import the bundle's routes, e.g. in `config/routes/ea_extensions.yaml` (Symfony Flex's
+   default format). Use the `@EAExtensionsBundle` shortcut rather than a `vendor/`-relative
+   path — it resolves via the bundle's own path regardless of where it's actually installed
+   (vendor, path repository, submodule...):
+   ```yaml
+   ea_extensions_customizable_columns:
+       resource: '@EAExtensionsBundle/src/CustomizableColumns/Controller/'
+       type: attribute
+   ```
+   or in PHP, in `config/routes.php`:
    ```php
-   $routes->import('vendor/coop-tilleuls/ea-extensions-bundle/src/CustomizableColumns/Controller/', 'attribute');
+   $routes->import('@EAExtensionsBundle/src/CustomizableColumns/Controller/', 'attribute');
    ```
 2. Register these bundles in `config/bundles.php` if not already present (required for `easycorp/easyadmin-bundle` 5.5's own Twig components to render at all — `TwigExtraBundle` provides the `html_classes` Twig function EasyAdmin's templates use, `TwigComponentBundle` backs its `<twig:ea:...>` components):
    ```php
