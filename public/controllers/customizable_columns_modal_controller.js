@@ -21,7 +21,7 @@ export default class extends Controller {
         const wrapper = document.createElement('div');
         wrapper.innerHTML = `
             <div class="modal fade" id="ea-extensions-columns-modal" data-controller="ea-extensions--customizable-columns-modal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable">
+                <div class="modal-dialog modal-dialog-lg modal-dialog-scrollable">
                     <div class="modal-content">
                         <div class="modal-header justify-content-between">
                             <h5 class="modal-title"><i class="fa fa-columns fa-fw"></i> Personnaliser les colonnes</h5>

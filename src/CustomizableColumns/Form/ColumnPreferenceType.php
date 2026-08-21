@@ -33,10 +33,6 @@ final class ColumnPreferenceType extends AbstractType
         $builder->add('save', CheckboxType::class, [
             'label' => 'Enregistrer comme paramètres par défaut',
             'required' => false,
-            'attr' => [
-                'role' => 'switch',
-                'class' => 'form-check-input ms-0',
-            ],
         ]);
     }
 

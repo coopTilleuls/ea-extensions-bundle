@@ -20,13 +20,17 @@
         {% endfor %}
     </div>
     {% if form.save is defined %}
+        {% do form.save.setRendered %}
         <div class="card p-3 my-3 ea-extensions-save-switch">
-            <div class="form-check form-switch ps-0 d-flex align-items-center justify-content-between">
-                <label class="form-check-label flex-grow-1" for="{{ form.save.vars.id }}">
-                    <i class="fas fa-star me-2"></i>{{ form.save.vars.label }}
-                </label>
-                {{ form_widget(form.save) }}
-            </div>
+            <label class="d-flex align-items-center justify-content-between gap-3" for="{{ form.save.vars.id }}">
+                <span class="text-nowrap"><i class="fas fa-star me-2"></i>{{ form.save.vars.label }}</span>
+                <twig:ea:Switch
+                    name="{{ form.save.vars.full_name }}"
+                    id="{{ form.save.vars.id }}"
+                    value="{{ form.save.vars.value }}"
+                    :checked="form.save.vars.checked"
+                />
+            </label>
         </div>
     {% endif %}
 {{ form_end(form) }}
