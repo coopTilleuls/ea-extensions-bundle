@@ -1,0 +1,40 @@
+{#
+    Renders a list of EasyAdmin MenuItemDto (e.g. `ea.mainMenu.items`, or any `subItems` list)
+    as a plain nested <ul>, recursing into `subItems` to whatever depth the menu actually has.
+
+    This bundle deliberately does not override EasyAdmin's own `@EasyAdmin/menu.html.twig` —
+    doing so would fight with any theme that already overrides it. Import
+    this macro from your own menu template instead, wherever you currently loop over menu items,
+    and call `render_items()` in place of your own (depth-limited) loop. See docs/menu-overrides.md.
+
+    If your own template only knows at runtime whether this bundle is installed (e.g. a shared
+    theme that must keep working without it), don't `{% import %}` conditionally — Twig's
+    `import` doesn't leak out of an `{% if %}` the way `{% set %}` does, even when the condition
+    is true. Instead render this file directly, passing `items`:
+        {% include '@EAExtensions/menu_overrides/recursive_submenu.html.twig' ignore missing with {items: subItem.subItems} only %}
+    `ignore missing` makes it a no-op when the bundle isn't installed at all.
+#}
+{% macro render_items(items) %}
+    <ul class="ea-menu-overrides">
+        {% for item in items %}
+            {% if item.isMenuSection %}
+                <li class="ea-menu-overrides__section">{{ item.label|trans }}</li>
+            {% else %}
+                <li class="ea-menu-overrides__item{{ item.isSelected ? ' ea-menu-overrides__item--selected' }}{{ item.isExpanded ? ' ea-menu-overrides__item--expanded' }}">
+                    <a href="{{ item.linkUrl }}" target="{{ item.linkTarget }}"{% if item.linkRel %} rel="{{ item.linkRel }}"{% endif %}>
+                        {% if item.icon %}<i class="{{ item.icon }}"></i>{% endif %}
+                        <span>{{ item.label|trans }}</span>
+                        {% if item.hasVisibleBadge %}<span class="ea-menu-overrides__badge">{{ item.badge.content }}</span>{% endif %}
+                    </a>
+                    {% if item.hasSubItems %}
+                        {{ _self.render_items(item.subItems) }}
+                    {% endif %}
+                </li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+{% endmacro %}
+
+{% if items is defined %}
+    {{ _self.render_items(items) }}
+{% endif %}
