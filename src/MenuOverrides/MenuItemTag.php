@@ -29,7 +29,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
  */
 final class MenuItemTag
 {
-    public const string QUERY_PARAMETER = '_menuOverrideKey';
+    public const string QUERY_PARAMETER = 'menuEntry';
 
     private function __construct()
     {

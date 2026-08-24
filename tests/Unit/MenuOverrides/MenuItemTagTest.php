@@ -36,7 +36,7 @@ final class MenuItemTagTest extends TestCase
     public function testAppendToUrlAddsTheParameterToAUrlWithNoQueryString(): void
     {
         self::assertSame(
-            '/admin/book?_menuOverrideKey=variant-a',
+            '/admin/book?menuEntry=variant-a',
             MenuItemTag::appendToUrl('/admin/book', 'variant-a')
         );
     }
@@ -44,7 +44,7 @@ final class MenuItemTagTest extends TestCase
     public function testAppendToUrlAddsTheParameterToAUrlThatAlreadyHasAQueryString(): void
     {
         self::assertSame(
-            '/admin/book?foo=bar&_menuOverrideKey=variant-a',
+            '/admin/book?foo=bar&menuEntry=variant-a',
             MenuItemTag::appendToUrl('/admin/book?foo=bar', 'variant-a')
         );
     }

@@ -36,7 +36,7 @@ final class MenuOverridesTest extends WebTestCase
     public function testDeepMenuIsFullyNestedAndCorrectLeafIsSelected(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/admin/fixture?_menuOverrideKey=variant-a');
+        $client->request('GET', '/admin/fixture?menuEntry=variant-a');
 
         self::assertResponseIsSuccessful();
 
@@ -69,7 +69,7 @@ final class MenuOverridesTest extends WebTestCase
     public function testOtherDisambiguatedLeafIsSelectedWhenItsOwnUrlIsVisited(): void
     {
         $client = static::createClient();
-        $client->request('GET', '/admin/fixture?_menuOverrideKey=variant-b');
+        $client->request('GET', '/admin/fixture?menuEntry=variant-b');
 
         self::assertResponseIsSuccessful();
 
@@ -85,7 +85,7 @@ final class MenuOverridesTest extends WebTestCase
     public function testTagPropagatesToActionLinksGeneratedOnTheTaggedPage(): void
     {
         $client = static::createClient();
-        $crawler = $client->request('GET', '/admin/fixture?_menuOverrideKey=variant-a');
+        $crawler = $client->request('GET', '/admin/fixture?menuEntry=variant-a');
 
         self::assertResponseIsSuccessful();
 
@@ -94,7 +94,7 @@ final class MenuOverridesTest extends WebTestCase
         // the tag through that call, or leaving the exact tagged URL loses the highlight
         $newActionHref = $crawler->filter('a.action-new')->attr('href');
         self::assertNotNull($newActionHref);
-        self::assertStringContainsString('_menuOverrideKey=variant-a', $newActionHref);
+        self::assertStringContainsString('menuEntry=variant-a', $newActionHref);
 
         $crawler = $client->request('GET', $newActionHref);
 
