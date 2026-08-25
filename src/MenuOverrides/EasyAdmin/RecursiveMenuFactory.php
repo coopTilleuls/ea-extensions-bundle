@@ -23,6 +23,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Factory\MenuFactory;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Security\Permission;
 use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\Attribute\AutowireDecorated;
 use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 use Symfony\Component\Security\Http\Logout\LogoutUrlGenerator;
@@ -52,6 +53,7 @@ final readonly class RecursiveMenuFactory implements MenuFactoryInterface
         private AuthorizationCheckerInterface $authChecker,
         private AdminUrlGeneratorInterface $adminUrlGenerator,
         private MenuItemMatcherInterface $menuItemMatcher,
+        #[Autowire(service: 'security.logout_url_generator')]
         private LogoutUrlGenerator $logoutUrlGenerator,
         private ?EntityTranslationIdGeneratorInterface $entityTranslationIdGenerator = null,
     ) {
