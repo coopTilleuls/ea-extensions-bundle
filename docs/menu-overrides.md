@@ -1,6 +1,6 @@
 # Menu overrides
 
-Fixes two long-standing gaps in EasyAdmin's own menu handling:
+Adds two things EasyAdmin's own menu handling doesn't support:
 
 - **Infinite depth**: EasyAdmin's `MenuFactory` only ever builds two levels (top-level items and
   their direct sub-items) — any sub-item that is itself a submenu has its own sub-items silently
@@ -78,11 +78,9 @@ public function configureMenuItems(): iterable
 }
 ```
 
-There is no separate registry mapping controllers to tags to keep in sync — each item carries its
-own tag, so there's nothing to forget when a new controller is added later. Under the hood, the
-tag is just baked into the item's generated URL as an ordinary route parameter, and preserved
-across any link EasyAdmin regenerates from that page (edit/detail/etc.), so the right item stays
-highlighted even after navigating away from its own index page.
+Under the hood, the tag is baked into the item's generated URL as an ordinary route parameter,
+and preserved across any link EasyAdmin regenerates from that page (edit/detail/etc.), so the
+right item stays highlighted even after navigating away from its own index page.
 
 Tagging only prevents ambiguity for the exact-URL-match pass. EasyAdmin also has a looser
 CRUD-index fallback for pages with no exact match (e.g. an edit/detail page, which highlights its
@@ -137,11 +135,9 @@ final class TransferCrudController extends AbstractCrudController implements Men
 }
 ```
 
-As with `MenuItemTag`, this is declared on the controller that needs it — there's no separate
-registry of controller-to-controller overrides to keep in sync, and nothing to forget when a new
-sub-resource controller is added later. It only affects the CRUD-index fallback: if one of your
-menu items happens to link to `TransferCrudController` directly (or it's reached via a
-`MenuItemTag`-ged link), that exact match still wins over the alias.
+This only affects the CRUD-index fallback: if one of your menu items happens to link to
+`TransferCrudController` directly (or it's reached via a `MenuItemTag`-ged link), that exact
+match still wins over the alias.
 
 ## Which mechanism for which case
 
