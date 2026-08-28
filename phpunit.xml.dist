@@ -15,7 +15,7 @@
         <!-- The lowest-deps CI matrix cell resolves vendor packages predating their own
              PHP 8.4 "implicitly nullable parameter" fixes — those are vendor-only
              deprecations, not ours, so symfony/phpunit-bridge is told to warn, not fail. -->
-        <server name="SYMFONY_DEPRECATIONS_HELPER" value="weak"/>
+        <server name="SYMFONY_DEPRECATIONS_HELPER" value="weak" force="true"/>
     </php>
 
     <testsuites>

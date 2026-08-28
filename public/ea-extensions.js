@@ -1,0 +1,11 @@
+import { startStimulusApp } from '@symfony/stimulus-bundle';
+import CustomizableColumnsModalController from './controllers/customizable_columns_modal_controller.js';
+import ColumnHandlerController from './controllers/column_handler_controller.js';
+import CrudFieldEagerController from './controllers/crud_field_eager_controller.js';
+import CrudFieldLazyController from './controllers/crud_field_lazy_controller.js';
+
+const app = startStimulusApp();
+app.register('ea-extensions--customizable-columns-modal', CustomizableColumnsModalController);
+app.register('ea-extensions--column-handler', ColumnHandlerController);
+app.register('ea-extensions--crud-field-eager', CrudFieldEagerController);
+app.register('ea-extensions--crud-field-lazy', CrudFieldLazyController);

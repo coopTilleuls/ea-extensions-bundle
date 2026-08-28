@@ -1,0 +1,26 @@
+{#
+    Inert <template> holding the exact same modal header/shell EasyAdmin's own real filters
+    modal uses (@EasyAdmin/crud/includes/_filters_modal.html.twig) — cloned by
+    crud_field_eager_controller.js when the "Filtrer" button is opened, so a CrudField's
+    filters popup looks and behaves identically to a standard index page's. Only the id and
+    the Clear/Apply buttons' identifiers differ (classes instead of ids, to avoid colliding
+    with a real #modal-filters possibly present elsewhere on the same page), since the JS
+    wires them itself rather than relying on EasyAdmin's own app.js (which never sees content
+    injected into this modal).
+#}
+<template id="ea-extensions-crud-field-filters-modal-template">
+    <twig:ea:Modal id="ea-extensions-crud-field-filters-modal" size="lg" headerClass="justify-content-between" bodyClass="p-0">
+        <twig:block name="header">
+            <twig:ea:Button type="button" size="sm" icon="internal:xmark" data-bs-dismiss="modal" class="ea-crud-field-filters-clear" formtarget="_self">
+                {{ 'filter.button.clear'|trans(domain: 'EasyAdminBundle') }}
+            </twig:ea:Button>
+            <h5 class="modal-title">
+                <twig:ea:Icon name="internal:filter" /> {{ 'filter.title'|trans(domain: 'EasyAdminBundle') }}
+            </h5>
+            <twig:ea:Button type="button" variant="primary" size="sm" data-bs-dismiss="modal" class="btn btn-sm btn-primary ea-crud-field-filters-apply" formtarget="_self" icon="internal:check">
+                {{ 'filter.button.apply'|trans(domain: 'EasyAdminBundle') }}
+            </twig:ea:Button>
+        </twig:block>
+        <twig:block name="body"></twig:block>
+    </twig:ea:Modal>
+</template>

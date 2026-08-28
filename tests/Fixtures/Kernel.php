@@ -67,7 +67,7 @@ final class Kernel extends BaseKernel
                 'auto_generate_proxy_classes' => true,
                 'auto_mapping' => false,
                 'mappings' => [
-                    'EAExtensionsMenuOverridesFixtures' => [
+                    'EAExtensionsFixtures' => [
                         'type' => 'attribute',
                         'dir' => __DIR__.'/Entity',
                         'prefix' => 'CoopTilleuls\\Bundle\\EAExtensionsBundle\\Tests\\Fixtures\\Entity',
@@ -104,11 +104,15 @@ final class Kernel extends BaseKernel
         $services->set(FixtureDashboardController::class)->public();
         $services->set(FixtureCrudController::class)->public();
         $services->set(FixtureSubResourceCrudController::class)->public();
+        $services->set(FixtureCrudControllerWithConfiguration::class)->public();
+        $services->set(FixtureEmbeddingCrudController::class)->public();
+        $services->set(FixtureEmbeddedTargetCrudController::class)->public();
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void
     {
         $routes->import('.', 'easyadmin.routes');
+        $routes->import(__DIR__.'/../../src/CustomizableColumns/Controller/', 'attribute');
     }
 
     public function getCacheDir(): string

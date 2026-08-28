@@ -2,21 +2,26 @@
 
 declare(strict_types=1);
 
-use CoopTilleuls\Bundle\EAExtensionsBundle\MenuOverrides\EasyAdmin\RecursiveMenuItemMatcher;
-use EasyCorp\Bundle\EasyAdminBundle\Contracts\Menu\MenuItemMatcherInterface;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Controller\ColumnPreferenceController;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Storage\ColumnPreferenceStorageInterface;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Storage\SecurityUserColumnPreferenceStorage;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
-return static function (ContainerConfigurator $configurator): void {
-    $services = $configurator->services()
+return static function (ContainerConfigurator $container): void {
+    $services = $container->services()
         ->defaults()
-            ->autowire()
-            ->autoconfigure()
+        ->autowire()
+        ->autoconfigure()
     ;
 
-    $services->load(
-        'CoopTilleuls\\Bundle\\EAExtensionsBundle\\MenuOverrides\\',
-        __DIR__.'/../src/MenuOverrides/'
-    )->exclude(__DIR__.'/../src/MenuOverrides/MenuItemTag.php');
+    $services->load('CoopTilleuls\\Bundle\\EAExtensionsBundle\\CustomizableColumns\\', __DIR__.'/../src/CustomizableColumns/')
+        ->exclude(__DIR__.'/../src/CustomizableColumns/{Entity,Controller,CustomizableColumnsConfigurationInterface.php}')
+    ;
 
-    $services->alias(MenuItemMatcherInterface::class, RecursiveMenuItemMatcher::class);
+    $services->set(ColumnPreferenceController::class)
+        ->tag('controller.service_arguments')
+        ->public()
+    ;
+
+    $services->alias(ColumnPreferenceStorageInterface::class, SecurityUserColumnPreferenceStorage::class);
 };

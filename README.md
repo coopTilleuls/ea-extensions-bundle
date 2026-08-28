@@ -17,10 +17,19 @@ This bundle is not published on Packagist. Add the VCS repository to your `compo
 }
 ```
 
-Then require it:
+Then require it. This bundle has no tagged release yet (branches only), so with the
+default `minimum-stability: stable`, a plain `composer require` fails with:
+
+```
+Could not find a version of package coop-tilleuls/ea-extensions-bundle matching your
+minimum-stability (stable). Require it with an explicit version constraint allowing
+its desired stability.
+```
+
+Pin an explicit dev-branch constraint instead:
 
 ```bash
-composer require coop-tilleuls/ea-extensions-bundle
+composer require coop-tilleuls/ea-extensions-bundle:dev-main
 ```
 
 If Symfony Flex doesn't register it automatically, add it to `config/bundles.php`:
@@ -29,12 +38,16 @@ If Symfony Flex doesn't register it automatically, add it to `config/bundles.php
 CoopTilleuls\Bundle\EAExtensionsBundle\EAExtensionsBundle::class => ['all' => true],
 ```
 
+Requires **PHP >=8.4** (`easycorp/easyadmin-bundle` 5.5's UI only renders correctly with `symfony/ux-twig-component` ^3.0, which itself requires PHP 8.4 — see the `bundle-ci-scaffolding` skill for details).
+
 ## Features
 
 Each feature has its own setup/usage doc in [`docs/`](docs/):
 
 - [Menu overrides](docs/menu-overrides.md) — infinite-depth submenus and correct active-item
   highlighting when two menu items share the same destination.
+- [Customizable index columns](docs/customizable-columns.md) — per-user choice and ordering of visible fields on any CRUD's index page.
+- [CrudFields](docs/crud-fields.md) — embed one CrudController's index listing inside another entity's page (e.g. a detail page tab).
 
 ## Development
 

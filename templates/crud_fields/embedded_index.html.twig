@@ -1,0 +1,41 @@
+{#
+    Extends the real crud/index template (vendor's, or the app's own theme override — see
+    CrudFieldIndexTemplateExtension) so every block except "page_actions"/"filters" renders
+    100% unmodified. "filters" is patched to exclude filters "forced" via overrideIndexUrl()
+    (declared through the hiddenFilters query param) from the applied-filters count badge and
+    reset link — ported from cgt-cogitiel's own admin/table/partials/_table.html.twig.
+    "page_actions" is patched only to gate the whole filters button behind CrudField's own
+    showFilters() option — see the block below for why.
+#}
+{% extends ea_extensions_crud_field_parent_index_template() %}
+
+{# CrudField's own showFilters() option gates the whole filters button/feature — without it,
+   vendor's own page_actions block would still show "Filtrer" for any target that happens to
+   have filters configured, regardless of whether the CrudField asked for it. global_actions
+   and batch_actions are untouched, resolved from whichever template actually defines them. #}
+{% block page_actions %}
+    {% if app.request.query.getBoolean('showFilters') and filters|length > 0 %}
+        <div class="datagrid-filters">
+            {{ block('filters') }}
+        </div>
+    {% endif %}
+    {{ block('global_actions') }}
+    {{ block('batch_actions') }}
+{% endblock page_actions %}
+
+{% block filters %}
+    {% set hidden_filter_keys = app.request.query.all('hiddenFilters') %}
+    {% set all_filters = app.request.query.all('filters') %}
+    {% set forced_filters = all_filters|filter((value, key) => key in hidden_filter_keys) %}
+    {% set applied_filters = all_filters|filter((value, key) => key not in hidden_filter_keys)|keys %}
+    <div class="btn-group action-filters">
+        <a href="#" data-href="{{ ea_url().setAction('renderFilters') }}" class="btn btn-secondary btn-labeled btn-labeled-right action-filters-button disabled {{ applied_filters ? 'action-filters-applied' }}" data-bs-toggle="modal" data-bs-target="#modal-filters">
+            <twig:ea:Icon name="internal:filter" /> {{ t('filter.title', ea.i18n.translationParameters, 'EasyAdminBundle')|trans }}{% if applied_filters %} <span class="action-filters-button-count">({{ applied_filters|length }})</span>{% endif %}
+        </a>
+        {% if applied_filters %}
+            <a href="{{ forced_filters is empty ? ea_url().unset('filters').setAction('index') : ea_url().set('filters', forced_filters).setAction('index') }}" class="btn btn-secondary action-filters-reset">
+                <twig:ea:Icon name="internal:xmark" class="btn-icon" />
+            </a>
+        {% endif %}
+    </div>
+{% endblock filters %}

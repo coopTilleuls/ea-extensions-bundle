@@ -87,6 +87,7 @@ jobs:
                 uses: shivammathur/setup-php@v2
                 with:
                     php-version: ${{ matrix.php-version }}
+                    extensions: pdo_sqlite
                     coverage: none
 
             -   name: Install Composer dependencies

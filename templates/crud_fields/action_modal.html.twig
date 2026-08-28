@@ -1,0 +1,16 @@
+{#
+    Inert <template> holding a plain vendor <twig:ea:Modal> shell — cloned by
+    crud_field_eager_controller.js when openActionsInModal() action link (new/edit/custom) is
+    clicked, so the fetched form fragment renders inside a real, themed modal instead of a hand
+    -rolled approximation. Built fresh on every open (same convention as
+    ea-extensions-crud-field-filters-modal-template) rather than a single shared/static shell,
+    so multiple openActionsInModal() embeds can coexist safely on one page.
+#}
+<template id="ea-extensions-crud-field-action-modal-template">
+    <twig:ea:Modal id="ea-extensions-crud-field-action-modal" size="xl">
+        <twig:block name="header">
+            <twig:ea:Button type="button" size="sm" icon="internal:xmark" data-bs-dismiss="modal" formtarget="_self" />
+        </twig:block>
+        <twig:block name="body"></twig:block>
+    </twig:ea:Modal>
+</template>
