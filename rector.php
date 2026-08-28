@@ -8,6 +8,7 @@ use Rector\CodeQuality\Rector\BooleanOr\RepeatedOrEqualToInArrayRector;
 use Rector\Config\RectorConfig;
 use Rector\Symfony\Symfony72\Rector\StmtsAwareInterface\PushRequestToRequestStackConstructorRector;
 use Rector\Symfony\Symfony73\Rector\Class_\ConstraintOptionsToNamedArgumentsRector;
+use Rector\Symfony\Symfony73\Rector\Class_\GetFiltersAndFunctionsToAsTwigAttributeRector;
 use Rector\TypeDeclaration\Rector\ClassMethod\NarrowObjectReturnTypeRector;
 use Rector\TypeDeclaration\Rector\ClassMethod\ParamTypeByMethodCallTypeRector;
 
@@ -31,6 +32,10 @@ return RectorConfig::configure()
         NarrowObjectReturnTypeRector::class,
         RepeatedAndNotEqualToNotInArrayRector::class,
         RepeatedOrEqualToInArrayRector::class,
+        // #[AsTwigFunction] needs a newer twig/twig-bridge than this bundle's declared
+        // "lowest" support floor — applying it makes the function silently unregistered
+        // under a lowest-deps install (confirmed: 500 "Unknown function" at runtime).
+        GetFiltersAndFunctionsToAsTwigAttributeRector::class,
     ])
     ->withCodeQualityLevel(15)
 ;

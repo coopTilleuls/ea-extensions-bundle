@@ -1,0 +1,30 @@
+{#
+    Minimal replacement for @EasyAdmin/layout.html.twig, used instead of the real one whenever
+    the request carries CrudField's cleanLayout flag — see CrudFieldLayout::applyIfEmbedded().
+
+    crud/index.html.twig (vendor's, or a theme's own override) keeps rendering 100% normally
+    and unmodified — it still {% extends %} "layout" (this file, once overridden) and fills in
+    its content_title/page_actions/main blocks exactly as it would on a real standalone page,
+    so the table, action buttons, dropdowns, pagination and filters button all keep their real
+    markup/CSS/icons. Only the surrounding chrome (html/head/sidebar/topbar/search) is stripped,
+    by reproducing just the two small wrapper elements those blocks normally render into.
+
+    The four "configured_*" blocks below must exist (even empty) because crud/index.html.twig
+    calls {{ parent() }} on each of them.
+#}
+{% block configured_head_contents %}{% endblock %}
+{% block configured_body_contents %}{% endblock %}
+{% block configured_stylesheets %}{% endblock %}
+{% block configured_javascripts %}{% endblock %}
+
+{% block body %}
+    <section class="content-header">
+        <div class="content-header-title">
+            <h1 class="title">{% block content_title %}{% endblock %}</h1>
+        </div>
+        <div class="page-actions">{% block page_actions %}{% endblock %}</div>
+    </section>
+    <section id="main" class="content-body">
+        {% block main %}{% endblock %}
+    </section>
+{% endblock %}

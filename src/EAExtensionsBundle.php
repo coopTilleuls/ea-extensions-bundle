@@ -23,17 +23,49 @@ final class EAExtensionsBundle extends AbstractBundle
                         ->booleanNode('enabled')->defaultTrue()->end()
                     ->end()
                 ->end()
+                ->arrayNode('customizable_columns')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')->defaultTrue()->end()
+                    ->end()
+                ->end()
             ->end()
         ;
     }
 
+    public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
+    {
+        if (!$builder->hasExtension('doctrine')) {
+            return;
+        }
+
+        $container->extension('doctrine', [
+            'orm' => [
+                'mappings' => [
+                    'EAExtensionsCustomizableColumns' => [
+                        'type' => 'attribute',
+                        'dir' => $this->getPath().'/src/CustomizableColumns/Entity',
+                        'prefix' => 'CoopTilleuls\\Bundle\\EAExtensionsBundle\\CustomizableColumns\\Entity',
+                        'is_bundle' => false,
+                    ],
+                ],
+            ],
+        ]);
+    }
+
     /**
-     * @param array{menu_overrides: array{enabled: bool}} $config
+     * @param array<string, mixed> $config
      */
     public function loadExtension(array $config, ContainerConfigurator $container, ContainerBuilder $builder): void
     {
         if ($config['menu_overrides']['enabled']) {
+            $container->import('../config/menu_overrides_services.php');
+        }
+
+        if ($config['customizable_columns']['enabled']) {
             $container->import('../config/services.php');
         }
+
+        $container->import('../config/crud_fields_services.php');
     }
 }

@@ -1,0 +1,50 @@
+{#
+    Overrides EasyAdmin's own ea_filters_widget form-theme block, added as an extra form theme
+    (see CrudFieldLayout::applyIfEmbedded()'s addFormTheme() call) only for embedded requests.
+    Every filter field renders exactly as vendor's own block would (copied verbatim below) EXCEPT
+    fields flagged "hidden_filter" by HiddenFilterTypeExtension (forced filters baked into the
+    embed's fetch URL via overrideIndexUrl()) — those render as an invisible <input type="hidden">
+    instead of the normal checkbox+collapsible filter row, so they can't be seen or removed from
+    the "Filtrer" modal. Ported from cgt-cogitiel's own form_theme.html.twig override.
+#}
+{% block ea_filters_widget %}
+    {% set applied_filters = ea().request.query.all()['filters']|default([])|keys %}
+
+    {% for field in form %}
+        {% if field.vars.hidden_filter|default(false) %}
+            {{ _self.render_hidden_filter(field) }}
+            {% do field.setRendered(true) %}
+        {% else %}
+            <div class="col-12">
+                <div class="filter-field px-3" data-filter-property="{{ field.vars.name }}">
+                    <div class="filter-heading" id="filter-heading-{{ loop.index }}">
+                        <input type="checkbox" class="filter-checkbox" {% if field.vars.name in applied_filters %}checked{% endif %}>
+                        <a data-bs-toggle="collapse" href="#filter-content-{{ loop.index }}" aria-expanded="{{ field.vars.name in applied_filters ? 'true' : 'false' }}" aria-controls="filter-content-{{ loop.index }}"
+                            {% for name, value in field.vars.label_attr|default([]) %}{{ name }}="{{ value|e('html') }}" {% endfor %}>
+                            {% set has_filter_label = field.vars.label is ea_is_not_empty %}
+                            {% set filter_label = has_filter_label ? field.vars.label : field.vars.name|humanize %}
+                            {{ filter_label|trans(domain: ea().i18n.translationDomain) }}
+                        </a>
+                    </div>
+                    <div id="filter-content-{{ loop.index }}" class="filter-content collapse {% if field.vars.name in applied_filters %}show{% endif %}" aria-labelledby="filter-heading-{{ loop.index }}">
+                        <div class="form-widget">
+                            {{ form_widget(field) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endblock ea_filters_widget %}
+
+{% macro render_hidden_filter(field) %}
+    {% if field.children|length > 0 %}
+        {% for child in field.children %}{{ _self.render_hidden_filter(child) }}{% endfor %}
+    {% elseif field.vars.value is iterable %}
+        {% for value in field.vars.value %}
+            <input type="hidden" name="{{ field.vars.full_name }}" value="{{ value }}">
+        {% endfor %}
+    {% else %}
+        <input type="hidden" name="{{ field.vars.full_name }}" value="{{ field.vars.value }}">
+    {% endif %}
+{% endmacro %}
