@@ -102,6 +102,20 @@ Once the PHP floor is 8.4 (see above) but the Symfony range still spans back to 
 
 The failure isn't PHPUnit's native `failOnDeprecation` attribute (setting it `false` alone does nothing) — `symfony/phpunit-bridge` auto-bootstraps its own `DeprecationErrorHandler` via a Composer `autoload.files` entry the moment the package is installed, completely independent of anything in `phpunit.xml.dist`'s `<phpunit>` attributes, and its default mode fails the build on any such notice. Fix: set `SYMFONY_DEPRECATIONS_HELPER=weak` as a `<server>` value in `phpunit.xml.dist`'s `<php>` block (and set the native `failOnDeprecation="false"` too, since it's a separate, independently-enforced check).
 
+## `composer.lock` can silently drift from `composer.json`'s declared constraints
+
+After editing `require`/`require-dev` (e.g. adding new packages a feature needs —
+`doctrine/orm`, `easycorp/easyadmin-bundle`, `symfony/messenger`, `league/flysystem`, …),
+running `composer install` first can fail loudly with `"Required package ... is not
+present in the lock file"` / `"... is in the lock file as vX but that does not satisfy
+your constraint"` — the lock file may still carry versions from an *earlier* state of
+`composer.json` (including transitive components that had drifted to Symfony 8.x before a
+prior `conflict`-list cleanup, even though nothing currently in `composer.json` asks for
+them). This is the expected, correct failure mode — `composer install` never resolves,
+it only replays the lock file. Fix is simply `composer update` (not `install`) to let it
+re-resolve from the current `composer.json`; the loud failure is the useful signal that
+this is needed, not a sign something's broken.
+
 ## No local `composer` binary
 
 This dev environment has PHP CLI available directly on the host (checked: 8.3.6) but no `composer` binary. Use the official image instead, always with `--user`, or vendor/lockfile end up root-owned and need `sudo` (unavailable non-interactively) or a throwaway `docker run ... alpine rm -f ...` to clean up:

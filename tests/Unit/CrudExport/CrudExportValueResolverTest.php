@@ -1,0 +1,136 @@
+<?php
+
+declare(strict_types=1);
+
+namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Unit\CrudExport;
+
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportColumn;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportFieldResolverInterface;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Value\CrudExportValueResolver;
+use Doctrine\Common\Collections\ArrayCollection;
+use PHPUnit\Framework\TestCase;
+use Symfony\Contracts\Service\ServiceProviderInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
+
+final class ValueResolverFixtureRelation
+{
+    public function __construct(public string $label = 'related-label')
+    {
+    }
+
+    public function __toString(): string
+    {
+        return $this->label;
+    }
+}
+
+final class ValueResolverFixtureEntity
+{
+    /**
+     * @param list<string>                                        $tags
+     * @param ?ArrayCollection<int, ValueResolverFixtureRelation> $items
+     */
+    public function __construct(
+        public string $name = 'entity-name',
+        public ?ValueResolverFixtureRelation $relation = null,
+        public ?\DateTimeImmutable $createdAt = null,
+        public array $tags = ['a', 'b'],
+        public ?ArrayCollection $items = null,
+    ) {
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+}
+
+final class CrudExportValueResolverTest extends TestCase
+{
+    private function createResolver(): CrudExportValueResolver
+    {
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->method('trans')->willReturnArgument(0);
+
+        return new CrudExportValueResolver($this->createStub(ServiceProviderInterface::class), $translator);
+    }
+
+    public function testResolveValueUsesGetter(): void
+    {
+        $entity = new ValueResolverFixtureEntity(name: 'hello');
+        $column = new CrudExportColumn('name', 'Name');
+
+        self::assertSame('hello', $this->createResolver()->resolveValue($entity, $column));
+    }
+
+    public function testResolveValueTraversesRelationDotPath(): void
+    {
+        $entity = new ValueResolverFixtureEntity(relation: new ValueResolverFixtureRelation('nested'));
+        $column = new CrudExportColumn('relation.label', 'Relation');
+
+        self::assertSame('nested', $this->createResolver()->resolveValue($entity, $column));
+    }
+
+    public function testResolveValueReturnsNullWhenRelationIsNull(): void
+    {
+        $entity = new ValueResolverFixtureEntity();
+        $column = new CrudExportColumn('relation.label', 'Relation');
+
+        self::assertNull($this->createResolver()->resolveValue($entity, $column));
+    }
+
+    public function testResolveValueFormatsDateTime(): void
+    {
+        $entity = new ValueResolverFixtureEntity(createdAt: new \DateTimeImmutable('2026-01-02 03:04:05'));
+        $column = new CrudExportColumn('createdAt', 'Created');
+
+        self::assertSame('02/01/2026 03:04:05', $this->createResolver()->resolveValue($entity, $column));
+    }
+
+    public function testResolveValueImplodesArray(): void
+    {
+        $entity = new ValueResolverFixtureEntity(tags: ['a', 'b', 'c']);
+        $column = new CrudExportColumn('tags', 'Tags');
+
+        self::assertSame('a, b, c', $this->createResolver()->resolveValue($entity, $column));
+    }
+
+    public function testResolveValueImplodesCollection(): void
+    {
+        $entity = new ValueResolverFixtureEntity(items: new ArrayCollection([
+            new ValueResolverFixtureRelation('x'),
+            new ValueResolverFixtureRelation('y'),
+        ]));
+        $column = new CrudExportColumn('items', 'Items');
+
+        self::assertSame('x, y', $this->createResolver()->resolveValue($entity, $column));
+    }
+
+    public function testResolveValueDelegatesToCustomResolver(): void
+    {
+        $entity = new ValueResolverFixtureEntity();
+        $column = new CrudExportColumn('name', 'Name', resolverFqcn: 'App\\Some\\Resolver');
+
+        $customResolver = new class implements CrudExportFieldResolverInterface {
+            public function __invoke(object $entity): mixed
+            {
+                return 'custom-value';
+            }
+        };
+
+        $locator = $this->createMock(ServiceProviderInterface::class);
+        $locator->method('get')->with('App\\Some\\Resolver')->willReturn($customResolver);
+        $translator = $this->createStub(TranslatorInterface::class);
+
+        $resolver = new CrudExportValueResolver($locator, $translator);
+
+        self::assertSame('custom-value', $resolver->resolveValue($entity, $column));
+    }
+
+    public function testResolveHeaderFallsBackToPropertyNameWhenLabelIsFalseOrEmpty(): void
+    {
+        $column = new CrudExportColumn('propertyName', false);
+
+        self::assertSame('propertyName', $this->createResolver()->resolveHeader($column));
+    }
+}

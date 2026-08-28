@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle;
 
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportFileDownloader;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportFileWriter;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
 
 final class EAExtensionsBundle extends AbstractBundle
@@ -44,6 +48,23 @@ final class EAExtensionsBundle extends AbstractBundle
                     ->validate()
                         ->ifTrue(static fn (array $v): bool => $v['enabled'] && !\in_array($v['default_page_size'], $v['available_page_sizes'], true))
                         ->thenInvalid('The "pagination.default_page_size" value must be one of the "pagination.available_page_sizes" values.')
+                    ->end()
+                ->end()
+                ->arrayNode('crud_export')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')->defaultTrue()->end()
+                        ->integerNode('async_threshold')->defaultValue(1000)->end()
+                        ->integerNode('max_limit')->defaultValue(50000)->end()
+                        ->scalarNode('storage_service_id')->defaultNull()->end()
+                        ->arrayNode('xlsx')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->booleanNode('enabled')->defaultFalse()->end()
+                                ->booleanNode('encryption_enabled')->defaultFalse()->end()
+                                ->scalarNode('csv2xlsx_binary')->defaultValue('csv2xlsx')->end()
+                            ->end()
+                        ->end()
                     ->end()
                 ->end()
             ->end()
@@ -92,6 +113,26 @@ final class EAExtensionsBundle extends AbstractBundle
             $builder->setParameter('coop_tilleuls_ea_extensions.pagination.max_page_size', $config['pagination']['max_page_size']);
 
             $container->import('../config/pagination_services.php');
+        }
+
+        if ($config['crud_export']['enabled']) {
+            $builder->setParameter('coop_tilleuls_ea_extensions.crud_export.async_threshold', $config['crud_export']['async_threshold']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.crud_export.max_limit', $config['crud_export']['max_limit']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.crud_export.xlsx.enabled', $config['crud_export']['xlsx']['enabled']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.crud_export.xlsx.encryption_enabled', $config['crud_export']['xlsx']['encryption_enabled']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.crud_export.xlsx.csv2xlsx_binary', $config['crud_export']['xlsx']['csv2xlsx_binary']);
+
+            $container->import('../config/crud_export_services.php');
+
+            $storageServiceId = $config['crud_export']['storage_service_id'];
+            if (null === $storageServiceId) {
+                throw new InvalidConfigurationException('"coop_tilleuls_ea_extensions.crud_export.storage_service_id" must be set when crud_export is enabled.');
+            }
+
+            // Bound explicitly (never autowired by type) since a consumer app may have several
+            // unrelated League\Flysystem\FilesystemOperator services registered.
+            $builder->getDefinition(CrudExportFileWriter::class)->setArgument('$storage', new Reference($storageServiceId));
+            $builder->getDefinition(CrudExportFileDownloader::class)->setArgument('$storage', new Reference($storageServiceId));
         }
     }
 }
