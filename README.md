@@ -29,6 +29,13 @@ If Symfony Flex doesn't register it automatically, add it to `config/bundles.php
 CoopTilleuls\Bundle\EAExtensionsBundle\EAExtensionsBundle::class => ['all' => true],
 ```
 
+## Features
+
+Each feature has its own setup/usage doc in [`docs/`](docs/):
+
+- [Menu overrides](docs/menu-overrides.md) — infinite-depth submenus and correct active-item
+  highlighting when two menu items share the same destination.
+
 ## Development
 
 ```bash

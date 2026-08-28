@@ -1,0 +1,8 @@
+{#
+    Test-only override of EasyAdmin's stock menu template, proving that a consumer template can
+    render an arbitrarily deep menu simply by delegating to the bundle's recursive macro instead
+    of writing its own (depth-limited) loop. See templates/menu_overrides/recursive_submenu.html.twig.
+#}
+{% import '@EAExtensions/menu_overrides/recursive_submenu.html.twig' as menu_overrides %}
+
+{{ menu_overrides.render_items(ea().mainMenu.items) }}
