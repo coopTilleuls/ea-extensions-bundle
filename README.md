@@ -48,6 +48,7 @@ Each feature has its own setup/usage doc in [`docs/`](docs/):
   highlighting when two menu items share the same destination.
 - [Customizable index columns](docs/customizable-columns.md) — per-user choice and ordering of visible fields on any CRUD's index page.
 - [CrudFields](docs/crud-fields.md) — embed one CrudController's index listing inside another entity's page (e.g. a detail page tab).
+- [Configurable pagination](docs/pagination.md) — lets users pick how many rows show per page on any CRUD's index page.
 
 ## Development
 

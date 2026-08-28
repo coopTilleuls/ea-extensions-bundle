@@ -107,6 +107,8 @@ final class Kernel extends BaseKernel
         $services->set(FixtureCrudControllerWithConfiguration::class)->public();
         $services->set(FixtureEmbeddingCrudController::class)->public();
         $services->set(FixtureEmbeddedTargetCrudController::class)->public();
+        $services->set(FixturePaginationCrudController::class)->public();
+        $services->set(FixtureLockedPaginationCrudController::class)->public();
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void
