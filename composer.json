@@ -37,6 +37,7 @@
         "symfony/css-selector": "^6.4|^7.0",
         "symfony/framework-bundle": "^6.4|^7.0",
         "symfony/phpunit-bridge": "^7.0",
+        "symfony/translation": "^6.4|^7.0",
         "symfony/ux-twig-component": "^2.32|^3.0",
         "symfony/var-exporter": "^7.2.5",
         "twig/extra-bundle": "^3.0"

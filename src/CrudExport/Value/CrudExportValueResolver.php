@@ -29,9 +29,7 @@ final readonly class CrudExportValueResolver
         $label = $column->label;
         if ($label instanceof TranslatableInterface) {
             $label = $label->trans($this->translator);
-        }
-
-        if (is_string($label)) {
+        } elseif (is_string($label)) {
             $label = $this->translator->trans($label);
         }
 

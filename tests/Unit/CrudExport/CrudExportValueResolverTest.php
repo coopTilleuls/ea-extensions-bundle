@@ -9,6 +9,7 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportFieldResolverInt
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Value\CrudExportValueResolver;
 use Doctrine\Common\Collections\ArrayCollection;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Translation\TranslatableMessage;
 use Symfony\Contracts\Service\ServiceProviderInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -132,5 +133,31 @@ final class CrudExportValueResolverTest extends TestCase
         $column = new CrudExportColumn('propertyName', false);
 
         self::assertSame('propertyName', $this->createResolver()->resolveHeader($column));
+    }
+
+    public function testResolveHeaderTranslatesAPlainStringLabel(): void
+    {
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')->with('field.isbn')->willReturn('ISBN');
+
+        $resolver = new CrudExportValueResolver($this->createStub(ServiceProviderInterface::class), $translator);
+        $column = new CrudExportColumn('isbn', 'field.isbn');
+
+        self::assertSame('ISBN', $resolver->resolveHeader($column));
+    }
+
+    public function testResolveHeaderTranslatesATranslatableLabelExactlyOnce(): void
+    {
+        // Regression test: a TranslatableInterface label used to fall through into the
+        // plain-string branch too (its ->trans() result is a string), running the
+        // already-translated text back through the translator a second time — harmless
+        // only by coincidence when the translated text isn't itself a catalog key.
+        $translator = $this->createMock(TranslatorInterface::class);
+        $translator->expects(self::once())->method('trans')->with('field.isbn')->willReturn('ISBN');
+
+        $resolver = new CrudExportValueResolver($this->createStub(ServiceProviderInterface::class), $translator);
+        $column = new CrudExportColumn('isbn', new TranslatableMessage('field.isbn'));
+
+        self::assertSame('ISBN', $resolver->resolveHeader($column));
     }
 }
