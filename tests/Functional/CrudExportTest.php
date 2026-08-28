@@ -222,7 +222,9 @@ final class CrudExportTest extends AbstractFunctionalTestCase
         ]));
         $contentDisposition = $this->client->getResponse()->headers->get('Content-Disposition');
         self::assertNotNull($contentDisposition);
-        self::assertSame(1, preg_match('/filename="([^"]+)"/', $contentDisposition, $matches));
+        // HeaderUtils::makeDisposition() only quotes the filename when it actually needs to
+        // (special characters present) — a plain export filename comes back unquoted.
+        self::assertSame(1, preg_match('/filename="?([^";]+)"?/', $contentDisposition, $matches));
         $filename = $matches[1] ?? self::fail('Content-Disposition filename not found.');
 
         $this->client->request('GET', '/_ea-extensions/crud-export/download/user/'.$filename);

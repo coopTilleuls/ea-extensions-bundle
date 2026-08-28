@@ -54,6 +54,27 @@ final class CrudExportFileWriterTest extends TestCase
         self::assertSame('Name', $storage->read($result['storagePath']));
     }
 
+    public function testWriteSanitizesExportNameOutOfTheFilenameAndStoragePath(): void
+    {
+        // exportName comes from CrudExportConfigurationInterface::getExportName(), which the
+        // bundle's own docs encourage building from request data — it must never reach the
+        // filename/storage path (and, downstream, the Content-Disposition header) verbatim.
+        $storage = $this->createStorage();
+        $locator = $this->createLocator(['txt' => new TxtFixtureCrudExportFormatWriter()]);
+
+        $writer = new CrudExportFileWriter($storage, $locator);
+
+        $result = $writer->write(['Name'], [['item-1']], 'user-1', '../../etc/passwd" evil="1', 'txt', self::class);
+
+        // No path separator can survive sanitization, so whatever's left of "../.." is
+        // inert plain text within a single filename — it can no longer traverse anything.
+        self::assertStringNotContainsString('/', $result['filename']);
+        self::assertStringNotContainsString('\\', $result['filename']);
+        self::assertStringNotContainsString('"', $result['filename']);
+        self::assertSame('user-1/'.$result['filename'], $result['storagePath']);
+        self::assertTrue($storage->fileExists($result['storagePath']));
+    }
+
     public function testWriteThrowsClearErrorForUnregisteredFormat(): void
     {
         $writer = new CrudExportFileWriter($this->createStorage(), $this->createLocator([]));

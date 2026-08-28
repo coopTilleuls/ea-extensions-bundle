@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File;
 
 use League\Flysystem\FilesystemOperator;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -32,7 +33,9 @@ final readonly class CrudExportFileDownloader
         });
 
         $response->headers->set('Content-Type', $mimeType);
-        $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s"', $filename));
+        // $filename ultimately derives from the app-supplied CrudExportConfigurationInterface::
+        // getExportName(), which can carry request data — never hand-roll this header from it.
+        $response->headers->set('Content-Disposition', HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $filename));
         $response->headers->set('Content-Length', (string) $this->storage->fileSize($storagePath));
 
         return $response;
