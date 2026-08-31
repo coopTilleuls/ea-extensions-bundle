@@ -6,6 +6,7 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Functional;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\Entity\FixtureEntity;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureCrudController;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureDefaultOnlyMismatchedPaginationCrudController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureLockedPaginationCrudController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureMismatchedPaginationCrudController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixturePaginationCrudController;
@@ -74,9 +75,20 @@ final class PaginationTest extends AbstractFunctionalTestCase
         $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
 
         $this->expectException(\LogicException::class);
-        $this->expectExceptionMessage('is not one of the page sizes returned by');
+        $this->expectExceptionMessage('is not one of the available page sizes');
 
         $this->client->request('GET', $this->crudUrl(FixtureMismatchedPaginationCrudController::class));
+    }
+
+    public function testControllerDeclaredDefaultNotInTheBundleWideListThrowsEvenWithoutItsOwnList(): void
+    {
+        $this->client->catchExceptions(false);
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('is not one of the available page sizes');
+
+        $this->client->request('GET', $this->crudUrl(FixtureDefaultOnlyMismatchedPaginationCrudController::class));
     }
 
     public function testLockedControllerHidesTheSelectorAndIgnoresTheQueryOverride(): void

@@ -73,4 +73,14 @@ final class PageSizeResolverTest extends TestCase
 
         self::assertSame(20, $resolver->resolve(new Request(['itemsPerPage' => '999']), null, []));
     }
+
+    public function testArrayQueryValueFallsBackInsteadOfThrowing(): void
+    {
+        // Symfony's InputBag::get() throws BadRequestException for a non-scalar query value —
+        // "?itemsPerPage[]=5" ends up as an array here, and must degrade to the fallback like
+        // every other malformed value instead of 500ing the request.
+        $resolver = new PageSizeResolver('itemsPerPage', 20, null);
+
+        self::assertSame(20, $resolver->resolve(new Request(['itemsPerPage' => ['5']]), null, null));
+    }
 }

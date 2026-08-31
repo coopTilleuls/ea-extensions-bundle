@@ -2,10 +2,10 @@
    slot below isn't a block vendor defines, and {% extends %} can only override existing blocks,
    not introduce a new insertion point). Changes from vendor:
    - .list-pagination-counter gets flex utility classes so the counter text, this bundle's
-     page-size <select> (see counter_extra below) and its "per page" label sit on one row —
-     matches cgt-cogitiel's own markup for this same UI (no custom CSS needed).
-   - the counter text is wrapped in its own <span> (also matching cgt-cogitiel): with
-     .list-pagination-counter now a flex container, the bare <strong>count</strong> + "results"
+     page-size <select> (see counter_extra below) and its "per page" label sit on one row
+     (no custom CSS needed).
+   - the counter text is wrapped in its own <span>: with .list-pagination-counter now a
+     flex container, the bare <strong>count</strong> + "results"
      text would otherwise split into two separate anonymous flex items, and the leading space of
      the second one collapses like block-level leading whitespace — rendering "17results" with no
      gap. Wrapping both in one inline element keeps them a single flex item, so the space survives.

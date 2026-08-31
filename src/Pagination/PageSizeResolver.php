@@ -32,11 +32,15 @@ final class PageSizeResolver
             return $fallback;
         }
 
-        if (!$request->query->has($this->queryParameter)) {
+        // Read via all() rather than InputBag::get(), which throws a BadRequestException for
+        // a non-scalar value (e.g. "?itemsPerPage[]=5") instead of the graceful fallback every
+        // other malformed value (negative, zero, non-numeric) gets below.
+        $raw = $request->query->all()[$this->queryParameter] ?? null;
+        if (!\is_scalar($raw)) {
             return $fallback;
         }
 
-        $requested = filter_var($request->query->get($this->queryParameter), \FILTER_VALIDATE_INT);
+        $requested = filter_var($raw, \FILTER_VALIDATE_INT);
         if (false === $requested || $requested < 1) {
             return $fallback;
         }

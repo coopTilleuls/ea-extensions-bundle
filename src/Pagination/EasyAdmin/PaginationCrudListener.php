@@ -46,8 +46,15 @@ final class PaginationCrudListener
             $controllerDefault = $crudControllerFqcn::getDefaultPageSize($context);
             $availablePageSizes = $crudControllerFqcn::getAvailablePageSizes($context);
 
-            if (null !== $controllerDefault && null !== $availablePageSizes && [] !== $availablePageSizes && !\in_array($controllerDefault, $availablePageSizes, true)) {
-                throw new \LogicException(sprintf('%s::getDefaultPageSize() returned %d, which is not one of the page sizes returned by %s::getAvailablePageSizes() (%s).', $crudControllerFqcn, $controllerDefault, $crudControllerFqcn, implode(', ', $availablePageSizes)));
+            // A null availablePageSizes falls back to the bundle-wide list at render time (see
+            // the request attribute set below), so the consistency check must compare against
+            // that same effective list — not skip just because this controller didn't declare
+            // its own, which would let e.g. getDefaultPageSize() => 15 through unnoticed while
+            // the bundle-wide list stays [10, 25, 50, 100].
+            $effectiveAvailablePageSizes = $availablePageSizes ?? $this->defaultAvailablePageSizes;
+
+            if (null !== $controllerDefault && [] !== $effectiveAvailablePageSizes && !\in_array($controllerDefault, $effectiveAvailablePageSizes, true)) {
+                throw new \LogicException(sprintf('%s::getDefaultPageSize() returned %d, which is not one of the available page sizes (%s).', $crudControllerFqcn, $controllerDefault, implode(', ', $effectiveAvailablePageSizes)));
             }
         }
 
