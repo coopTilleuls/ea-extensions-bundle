@@ -45,6 +45,10 @@ final class PaginationCrudListener
         if (null !== $crudControllerFqcn && is_subclass_of($crudControllerFqcn, PaginationConfigurationInterface::class)) {
             $controllerDefault = $crudControllerFqcn::getDefaultPageSize($context);
             $availablePageSizes = $crudControllerFqcn::getAvailablePageSizes($context);
+
+            if (null !== $controllerDefault && null !== $availablePageSizes && [] !== $availablePageSizes && !\in_array($controllerDefault, $availablePageSizes, true)) {
+                throw new \LogicException(sprintf('%s::getDefaultPageSize() returned %d, which is not one of the page sizes returned by %s::getAvailablePageSizes() (%s).', $crudControllerFqcn, $controllerDefault, $crudControllerFqcn, implode(', ', $availablePageSizes)));
+            }
         }
 
         $pageSize = $this->resolver->resolve($context->getRequest(), $controllerDefault, $availablePageSizes);

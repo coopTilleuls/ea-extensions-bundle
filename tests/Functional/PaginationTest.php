@@ -7,6 +7,7 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Functional;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\Entity\FixtureEntity;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureCrudController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureLockedPaginationCrudController;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureMismatchedPaginationCrudController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixturePaginationCrudController;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\User\InMemoryUser;
@@ -65,6 +66,17 @@ final class PaginationTest extends AbstractFunctionalTestCase
                 static fn ($node): string => trim($node->text()),
             ),
         );
+    }
+
+    public function testControllerDeclaredDefaultNotInItsOwnAvailableSizesThrows(): void
+    {
+        $this->client->catchExceptions(false);
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('is not one of the page sizes returned by');
+
+        $this->client->request('GET', $this->crudUrl(FixtureMismatchedPaginationCrudController::class));
     }
 
     public function testLockedControllerHidesTheSelectorAndIgnoresTheQueryOverride(): void

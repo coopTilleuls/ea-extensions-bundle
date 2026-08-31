@@ -1,19 +1,26 @@
 {# @var paginator \EasyCorp\Bundle\EasyAdminBundle\Orm\EntityPaginatorInterface #}
 {# Reuses vendor's own pagination links (see @EasyAdmin/crud/paginator.html.twig) so the page
-   navigation UI never drifts from vendor's; only appends the page-size selector. #}
+   navigation UI never drifts from vendor's. The page-size selector is injected into the
+   "counter_extra" block exposed by this bundle's own templates/pagination/Pagination.html.twig
+   — see docs/pagination.md for the one-time consumer-app override that wires it in; without
+   that override this block is simply unused and the selector doesn't render. #}
 <twig:ea:Pagination
     paginator="{{ paginator }}"
     showResultsCount="{{ render_detailed_pagination ?? true }}"
     showPageNumbers="{{ render_detailed_pagination ?? true }}"
-/>
+>
+    <twig:block name="counter_extra">
+        {% set ea_extensions_pagination_sizes = ea_extensions_pagination_available_page_sizes() %}
+        {% if ea_extensions_pagination_sizes is not empty and not ea_extensions_pagination_is_embedded() %}
+            <select class="form-select mx-2" style="width: auto;" data-controller="ea-extensions--pagination-page-size" data-action="ea-extensions--pagination-page-size#navigate">
+                {% for option in ea_extensions_pagination_sizes %}
+                    <option value="{{ path(app.request.attributes.get('_route'), app.request.query.all|merge({(ea_extensions_pagination_query_parameter()): option})) }}" {{ paginator.pageSize == option ? 'selected' : '' }}>
+                        {{ option }}
+                    </option>
+                {% endfor %}
+            </select>
+            <span class="text-nowrap">{{ 'pagination.per_page'|trans({}, 'EAExtensionsBundle') }}</span>
+        {% endif %}
+    </twig:block>
 
-{% set ea_extensions_pagination_sizes = ea_extensions_pagination_available_page_sizes() %}
-{% if ea_extensions_pagination_sizes is not empty and not ea_extensions_pagination_is_embedded() %}
-    <select class="form-select mx-2" style="width: auto; display: inline-block;" data-controller="ea-extensions--pagination-page-size" data-action="ea-extensions--pagination-page-size#navigate">
-        {% for option in ea_extensions_pagination_sizes %}
-            <option value="{{ path(app.request.attributes.get('_route'), app.request.query.all|merge({(ea_extensions_pagination_query_parameter()): option})) }}" {{ paginator.pageSize == option ? 'selected' : '' }}>
-                {{ option }}
-            </option>
-        {% endfor %}
-    </select>
-{% endif %}
+</twig:ea:Pagination>

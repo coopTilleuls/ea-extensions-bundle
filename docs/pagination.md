@@ -17,10 +17,14 @@ coop_tilleuls_ea_extensions:
 coop_tilleuls_ea_extensions:
     pagination:
         query_parameter: itemsPerPage   # the query-string key read/written by the selector
-        default_page_size: 20           # applied when a controller declares no default of its own
+        default_page_size: 25           # applied when a controller declares no default of its own
         available_page_sizes: [10, 25, 50, 100]
         max_page_size: null             # optional hard cap; any requested/declared value above it is clamped
 ```
+
+`default_page_size` must be one of `available_page_sizes` — otherwise the selector never shows
+the size that's actually applied (no `<option>` matches it), and the bundle refuses to boot
+with an `InvalidConfigurationException`.
 
 No preference is persisted between requests — same request-driven behavior on every page
 load, nothing stored per user or per session. A requested page size that isn't a positive
@@ -29,18 +33,25 @@ instead — it never reaches EasyAdmin's own paginator, which would otherwise th
 
 ## Consumer app setup (one-time)
 
-Create `templates/bundles/EasyAdminBundle/crud/paginator.html.twig` in your app — a plain
-Symfony bundle-template override, no PHP involved:
+Create these two plain Symfony bundle-template overrides in your app — no PHP involved, and
+both a one-liner pointing at a template this bundle ships:
 
 ```twig
+{# templates/bundles/EasyAdminBundle/crud/paginator.html.twig #}
 {{ include('@EAExtensions/pagination/paginator.html.twig') }}
 ```
 
+```twig
+{# templates/bundles/EasyAdminBundle/components/Pagination.html.twig #}
+{% extends '@EAExtensions/pagination/Pagination.html.twig' %}
+```
+
 Twig resolves `@EasyAdmin/crud/paginator.html.twig` (the template EasyAdmin's own
-`crud/index.html.twig` includes) by checking your app's `templates/bundles/EasyAdminBundle/`
-directory first — this is the same mechanism used for overriding any vendor bundle
-template, no bundle-specific API or one-time method call needed. This is the same category
-of one-time, app-wide setup as the importmap entry required by `customizable-columns` (see
+`crud/index.html.twig` includes) and `@EasyAdmin/components/Pagination.html.twig` (the
+`<twig:ea:Pagination>` component's own template) by checking your app's
+`templates/bundles/EasyAdminBundle/` directory first — the same mechanism used for
+overriding any vendor bundle template. This is the same category of one-time, app-wide setup as the importmap entry
+required by `customizable-columns` (see
 [`docs/customizable-columns.md`](customizable-columns.md)) — not something every
 CrudController needs to declare.
 
@@ -78,6 +89,10 @@ Returning `null` from either method falls back to the bundle-wide config value. 
 an **empty array** from `getAvailablePageSizes()` locks the page size: the selector is
 hidden and the query-string override is ignored, so the controller's own
 `getDefaultPageSize()` (or the bundle default, if that's also `null`) always applies.
+
+When both methods return a non-empty, non-null value, the default must be one of the
+available sizes — same rule as the bundle-wide config, checked per request since either
+method can vary its answer. A mismatch throws a `LogicException` naming the controller.
 
 ## Interaction with CrudFields
 
