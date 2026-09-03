@@ -24,8 +24,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
  * ea_filters_widget override) whenever its property name is listed in CrudField's
  * hiddenFilters query parameter — i.e. it's a "forced" filter baked into the embed's fetch URL
  * via overrideIndexUrl(), not something the end user applied themselves, so it has no business
- * showing up as an editable/removable row in the "Filtrer" modal. Ported from cgt-cogitiel's
- * own HiddenFilterTypeExtension.
+ * showing up as an editable/removable row in the "Filtrer" modal.
  */
 final class HiddenFilterTypeExtension extends AbstractTypeExtension
 {

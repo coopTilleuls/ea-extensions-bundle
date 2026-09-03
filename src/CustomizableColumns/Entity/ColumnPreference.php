@@ -8,9 +8,8 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Repository\Column
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * One row per owner (not per owner+controller) — mirrors cgt-cogitiel's own shape, where the
- * whole column configuration for a user/responsibility is a single JSONB map keyed by
- * CrudController FQCN.
+ * One row per owner (not per owner+controller) — the whole column configuration for an owner is
+ * a single JSON map keyed by CrudController FQCN.
  */
 #[ORM\Entity(repositoryClass: ColumnPreferenceRepository::class)]
 #[ORM\Table(name: 'ea_extensions_column_preference')]

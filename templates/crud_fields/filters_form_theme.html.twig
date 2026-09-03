@@ -5,7 +5,7 @@
     fields flagged "hidden_filter" by HiddenFilterTypeExtension (forced filters baked into the
     embed's fetch URL via overrideIndexUrl()) — those render as an invisible <input type="hidden">
     instead of the normal checkbox+collapsible filter row, so they can't be seen or removed from
-    the "Filtrer" modal. Ported from cgt-cogitiel's own form_theme.html.twig override.
+    the "Filtrer" modal.
 #}
 {% block ea_filters_widget %}
     {% set applied_filters = ea().request.query.all()['filters']|default([])|keys %}

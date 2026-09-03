@@ -66,4 +66,4 @@ final class BookCrudController extends AbstractCrudController implements Customi
 
 ## Applying vs. saving
 
-Matches cgt-cogitiel's UX: choosing columns in the modal and clicking "Appliquer" is **transient** by default — it only changes the current page view, nothing is saved. To make a selection the new default, the user must check the "Enregistrer comme paramètres par défaut" switch in the modal before applying. "Réinitialiser" clears every checkbox except that switch, so it doesn't persist either unless the switch was already checked.
+Choosing columns in the modal and clicking "Appliquer" is **transient** by default — it only changes the current page view, nothing is saved. To make a selection the new default, the user must check the "Enregistrer comme paramètres par défaut" switch in the modal before applying. "Réinitialiser" clears every checkbox except that switch, so it doesn't persist either unless the switch was already checked.

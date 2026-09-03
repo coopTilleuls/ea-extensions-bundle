@@ -14,7 +14,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Dto\ActionDto;
  * Hides global/entity actions on WHATEVER CrudController is being rendered, driven purely by
  * the hideGlobalActions/hideEntityActions query flags CrudField's fetch URL carries — no
  * interface, no configureActions() change, no declaration whatsoever needed on the target
- * controller. This replaces cgt-cogitiel's per-controller ExpressionLanguage-based opt-in.
+ * controller.
  */
 final class CrudFieldActionsExtension implements ActionsExtensionInterface
 {

@@ -14,8 +14,9 @@ use Symfony\Component\HttpFoundation\Request;
  * Default storage: owner = current Security user's identifier. Named after that resolution
  * strategy (not "Doctrine") because the persistence backend is the uninteresting axis here —
  * almost any implementation will use Doctrine; what actually varies between projects is what
- * determines the "owner" (e.g. cgt-cogitiel keys by "active responsibility" instead of by
- * plain user — a UserResponsabiliteStructureColumnPreferenceStorage there, not this one).
+ * determines the "owner". Provide your own implementation of
+ * {@see ColumnPreferenceStorageInterface} if your app's notion of "owner" isn't simply the
+ * current Security user.
  */
 final class SecurityUserColumnPreferenceStorage implements ColumnPreferenceStorageInterface
 {

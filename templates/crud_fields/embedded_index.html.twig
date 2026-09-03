@@ -3,7 +3,7 @@
     CrudFieldIndexTemplateExtension) so every block except "page_actions"/"filters" renders
     100% unmodified. "filters" is patched to exclude filters "forced" via overrideIndexUrl()
     (declared through the hiddenFilters query param) from the applied-filters count badge and
-    reset link — ported from cgt-cogitiel's own admin/table/partials/_table.html.twig.
+    reset link.
     "page_actions" is patched only to gate the whole filters button behind CrudField's own
     showFilters() option — see the block below for why.
 #}
