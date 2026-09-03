@@ -1,0 +1,28 @@
+{% trans_default_domain 'EasyAdminBundle' %}
+{% set ea = ea() %}
+
+{% if ea.crud.currentAction == 'detail' or not field.customOptions.get('renderAsSwitch') %}
+    {% include "@!EasyAdmin/crud/field/boolean.html.twig" %}
+{% else %}
+    {% if field.value is not null %}
+        <div class="form-check form-switch"
+            data-controller="ea-extensions--notification-toggle"
+            data-ea-extensions--notification-toggle-toggle-url-value="{{ field.customOptions.get('toggleUrl') }}"
+            data-ea-extensions--notification-toggle-field-value="{{ field.property }}"
+            data-ea-extensions--notification-toggle-reload-value="{{ field.property == 'treatment.pending' ? 'true' : 'false' }}"
+            {% if field.formTypeOption('row_attr.custom-labels.true') is defined %}data-label-true="{{ field.formTypeOption('row_attr.custom-labels.true') }}"{% endif %}
+            {% if field.formTypeOption('row_attr.custom-labels.false') is defined %}data-label-false="{{ field.formTypeOption('row_attr.custom-labels.false') }}"{% endif %}
+        >
+            <input type="checkbox" class="form-check-input" id="{{ field.uniqueId }}" {{ field.value == true ? 'checked' }}
+                data-action="change->ea-extensions--notification-toggle#toggle"
+                {{ field.formTypeOption('disabled') == true ? 'disabled' }} autocomplete="off"
+                {% for key, value in field.getFormTypeOption('attr') %}{{ key }}="{{ value|e('html_attr') }}"{% endfor %}
+            >
+            <label class="form-check-label" for="{{ field.uniqueId }}">
+                {% if field.formTypeOption('row_attr.custom-labels') is defined %}
+                    {{ field.formTypeOption('row_attr.custom-labels.' ~ (field.value ? 'true' : 'false')) }}
+                {% endif %}
+            </label>
+        </div>
+    {% endif %}
+{% endif %}

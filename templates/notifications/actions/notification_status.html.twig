@@ -1,0 +1,18 @@
+{% trans_default_domain 'EasyAdminBundle' %}
+{% set entity = ea().entity %}
+{% set currentValue = ea_extensions_access_attribute(entity.instance, action.name) %}
+
+<div class="btn border-0 shadow-none bg-transparent form-check form-switch"
+    data-controller="ea-extensions--notification-toggle"
+    data-ea-extensions--notification-toggle-toggle-url-value="{{ action.linkUrl }}"
+    data-ea-extensions--notification-toggle-field-value="{{ action.name }}"
+    data-ea-extensions--notification-toggle-reload-value="{{ action.name == 'treatment.pending' ? 'true' : 'false' }}"
+    {% for key, value in action.htmlAttributes %}{{ key }}="{{ value|e('html_attr') }}"{% endfor %}
+>
+    <input type="checkbox" class="form-check-input" id="{{ action.name }}" {{ currentValue ? 'checked' }}
+        data-action="change->ea-extensions--notification-toggle#toggle"
+    >
+    <label class="form-check-label" for="{{ action.name }}">
+        {{ action.htmlAttributes['data-label-' ~ (currentValue ? 'true' : 'false')] }}
+    </label>
+</div>

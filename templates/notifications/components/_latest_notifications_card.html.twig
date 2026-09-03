@@ -1,0 +1,51 @@
+{# @var notifications array #}
+
+<div class="col-md-6 mb-4">
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex mb-3">
+                <h4 class="my-0 me-auto fw-bold">Dernières notifications</h4>
+                <p class="d-flex align-items-center my-0">
+                    <a href="{{ ea_url()
+                        .unsetAll()
+                        .setController('CoopTilleuls\\Bundle\\EAExtensionsBundle\\Notifications\\EasyAdmin\\NotificationCrudController')
+                        .setAction('index') }}" class="action-detail"><span class="action-label">Voir tout</span></a>
+                </p>
+            </div>
+            {% if notifications is not empty %}
+                <ul class="list-group list-group-flush">
+                    {% for notification in notifications %}
+                        <li class="list-group-item {{ loop.last ? 'pt-3 pb-0' : 'py-3'}} px-0">
+                            <div class="row align-items-start">
+                                <div class="col-auto">
+                                    <div class="badge badge-warning rounded-circle d-flex justify-content-center align-items-center ea-extensions-notification-icon-badge">
+                                        <i class="fa-solid fa-bell"></i>
+                                    </div>
+                                </div>
+                                <div class="col text-truncate">
+                                    <div class="d-flex flex-column text-start">
+                                        <span class="d-inline-block text-truncate">{{ notification.type|trans }} - {{ notification.title }}</span>
+                                        <span class="text-secondary fw-medium small">
+                                            <i class="fa-solid fa-calendar"></i> {{ notification.date|date('d/m/y - H\\hi') }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-auto">
+                                    <a href="{{ ea_url()
+                                        .unsetAll()
+                                        .setController('CoopTilleuls\\Bundle\\EAExtensionsBundle\\Notifications\\EasyAdmin\\NotificationCrudController')
+                                        .setAction('detail')
+                                        .set('entityId', notification.id) }}"
+                                       class="btn btn-secondary">Voir
+                                    </a>
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="mb-0 text-start text-secondary">Aucune notification non lue.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>

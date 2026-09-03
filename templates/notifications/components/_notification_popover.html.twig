@@ -1,0 +1,30 @@
+{#
+    Split out of notification_bar.html.twig on purpose: this is the only place referencing
+    Twig's "mercure" function (from symfony/mercure-bundle). Twig resolves function names when a
+    template is first loaded/compiled, not when a surrounding {% if %} actually runs — so keeping
+    this markup inline in notification_bar.html.twig meant the "mercure" function had to exist
+    even when notifications.mercure.enabled is false, forcing symfony/mercure-bundle to be
+    installed regardless. Included only from inside {% if mercureLive %}, so this file — and the
+    "mercure" call in it — is never loaded/compiled at all unless Mercure is actually enabled.
+#}
+<div class="ea-extensions-notification-popover card shadow position-fixed d-none border-0"
+    data-controller="ea-extensions--mercure-hub ea-extensions--real-time-notification"
+    data-ea-extensions--mercure-hub-hub-url-value="{{ mercure(null, {subscribe: ea_extensions_notification_topic()}) }}"
+    data-ea-extensions--real-time-notification-target="popover"
+    data-ea-extensions--real-time-notification-topic-value="{{ ea_extensions_notification_topic() }}"
+    data-ea-extensions--real-time-notification-ea-extensions--mercure-hub-outlet="[data-controller~='ea-extensions--mercure-hub']"
+>
+    <div class="ea-extensions-notification-popover-header card-header bg-white d-flex justify-content-between align-items-center py-3 border-bottom-0">
+        <h5 class="ea-extensions-notification-popover-title m-0 fs-6 fw-bold">Nouvelle notification</h5>
+        <button type="button" class="btn-close" aria-label="Fermer" data-action="ea-extensions--real-time-notification#close"></button>
+    </div>
+    <div class="ea-extensions-notification-popover-body card-body overflow-auto p-3 pt-0" data-ea-extensions--real-time-notification-target="notifications"></div>
+    <template data-ea-extensions--real-time-notification-target="notificationTemplate">
+        <a href="#" class="ea-extensions-notification-popover-item p-2 rounded d-flex align-items-center mb-2 gap-2 bg-success-subtle text-success text-decoration-none">
+            <i class="fas fa-check-circle fs-6"></i>
+            <div>
+                <span data-role="type" class="ea-extensions-notification-popover-item-type text-capitalize"></span> - <span data-role="title" class="ea-extensions-notification-popover-item-title"></span>
+            </div>
+        </a>
+    </template>
+</div>

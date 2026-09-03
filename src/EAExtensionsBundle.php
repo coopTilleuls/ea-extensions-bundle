@@ -13,6 +13,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Process\Process;
 
@@ -78,6 +79,18 @@ final class EAExtensionsBundle extends AbstractBundle
                         ->end()
                     ->end()
                 ->end()
+                ->arrayNode('notifications')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')->defaultTrue()->end()
+                        ->arrayNode('mercure')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->booleanNode('enabled')->defaultFalse()->end()
+                            ->end()
+                        ->end()
+                    ->end()
+                ->end()
             ->end()
         ;
     }
@@ -95,6 +108,12 @@ final class EAExtensionsBundle extends AbstractBundle
                         'type' => 'attribute',
                         'dir' => $this->getPath().'/src/CustomizableColumns/Entity',
                         'prefix' => 'CoopTilleuls\\Bundle\\EAExtensionsBundle\\CustomizableColumns\\Entity',
+                        'is_bundle' => false,
+                    ],
+                    'EAExtensionsNotifications' => [
+                        'type' => 'attribute',
+                        'dir' => $this->getPath().'/src/Notifications/Entity',
+                        'prefix' => 'CoopTilleuls\\Bundle\\EAExtensionsBundle\\Notifications\\Entity',
                         'is_bundle' => false,
                     ],
                 ],
@@ -161,6 +180,20 @@ final class EAExtensionsBundle extends AbstractBundle
             // unrelated League\Flysystem\FilesystemOperator services registered.
             $builder->getDefinition(CrudExportFileWriter::class)->setArgument('$storage', new Reference($storageServiceId));
             $builder->getDefinition(CrudExportFileDownloader::class)->setArgument('$storage', new Reference($storageServiceId));
+        }
+
+        if ($config['notifications']['enabled']) {
+            $builder->setParameter('coop_tilleuls_ea_extensions.notifications.mercure.enabled', $config['notifications']['mercure']['enabled']);
+
+            $container->import('../config/notifications_services.php');
+
+            if ($config['notifications']['mercure']['enabled']) {
+                if (!interface_exists(HubInterface::class)) {
+                    throw new \LogicException('The "coop_tilleuls_ea_extensions.notifications.mercure.enabled" option requires the "symfony/mercure" package. Try running "composer require symfony/mercure".');
+                }
+
+                $container->import('../config/notifications_mercure_services.php');
+            }
         }
     }
 }
