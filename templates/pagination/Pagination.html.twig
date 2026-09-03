@@ -1,0 +1,96 @@
+{# Full copy of vendor's own template (can't use {% extends %} here: the extra "counter_extra"
+   slot below isn't a block vendor defines, and {% extends %} can only override existing blocks,
+   not introduce a new insertion point). Changes from vendor:
+   - .list-pagination-counter gets flex utility classes so the counter text, this bundle's
+     page-size <select> (see counter_extra below) and its "per page" label sit on one row
+     (no custom CSS needed).
+   - the counter text is wrapped in its own <span>: with .list-pagination-counter now a
+     flex container, the bare <strong>count</strong> + "results"
+     text would otherwise split into two separate anonymous flex items, and the leading space of
+     the second one collapses like block-level leading whitespace — rendering "17results" with no
+     gap. Wrapping both in one inline element keeps them a single flex item, so the space survives.
+   - the "counter_extra" block: an empty slot by default; this bundle's own pagination template
+     (templates/pagination/paginator.html.twig) fills it via <twig:block name="counter_extra">
+     to inject the page-size selector.
+   Consuming apps don't copy this file: see docs/pagination.md — they override
+   @EasyAdmin/components/Pagination.html.twig with a one-line {% extends %} of this template
+   (not {% include %}: the counter_extra block above must stay reachable through real Twig
+   block inheritance for <twig:block name="counter_extra"> to fill it). #}
+<div {{ attributes.defaults({class: this.defaultCssClass()}) }}>
+    <div class="list-pagination-counter d-inline-flex flex-row align-items-center justify-content-start">
+        {%- if this.showResultsCount and this.numResults is not null -%}
+            <span class="text-nowrap">
+                {% block counter %}
+                    {{ 'paginator.results'|trans({'%count%': this.numResults|format}, this.translationDomain)|raw }}
+                {% endblock %}
+            </span>
+        {%- endif -%}
+        {% block counter_extra %}{% endblock %}
+    </div>
+    {% set has_previous_page = this.hasPreviousPage %}
+    {% set has_next_page = this.hasNextPage %}
+    {% if has_previous_page or has_next_page %}
+        {% set current_page = this.getCurrentPage %}
+        {% set page_link_css_class = this.pageLinkCssClass %}
+        {% set is_rtl = this.isRtl %}
+        <nav class="{{ this.navCssClass }}" aria-label="{{ 'paginator.label'|trans({}, this.translationDomain) }}">
+            <ul class="{{ this.listCssClass }}">
+                {% if this.showFirstLast %}
+                    <li class="page-item page-item-first {{ not has_previous_page ? 'disabled' }}">
+                        <a class="{{ page_link_css_class }}" href="{{ not has_previous_page ? '#' : this.urlForPage(1) }}"{% if not has_previous_page %} aria-disabled="true" tabindex="-1"{% endif %}>
+                            <span class="btn-label">{{ 'paginator.first'|trans({}, this.translationDomain) }}</span>
+                        </a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item page-item-previous {{ not has_previous_page ? 'disabled' }}">
+                    <a class="{{ page_link_css_class }}" href="{{ not has_previous_page ? '#' : this.urlForPage(this.previousPage) }}"{% if has_previous_page %} rel="prev"{% else %} aria-disabled="true" tabindex="-1"{% endif %}>
+                        {% if is_rtl %}
+                            <twig:ea:Icon name="internal:chevron-right" class="mx-1" aria-hidden="true" />
+                        {% else %}
+                            <twig:ea:Icon name="internal:chevron-left" class="mx-1" aria-hidden="true" />
+                        {% endif %}
+
+                        <span class="{{ this.showPreviousNextLabels ? 'btn-label' : 'visually-hidden' }}">{% block previous_label %}{{ 'paginator.previous'|trans({}, this.translationDomain) }}{% endblock %}</span>
+                    </a>
+                </li>
+
+                {% if this.showPageNumbers %}
+                    {% for page in this.pageRange %}
+                        <li class="page-item {{ page == current_page ? 'active' }} {{ page is null ? 'disabled' }}">
+                            {% if page is null %}
+                                <span class="{{ page_link_css_class }}"><span aria-hidden="true">&hellip;</span><span class="visually-hidden">{{ 'paginator.more_pages'|trans({}, this.translationDomain) }}</span></span>
+                            {% else %}
+                                <a class="{{ page_link_css_class }}" href="{{ this.urlForPage(page) }}"{% if page == current_page %} aria-current="page"{% endif %}>{{ page }}</a>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li class="page-item active">
+                        <a class="{{ page_link_css_class }}" href="{{ this.urlForPage(current_page) }}" aria-current="page">{{ current_page }}</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item page-item-next {{ not has_next_page ? 'disabled' }}">
+                    <a class="{{ page_link_css_class }}" href="{{ not has_next_page ? '#' : this.urlForPage(this.nextPage) }}"{% if has_next_page %} rel="next"{% else %} aria-disabled="true" tabindex="-1"{% endif %}>
+                        <span class="{{ this.showPreviousNextLabels ? 'btn-label' : 'visually-hidden' }}">{% block next_label %}{{ 'paginator.next'|trans({}, this.translationDomain) }}{% endblock %}</span>
+
+                        {% if is_rtl %}
+                            <twig:ea:Icon name="internal:chevron-left" class="mx-1" aria-hidden="true" />
+                        {% else %}
+                            <twig:ea:Icon name="internal:chevron-right" class="mx-1" aria-hidden="true" />
+                        {% endif %}
+                    </a>
+                </li>
+
+                {% if this.showFirstLast %}
+                    <li class="page-item page-item-last {{ not has_next_page ? 'disabled' }}">
+                        <a class="{{ page_link_css_class }}" href="{{ not has_next_page ? '#' : this.urlForPage(this.getLastPage) }}"{% if not has_next_page %} aria-disabled="true" tabindex="-1"{% endif %}>
+                            <span class="btn-label">{{ 'paginator.last'|trans({}, this.translationDomain) }}</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>

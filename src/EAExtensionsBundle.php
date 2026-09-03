@@ -29,6 +29,23 @@ final class EAExtensionsBundle extends AbstractBundle
                         ->booleanNode('enabled')->defaultTrue()->end()
                     ->end()
                 ->end()
+                ->arrayNode('pagination')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')->defaultTrue()->end()
+                        ->scalarNode('query_parameter')->defaultValue('itemsPerPage')->end()
+                        ->integerNode('default_page_size')->defaultValue(25)->end()
+                        ->arrayNode('available_page_sizes')
+                            ->integerPrototype()->end()
+                            ->defaultValue([10, 25, 50, 100])
+                        ->end()
+                        ->integerNode('max_page_size')->defaultNull()->end()
+                    ->end()
+                    ->validate()
+                        ->ifTrue(static fn (array $v): bool => $v['enabled'] && !\in_array($v['default_page_size'], $v['available_page_sizes'], true))
+                        ->thenInvalid('The "pagination.default_page_size" value must be one of the "pagination.available_page_sizes" values.')
+                    ->end()
+                ->end()
             ->end()
         ;
     }
@@ -67,5 +84,14 @@ final class EAExtensionsBundle extends AbstractBundle
         }
 
         $container->import('../config/crud_fields_services.php');
+
+        if ($config['pagination']['enabled']) {
+            $builder->setParameter('coop_tilleuls_ea_extensions.pagination.query_parameter', $config['pagination']['query_parameter']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.pagination.default_page_size', $config['pagination']['default_page_size']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.pagination.available_page_sizes', $config['pagination']['available_page_sizes']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.pagination.max_page_size', $config['pagination']['max_page_size']);
+
+            $container->import('../config/pagination_services.php');
+        }
     }
 }

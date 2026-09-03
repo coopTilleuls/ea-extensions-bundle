@@ -40,6 +40,8 @@ final class FixtureDashboardController extends AbstractDashboardController
 
     public function configureCrud(): Crud
     {
+        // Pagination's own override (crud/paginator) is NOT applied here — it's a standard
+        // Symfony bundle-template override, see templates/bundles/EasyAdminBundle/crud/paginator.html.twig.
         return CrudFieldLayout::applyIfEmbedded(Crud::new(), $this->requestStack->getCurrentRequest());
     }
 
