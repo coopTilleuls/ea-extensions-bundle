@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures;
 
+use Symfony\Bundle\MercureBundle\MercureBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -13,9 +14,22 @@ use Symfony\Component\Mercure\HubInterface;
  * Same as {@see Kernel}, with "notifications.mercure.enabled" turned on and a
  * {@see RecordingMercureHub} standing in for a real Mercure hub — used to exercise the
  * Mercure-enabled wiring path without requiring a real Mercure hub connection.
+ *
+ * Also registers the real symfony/mercure-bundle (dev-only — this bundle itself never requires
+ * it, only the lower-level symfony/mercure package) purely so the "mercure" Twig function and
+ * the subscriber-authorization cookie it can set (Authorization::setCookie(), wired in by
+ * MercureBundle's SetCookieSubscriber) are actually available to test — a real host app is
+ * expected to install symfony/mercure-bundle itself for the same reason. The dummy "url" below
+ * is never actually connected to; only "jwt.secret" is exercised, by the subscriber-cookie tests.
  */
 final class MercureKernel extends Kernel
 {
+    public function registerBundles(): iterable
+    {
+        yield from parent::registerBundles();
+        yield new MercureBundle();
+    }
+
     public function configureContainer(ContainerConfigurator $container, LoaderInterface $loader, ContainerBuilder $builder): void
     {
         parent::configureContainer($container, $loader, $builder);
@@ -24,6 +38,20 @@ final class MercureKernel extends Kernel
             'notifications' => [
                 'mercure' => [
                     'enabled' => true,
+                ],
+            ],
+        ]);
+
+        $container->extension('mercure', [
+            'hubs' => [
+                'default' => [
+                    // Must share a second-level domain with the test client's own host
+                    // (KernelBrowser defaults to "localhost") — Authorization::setCookie()
+                    // refuses to set a cookie for a hub it considers a different site.
+                    'url' => 'https://localhost/.well-known/mercure',
+                    'jwt' => [
+                        'secret' => '!TestOnlyMercureHubJWTSecretKey!',
+                    ],
                 ],
             ],
         ]);

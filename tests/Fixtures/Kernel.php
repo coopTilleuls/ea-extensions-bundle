@@ -154,6 +154,7 @@ class Kernel extends BaseKernel
         ;
 
         $services->set(RecordingNotificationEventListener::class)->public();
+        $services->set(FixturePopoverController::class)->public();
         $services->set(FixtureNotificationRecipientResolver::class);
         $services->alias(NotificationRecipientResolverInterface::class, FixtureNotificationRecipientResolver::class);
     }
@@ -169,6 +170,7 @@ class Kernel extends BaseKernel
         $routes->import(__DIR__.'/../../src/CustomizableColumns/Controller/', 'attribute');
         $routes->import(__DIR__.'/../../src/CrudExport/Controller/', 'attribute');
         $routes->import(__DIR__.'/../../src/Notifications/Controller/', 'attribute');
+        $routes->import(__DIR__, 'attribute');
     }
 
     public function getCacheDir(): string
