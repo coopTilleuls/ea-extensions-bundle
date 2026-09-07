@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\MessageHandler;
 
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event\CrudExportAsyncJobStartingEvent;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event\CrudExportFailedEvent;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event\CrudExportFileReadyEvent;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportGenerator;
@@ -26,6 +27,12 @@ final readonly class ExportCrudMessageHandler
 
     public function __invoke(ExportCrudMessage $message): void
     {
+        $this->eventDispatcher->dispatch(new CrudExportAsyncJobStartingEvent(
+            crudControllerFqcn: $message->crudControllerFqcn,
+            exportName: $message->exportName,
+            requesterId: $message->requesterId,
+        ));
+
         $query = $this->normalizer->rebuildQuery($message->dql, $message->parameters);
 
         try {

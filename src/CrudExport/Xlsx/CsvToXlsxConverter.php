@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Xlsx;
 
-use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Csv\CsvExport;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Csv\CsvFileWriter;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
@@ -20,7 +20,7 @@ final readonly class CsvToXlsxConverter
     {
     }
 
-    public function convert(string $csvPath, string $xlsxPath, string $separator = CsvExport::DEFAULT_SEPARATOR): void
+    public function convert(string $csvPath, string $xlsxPath, string $separator = CsvFileWriter::DEFAULT_SEPARATOR): void
     {
         if (!is_file($csvPath)) {
             throw new \RuntimeException(sprintf('CSV file "%s" does not exist.', $csvPath));

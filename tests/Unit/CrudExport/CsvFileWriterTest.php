@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Unit\CrudExport;
 
-use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Csv\CsvExport;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Csv\CsvFileWriter;
 use PHPUnit\Framework\TestCase;
 
-final class CsvExportTest extends TestCase
+final class CsvFileWriterTest extends TestCase
 {
     public function testWriteFileWritesHeadersAndRows(): void
     {
@@ -15,7 +15,7 @@ final class CsvExportTest extends TestCase
         self::assertIsString($path);
 
         try {
-            new CsvExport()->writeFile($path, ['Name', 'Amount'], [
+            new CsvFileWriter()->writeFile($path, ['Name', 'Amount'], [
                 ['item-1', 100],
                 ['item-2', 200],
             ]);
@@ -33,7 +33,7 @@ final class CsvExportTest extends TestCase
         self::assertIsString($path);
 
         try {
-            new CsvExport()->writeFile($path, ['Name'], [['item-1']], withBom: true);
+            new CsvFileWriter()->writeFile($path, ['Name'], [['item-1']], withBom: true);
 
             $content = (string) file_get_contents($path);
             self::assertStringStartsWith("\xEF\xBB\xBF", $content);
@@ -48,7 +48,7 @@ final class CsvExportTest extends TestCase
         self::assertIsString($path);
 
         try {
-            new CsvExport()->writeFile($path, ['a', 'b'], [['1', '2']], separator: ';');
+            new CsvFileWriter()->writeFile($path, ['a', 'b'], [['1', '2']], separator: ';');
 
             self::assertSame("a;b\n1;2\n", (string) file_get_contents($path));
         } finally {

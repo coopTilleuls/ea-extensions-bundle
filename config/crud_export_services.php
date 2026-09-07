@@ -35,6 +35,9 @@ return static function (ContainerConfigurator $container): void {
         ->args([
             '$asyncThreshold' => '%coop_tilleuls_ea_extensions.crud_export.async_threshold%',
             '$maxLimit' => '%coop_tilleuls_ea_extensions.crud_export.max_limit%',
+            '$actionIcon' => '%coop_tilleuls_ea_extensions.crud_export.action_icon%',
+            '$csvSeparator' => '%coop_tilleuls_ea_extensions.crud_export.csv.separator%',
+            '$csvWithBom' => '%coop_tilleuls_ea_extensions.crud_export.csv.with_bom%',
             '$xlsxEnabled' => '%coop_tilleuls_ea_extensions.crud_export.xlsx.enabled%',
             '$xlsxEncryptionEnabled' => '%coop_tilleuls_ea_extensions.crud_export.xlsx.encryption_enabled%',
             '$csv2xlsxBinary' => '%coop_tilleuls_ea_extensions.crud_export.xlsx.csv2xlsx_binary%',

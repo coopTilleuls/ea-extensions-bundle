@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Unit\CrudExport;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportSettings;
-use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Csv\CsvExport;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Csv\CsvFileWriter;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Format\XlsxCrudExportFormatWriter;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Password\CrudExportPasswordProviderInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Xlsx\CsvToXlsxConverter;
@@ -51,12 +51,15 @@ final class XlsxCrudExportFormatWriterTest extends TestCase
         $settings = new CrudExportSettings(
             asyncThreshold: 1000,
             maxLimit: 50000,
+            actionIcon: 'fa fa-download',
+            csvSeparator: ',',
+            csvWithBom: false,
             xlsxEnabled: true,
             xlsxEncryptionEnabled: $encryptionEnabled,
             csv2xlsxBinary: $this->csv2xlsxShim,
         );
 
-        return new XlsxCrudExportFormatWriter(new CsvExport(), new CsvToXlsxConverter($this->csv2xlsxShim), $settings, $passwordProvider);
+        return new XlsxCrudExportFormatWriter(new CsvFileWriter(), new CsvToXlsxConverter($this->csv2xlsxShim), $settings, $passwordProvider);
     }
 
     private function write(XlsxCrudExportFormatWriter $writer): string

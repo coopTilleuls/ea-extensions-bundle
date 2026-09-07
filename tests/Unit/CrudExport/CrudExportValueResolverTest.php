@@ -27,6 +27,8 @@ final class ValueResolverFixtureRelation
 
 final class ValueResolverFixtureEntity
 {
+    private string $secret = 'hidden';
+
     /**
      * @param list<string>                                        $tags
      * @param ?ArrayCollection<int, ValueResolverFixtureRelation> $items
@@ -43,6 +45,11 @@ final class ValueResolverFixtureEntity
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function describe(): string
+    {
+        return $this->name.':'.$this->secret;
     }
 }
 
@@ -105,6 +112,18 @@ final class CrudExportValueResolverTest extends TestCase
         $column = new CrudExportColumn('items', 'Items');
 
         self::assertSame('x, y', $this->createResolver()->resolveValue($entity, $column));
+    }
+
+    public function testResolveValueReturnsNullForAPrivatePropertyWithoutAGetter(): void
+    {
+        // Regression test: property_exists() returns true for private/protected properties
+        // too, even from outside the declaring class — reading them directly used to fatal
+        // ("Cannot access private property") instead of falling through like a genuinely
+        // missing property does.
+        $entity = new ValueResolverFixtureEntity();
+        $column = new CrudExportColumn('secret', 'Secret');
+
+        self::assertNull($this->createResolver()->resolveValue($entity, $column));
     }
 
     public function testResolveValueDelegatesToCustomResolver(): void

@@ -6,7 +6,7 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Format;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportFormat;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportSettings;
-use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Csv\CsvExport;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Csv\CsvFileWriter;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Password\CrudExportPasswordProviderInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Xlsx\CsvToXlsxConverter;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Xlsx\OoxmlEncryptor;
@@ -14,7 +14,7 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Xlsx\OoxmlEncryptor;
 final readonly class XlsxCrudExportFormatWriter implements CrudExportFormatWriterInterface
 {
     public function __construct(
-        private CsvExport $csvExport,
+        private CsvFileWriter $csvFileWriter,
         private CsvToXlsxConverter $csvToXlsxConverter,
         private CrudExportSettings $settings,
         private ?CrudExportPasswordProviderInterface $passwordProvider = null,
@@ -41,7 +41,7 @@ final readonly class XlsxCrudExportFormatWriter implements CrudExportFormatWrite
         $xlsxPath = $tmpBasePath.'.xlsx';
 
         try {
-            $this->csvExport->writeFile($csvPath, $headers, $rows);
+            $this->csvFileWriter->writeFile($csvPath, $headers, $rows);
             $this->csvToXlsxConverter->convert($csvPath, $xlsxPath);
         } finally {
             if (file_exists($csvPath)) {

@@ -6,11 +6,13 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\EasyAdmin;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportAction;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportConfigurationInterface;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportSettings;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Action\ActionsExtensionInterface;
+use Symfony\Component\Translation\TranslatableMessage;
 
 /**
  * Adds a global "Exporter" action to every index page, no trait/base class required.
@@ -20,6 +22,11 @@ use EasyCorp\Bundle\EasyAdminBundle\Contracts\Action\ActionsExtensionInterface;
  */
 final class CrudExportActionsExtension implements ActionsExtensionInterface
 {
+    public function __construct(
+        private readonly CrudExportSettings $settings,
+    ) {
+    }
+
     /**
      * @param AdminContext<object> $context
      */
@@ -50,8 +57,8 @@ final class CrudExportActionsExtension implements ActionsExtensionInterface
         $separator = str_contains($request->getUri(), '?') ? '&' : '?';
         $url = $request->getUri().$separator.CrudExportAction::QUERY_PARAM_TRIGGER.'=1';
 
-        $actions->add(Crud::PAGE_INDEX, Action::new(CrudExportAction::ACTION_NAME, 'Exporter')
-            ->setIcon('fa fa-download')
+        $actions->add(Crud::PAGE_INDEX, Action::new(CrudExportAction::ACTION_NAME, new TranslatableMessage('crud_export.action_label', domain: 'EAExtensionsBundle'))
+            ->setIcon($this->settings->actionIcon)
             ->createAsGlobalAction()
             ->linkToUrl($url));
 

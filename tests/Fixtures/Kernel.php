@@ -114,6 +114,7 @@ final class Kernel extends BaseKernel
 
         $container->extension('coop_tilleuls_ea_extensions', [
             'crud_export' => [
+                'enabled' => true,
                 'storage_service_id' => 'fixture.crud_export_storage',
                 'async_threshold' => 3,
                 'max_limit' => 10,

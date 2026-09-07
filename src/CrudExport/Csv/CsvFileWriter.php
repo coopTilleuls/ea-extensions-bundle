@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Csv;
 
-final readonly class CsvExport
+final readonly class CsvFileWriter
 {
     public const string DEFAULT_SEPARATOR = ',';
 

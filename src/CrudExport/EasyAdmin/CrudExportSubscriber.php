@@ -112,7 +112,10 @@ final readonly class CrudExportSubscriber
             $event->setResponse($this->redirectWithFlash(
                 $request,
                 'danger',
-                sprintf('Le nombre de résultats à exporter (%d) dépasse la limite autorisée (%d). Veuillez affiner votre sélection.', $count, $this->settings->maxLimit),
+                $this->translator->trans('crud_export.limit_exceeded', [
+                    '%count%' => $count,
+                    '%limit%' => $this->settings->maxLimit,
+                ], 'EAExtensionsBundle'),
             ));
 
             return;
@@ -133,7 +136,7 @@ final readonly class CrudExportSubscriber
             $event->setResponse($this->redirectWithFlash(
                 $request,
                 'warning',
-                "Le fichier d'export est en cours de préparation. Vous recevrez une notification lorsqu'il sera disponible.",
+                $this->translator->trans('crud_export.async_in_progress', [], 'EAExtensionsBundle'),
             ));
 
             return;

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Functional;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportAction;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event\CrudExportAsyncJobStartingEvent;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event\CrudExportFileReadyEvent;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Message\ExportCrudMessage;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\MessageHandler\ExportCrudMessageHandler;
@@ -109,6 +110,43 @@ final class CrudExportTest extends AbstractFunctionalTestCase
         /** @var FilesystemOperator $storage */
         $storage = static::getContainer()->get('fixture.crud_export_storage');
         self::assertTrue($storage->fileExists($readyEvents[0]->storagePath));
+    }
+
+    public function testAsyncHandlerDispatchesTheJobStartingEventBeforeRunningTheQuery(): void
+    {
+        // Regression coverage for the fact that a worker process is not the original HTTP
+        // request: any per-request state the export query depends on (e.g. an enabled
+        // Doctrine filter) must be re-established via this event, not assumed to still be
+        // active — see CrudExportAsyncJobStartingEvent's own docblock.
+        $this->client->loginUser(new InMemoryUser('user', 'user', ['ROLE_USER']));
+        $this->createItems(5);
+
+        $this->client->request('GET', $this->crudUrl(FixtureItemCrudController::class, extraParams: [
+            CrudExportAction::QUERY_PARAM_TRIGGER => '1',
+        ]));
+
+        /** @var InMemoryTransport $transport */
+        $transport = static::getContainer()->get('messenger.transport.async');
+        $message = $transport->getSent()[0]->getMessage();
+        self::assertInstanceOf(ExportCrudMessage::class, $message);
+
+        $startingEvents = [];
+        $listener = static function (CrudExportAsyncJobStartingEvent $event) use (&$startingEvents): void {
+            $startingEvents[] = $event;
+        };
+        /** @var EventDispatcherInterface $eventDispatcher */
+        $eventDispatcher = static::getContainer()->get(EventDispatcherInterface::class);
+        $eventDispatcher->addListener(CrudExportAsyncJobStartingEvent::class, $listener);
+
+        /** @var ExportCrudMessageHandler $handler */
+        $handler = static::getContainer()->get(ExportCrudMessageHandler::class);
+        $handler($message);
+
+        $eventDispatcher->removeListener(CrudExportAsyncJobStartingEvent::class, $listener);
+
+        self::assertCount(1, $startingEvents);
+        self::assertSame(FixtureItemCrudController::class, $startingEvents[0]->crudControllerFqcn);
+        self::assertSame('user', $startingEvents[0]->requesterId);
     }
 
     public function testExportDeniedByCustomPermission(): void

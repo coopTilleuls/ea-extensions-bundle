@@ -110,7 +110,7 @@ final readonly class CrudExportValueResolver
             return $entity->$getter();
         }
 
-        if (property_exists($entity, $propertyName)) {
+        if (property_exists($entity, $propertyName) && new \ReflectionProperty($entity, $propertyName)->isPublic()) {
             return $entity->$propertyName;
         }
 

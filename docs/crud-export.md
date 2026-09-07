@@ -1,20 +1,35 @@
 # CRUD index export
 
-Adds an "Exporter" action to any CRUD's index page, exporting exactly the rows/filters
-currently visible (CSV by default, XLSX optionally) as a synchronous download or, for
-large result sets, an asynchronous background job. Works on any `AbstractCrudController`.
+Adds an "Exporter" action to any CRUD's index page, exporting exactly the rows currently
+matched by the visitor's filters/search (CSV by default, XLSX optionally) as a synchronous
+download or, for large result sets, an asynchronous background job. The current sort order
+is **not** preserved — the export query drops it and returns rows unordered — only the
+filter/search criteria carry over. Works on any `AbstractCrudController`.
 
-Enabled by default; disable via:
+Unlike the bundle's other features, this one is **disabled by default**: it has a mandatory
+setting (`storage_service_id`, see below) with no bundle-owned default, so enabling it
+unconditionally would break `composer update`/`docker compose up` for any app that hasn't
+configured it yet. Enable it explicitly once storage is configured:
 
 ```yaml
 # config/packages/coop_tilleuls_ea_extensions.yaml
 coop_tilleuls_ea_extensions:
     crud_export:
-        enabled: false
+        enabled: true
 ```
 
 ## Consumer app setup (one-time)
 
+0. `league/flysystem`, `symfony/messenger` and `symfony/process` are suggested, not
+   required, by the bundle — apps that never enable this feature don't carry their weight.
+   Install them before enabling it:
+   ```bash
+   composer require league/flysystem symfony/messenger symfony/process
+   ```
+   `symfony/process` is needed even if XLSX export itself stays disabled (it backs the
+   CSV-to-XLSX conversion service, which is always wired once this feature is enabled).
+   Enabling `crud_export` without one of these installed fails fast at container
+   compilation with a `LogicException` naming the missing package.
 1. Import the bundle's routes (the download endpoint for async exports):
    ```yaml
    # config/routes/ea_extensions.yaml
@@ -22,15 +37,16 @@ coop_tilleuls_ea_extensions:
        resource: '@EAExtensionsBundle/src/CrudExport/Controller/'
        type: attribute
    ```
-2. Point `storage_service_id` at a Flysystem storage the app already has (or a new one) —
-   there is no bundle-provided default, so the app must be explicit about where exported
-   files live:
+2. Enable the feature and point `storage_service_id` at a Flysystem storage the app
+   already has (or a new one) — there is no bundle-provided default, so the app must be
+   explicit about where exported files live:
    ```yaml
    coop_tilleuls_ea_extensions:
        crud_export:
+           enabled: true
            storage_service_id: 'export.crud_export' # any service implementing League\Flysystem\FilesystemOperator
    ```
-3. Require `symfony/messenger` and route `CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Message\ExportCrudMessage`
+3. Route `CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Message\ExportCrudMessage`
    to whichever transport should handle background exports — the bundle intentionally
    pins none:
    ```yaml
@@ -105,6 +121,20 @@ final class ProductCrudController extends AbstractCrudController implements Crud
     }
 }
 ```
+
+## Customizing the CSV output and the action button
+
+```yaml
+coop_tilleuls_ea_extensions:
+    crud_export:
+        action_icon: 'fa fa-file-export' # any Font Awesome class, default 'fa fa-download'
+        csv:
+            separator: ';'    # default ','
+            with_bom: true    # default false — prepends a UTF-8 BOM (e.g. for Excel on Windows)
+```
+
+These apply to the built-in CSV writer only (`CrudExportFormat::CSV`); the intermediate CSV
+XLSX export converts from is unaffected.
 
 ## Per-field custom export values
 
@@ -216,6 +246,23 @@ Register it and alias it to `CrudExportPasswordProviderInterface`.
 
 The bundle sends no notification itself — it dispatches events instead:
 
+- `CrudExportAsyncJobStartingEvent` — fired at the very start of the async message
+  handler, before the export query runs. A Messenger worker is a separate process from
+  the HTTP request that triggered the export, so anything that request's own listeners set
+  up (most notably an **enabled Doctrine filter**, e.g. a soft-deleteable filter) is not
+  automatically present here. Listen to this event to re-enable it:
+  ```php
+  #[AsEventListener(event: CrudExportAsyncJobStartingEvent::class)]
+  final class ReEnableSoftDeleteableFilter
+  {
+      public function __construct(private readonly EntityManagerInterface $em) {}
+
+      public function __invoke(CrudExportAsyncJobStartingEvent $event): void
+      {
+          $this->em->getFilters()->enable('softdeleteable');
+      }
+  }
+  ```
 - `CrudExportFileReadyEvent` — fired for both sync and async exports, once the file is
   written to storage. Carries `downloadUrl` (only set for async exports).
 - `CrudExportFailedEvent` — fired when an async export throws, right before the exception
