@@ -33,8 +33,6 @@ final class NotificationExtension extends AbstractExtension
             new TwigFunction('ea_extensions_notification_topic', $this->getCurrentRecipientTopic(...)),
             new TwigFunction('ea_extensions_notifications_mercure_enabled', fn (): bool => $this->mercureEnabled),
             new TwigFunction('ea_extensions_notification_unread_count', $this->getCurrentRecipientUnreadCount(...)),
-            // dotted-path property access (e.g. "treatment.pending"), unlike Twig's built-in
-            // single-level attribute() function — needed for the status-toggle action template.
             new TwigFunction('ea_extensions_access_attribute', fn (object $object, string $attribute): mixed => $this->propertyAccessor->getValue($object, $attribute)),
         ];
     }

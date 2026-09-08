@@ -38,7 +38,7 @@ final class NotificationTreatmentSubscriber
             return;
         }
 
-        if ('treatment.pending' !== $context->getRequest()->query->get('fieldName')) {
+        if (NotificationCrudController::ACTION_TREATMENT !== $context->getRequest()->query->get('fieldName')) {
             return;
         }
 

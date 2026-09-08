@@ -43,6 +43,8 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
  */
 final class NotificationCrudController extends AbstractCrudController
 {
+    public const ACTION_TREATMENT = 'treatment.pending';
+
     public function __construct(
         private readonly AdminUrlGeneratorInterface $adminUrlGenerator,
         private readonly RequestStack $requestStack,
@@ -100,11 +102,11 @@ final class NotificationCrudController extends AbstractCrudController
             ])
             ->setTemplatePath('@EAExtensions/notifications/actions/notification_status.html.twig');
 
-        $treatmentAction = Action::new('treatment.pending', 'Traitement')
+        $treatmentAction = Action::new(self::ACTION_TREATMENT, 'Traitement')
             ->linkToUrl($entityId ? $this->adminUrlGenerator
                 ->setController(self::class)
                 ->setAction(Action::EDIT)
-                ->set('fieldName', 'treatment.pending')
+                ->set('fieldName', self::ACTION_TREATMENT)
                 ->set('csrfToken', $this->csrfTokenManager->getToken(BooleanField::CSRF_TOKEN_NAME))
                 ->set('entityId', $entityId)
                 ->generateUrl() : '/')
@@ -120,7 +122,7 @@ final class NotificationCrudController extends AbstractCrudController
             $notification = $this->notificationRepository->find($entityId);
             if (null !== $notification?->getTreatment()) {
                 $actions->add(Crud::PAGE_DETAIL, $treatmentAction);
-                $order[] = 'treatment.pending';
+                $order[] = self::ACTION_TREATMENT;
             }
         }
         $actions->add(Crud::PAGE_DETAIL, $unreadAction);
@@ -147,7 +149,7 @@ final class NotificationCrudController extends AbstractCrudController
             Action::EDIT => NotificationVoter::IS_RELATED,
             Action::DELETE => NotificationVoter::IS_RELATED,
             'unread' => NotificationVoter::IS_RELATED,
-            'treatment.pending' => new Expression('
+            self::ACTION_TREATMENT => new Expression('
                 is_granted("'.NotificationVoter::IS_RELATED.'", object)
                 and is_granted("'.NotificationVoter::IS_TREATABLE.'", object)
             '),
@@ -185,7 +187,7 @@ final class NotificationCrudController extends AbstractCrudController
                 ],
             ])
             ->setTemplatePath('@EAExtensions/notifications/fields/notification_status.html.twig');
-        yield BooleanField::new('treatment.pending', 'Traitement')
+        yield BooleanField::new(self::ACTION_TREATMENT, 'Traitement')
             ->setTextAlign('left')
             ->setFormTypeOption('row_attr', [
                 'custom-labels' => [
