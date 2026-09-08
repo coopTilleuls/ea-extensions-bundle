@@ -38,7 +38,7 @@ class NotificationManager
     public function send(Notification $notification, array $recipients, bool $flush = false): array
     {
         $notification->setDate($this->clock->now())
-            ->setUnread(true);
+            ->setRead(false);
 
         /** @var list<Notification> $notifications */
         $notifications = [];

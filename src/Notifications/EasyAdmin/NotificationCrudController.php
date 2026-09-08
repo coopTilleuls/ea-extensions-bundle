@@ -44,6 +44,7 @@ use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 final class NotificationCrudController extends AbstractCrudController
 {
     public const ACTION_TREATMENT = 'treatment.pending';
+    public const ACTION_READ = 'read';
 
     public function __construct(
         private readonly AdminUrlGeneratorInterface $adminUrlGenerator,
@@ -88,17 +89,17 @@ final class NotificationCrudController extends AbstractCrudController
 
         $entityId = $this->requestStack->getCurrentRequest()?->attributes->get('entityId');
 
-        $unreadAction = Action::new('unread', 'Lu')
+        $readAction = Action::new(self::ACTION_READ, 'Lu')
             ->linkToUrl($entityId ? $this->adminUrlGenerator
                 ->setController(self::class)
                 ->setAction(Action::EDIT)
-                ->set('fieldName', 'unread')
+                ->set('fieldName', self::ACTION_READ)
                 ->set('csrfToken', $this->csrfTokenManager->getToken(BooleanField::CSRF_TOKEN_NAME))
                 ->set('entityId', $entityId)
                 ->generateUrl() : '/')
             ->setHtmlAttributes([
-                'data-label-true' => 'Non lu',
-                'data-label-false' => 'Lu',
+                'data-label-true' => 'notifications.status.read',
+                'data-label-false' => 'notifications.status.unread',
             ])
             ->setTemplatePath('@EAExtensions/notifications/actions/notification_status.html.twig');
 
@@ -111,8 +112,8 @@ final class NotificationCrudController extends AbstractCrudController
                 ->set('entityId', $entityId)
                 ->generateUrl() : '/')
             ->setHtmlAttributes([
-                'data-label-false' => 'Demande traitée',
-                'data-label-true' => 'Non traitée',
+                'data-label-false' => 'notifications.status.treatment_done',
+                'data-label-true' => 'notifications.status.treatment_pending',
             ])
             ->setTemplatePath('@EAExtensions/notifications/actions/notification_status.html.twig');
 
@@ -125,8 +126,8 @@ final class NotificationCrudController extends AbstractCrudController
                 $order[] = self::ACTION_TREATMENT;
             }
         }
-        $actions->add(Crud::PAGE_DETAIL, $unreadAction);
-        $order[] = 'unread';
+        $actions->add(Crud::PAGE_DETAIL, $readAction);
+        $order[] = self::ACTION_READ;
 
         // kept available (for the status toggle switches) but not rendered as a normal action
         $actions->update(Crud::PAGE_INDEX, Action::EDIT, fn (Action $action): Action => $action->displayIf(fn (): false => false));
@@ -148,7 +149,7 @@ final class NotificationCrudController extends AbstractCrudController
             Action::DETAIL => NotificationVoter::IS_RELATED,
             Action::EDIT => NotificationVoter::IS_RELATED,
             Action::DELETE => NotificationVoter::IS_RELATED,
-            'unread' => NotificationVoter::IS_RELATED,
+            self::ACTION_READ => NotificationVoter::IS_RELATED,
             self::ACTION_TREATMENT => new Expression('
                 is_granted("'.NotificationVoter::IS_RELATED.'", object)
                 and is_granted("'.NotificationVoter::IS_TREATABLE.'", object)
@@ -164,9 +165,9 @@ final class NotificationCrudController extends AbstractCrudController
             ->add(DateTimeFilter::new('date', 'Date'))
             ->add(TextFilter::new('type', 'Type'))
             ->add(TextFilter::new('title', 'Titre'))
-            ->add(BooleanFilter::new('unread', 'Statut')->setFormTypeOption('choices', [
-                'Non lu' => true,
-                'Lu' => false,
+            ->add(BooleanFilter::new(self::ACTION_READ, 'Statut')->setFormTypeOption('choices', [
+                'Lu' => true,
+                'Non lu' => false,
             ]))
             ->add(NotificationTreatmentFilter::new('Traitement'))
         ;
@@ -178,12 +179,12 @@ final class NotificationCrudController extends AbstractCrudController
             ->setFormat("dd/MM/yyyy - HH'h'mm");
         yield TextField::new('type', 'Type');
         yield TextField::new('title', 'Titre');
-        yield BooleanField::new('unread', 'Statut')
+        yield BooleanField::new(self::ACTION_READ, 'Statut')
             ->setTextAlign('left')
             ->setFormTypeOption('row_attr', [
                 'custom-labels' => [
-                    'false' => 'Lu',
-                    'true' => 'Non lu',
+                    'false' => 'notifications.status.unread',
+                    'true' => 'notifications.status.read',
                 ],
             ])
             ->setTemplatePath('@EAExtensions/notifications/fields/notification_status.html.twig');
@@ -191,8 +192,8 @@ final class NotificationCrudController extends AbstractCrudController
             ->setTextAlign('left')
             ->setFormTypeOption('row_attr', [
                 'custom-labels' => [
-                    'false' => 'Demande traitée',
-                    'true' => 'Non traitée',
+                    'false' => 'notifications.status.treatment_done',
+                    'true' => 'notifications.status.treatment_pending',
                 ],
             ])
             ->setTemplatePath('@EAExtensions/notifications/fields/notification_status.html.twig');

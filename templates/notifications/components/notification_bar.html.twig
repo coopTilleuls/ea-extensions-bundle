@@ -17,7 +17,7 @@
 >
     <a href="{{ notificationLink }}" class="text-secondary">
         <i class="fa fa-fw fa-bell"></i>
-        <span class="ea-extensions-notification-label">Notifications</span>
+        <span class="ea-extensions-notification-label">{{ 'notifications.bar.label'|trans({}, 'EAExtensionsBundle', 'fr') }}</span>
         <span
             data-ea-extensions--notification-read-update-target="count"
             data-count="{{ ea_extensions_notification_unread_count() }}"

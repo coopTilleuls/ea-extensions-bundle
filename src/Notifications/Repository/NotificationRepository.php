@@ -39,7 +39,7 @@ class NotificationRepository extends ServiceEntityRepository
         $qb = $this->forRecipient($this->createQueryBuilder('n'), $recipient);
 
         return (int) $qb->select('COUNT(n.id)')
-            ->andWhere('n.unread = TRUE')
+            ->andWhere('n.read = FALSE')
             ->getQuery()
             ->getSingleScalarResult();
     }
@@ -52,7 +52,7 @@ class NotificationRepository extends ServiceEntityRepository
         $qb = $this->forRecipient($this->createQueryBuilder('n'), $recipient);
 
         /* @var list<Notification> */
-        return $qb->andWhere('n.unread = TRUE')
+        return $qb->andWhere('n.read = FALSE')
             ->orderBy('n.date', 'DESC')
             ->setMaxResults($limit)
             ->getQuery()

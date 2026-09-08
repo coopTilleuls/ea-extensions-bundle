@@ -76,7 +76,7 @@ final class NotificationsTest extends AbstractFunctionalTestCase
         $repository = static::getContainer()->get(NotificationRepository::class);
         $reloaded = $repository->find($notification->getId());
         self::assertNotNull($reloaded);
-        self::assertFalse($reloaded->isUnread());
+        self::assertTrue($reloaded->isRead());
 
         /** @var RecordingNotificationEventListener $listener */
         $listener = static::getContainer()->get(RecordingNotificationEventListener::class);

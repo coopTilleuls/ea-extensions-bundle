@@ -24,7 +24,7 @@
                     </div>
                 </div>
                 {% if notification.buttonUrl %}
-                    <a href="{{ notification.buttonUrl }}" class="btn btn-primary mt-2">{{ notification.buttonLabel|default('Voir la fiche') }}</a>
+                    <a href="{{ notification.buttonUrl }}" class="btn btn-primary mt-2">{{ notification.buttonLabel|default('notifications.detail.default_button_label'|trans({}, 'EAExtensionsBundle', 'fr')) }}</a>
                 {% endif %}
             </div>
 

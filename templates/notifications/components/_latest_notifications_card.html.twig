@@ -4,12 +4,12 @@
     <div class="card">
         <div class="card-body">
             <div class="d-flex mb-3">
-                <h4 class="my-0 me-auto fw-bold">Dernières notifications</h4>
+                <h4 class="my-0 me-auto fw-bold">{{ 'notifications.card.title'|trans({}, 'EAExtensionsBundle', 'fr') }}</h4>
                 <p class="d-flex align-items-center my-0">
                     <a href="{{ ea_url()
                         .unsetAll()
                         .setController('CoopTilleuls\\Bundle\\EAExtensionsBundle\\Notifications\\EasyAdmin\\NotificationCrudController')
-                        .setAction('index') }}" class="action-detail"><span class="action-label">Voir tout</span></a>
+                        .setAction('index') }}" class="action-detail"><span class="action-label">{{ 'notifications.card.see_all'|trans({}, 'EAExtensionsBundle', 'fr') }}</span></a>
                 </p>
             </div>
             {% if notifications is not empty %}
@@ -36,7 +36,7 @@
                                         .setController('CoopTilleuls\\Bundle\\EAExtensionsBundle\\Notifications\\EasyAdmin\\NotificationCrudController')
                                         .setAction('detail')
                                         .set('entityId', notification.id) }}"
-                                       class="btn btn-secondary">Voir
+                                       class="btn btn-secondary">{{ 'notifications.card.view'|trans({}, 'EAExtensionsBundle', 'fr') }}
                                     </a>
                                 </div>
                             </div>
@@ -44,7 +44,7 @@
                     {% endfor %}
                 </ul>
             {% else %}
-                <p class="mb-0 text-start text-secondary">Aucune notification non lue.</p>
+                <p class="mb-0 text-start text-secondary">{{ 'notifications.card.empty'|trans({}, 'EAExtensionsBundle', 'fr') }}</p>
             {% endif %}
         </div>
     </div>

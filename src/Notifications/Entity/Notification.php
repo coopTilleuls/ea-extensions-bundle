@@ -70,8 +70,8 @@ class Notification
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $buttonUrl = null;
 
-    #[ORM\Column(nullable: false, options: ['default' => true])]
-    private bool $unread = true;
+    #[ORM\Column(nullable: false, options: ['default' => false])]
+    private bool $read = false;
 
     #[ORM\Column(nullable: false, options: ['default' => false])]
     private bool $displayInNewCard = false;
@@ -257,14 +257,14 @@ class Notification
         return $this;
     }
 
-    public function isUnread(): bool
+    public function isRead(): bool
     {
-        return $this->unread;
+        return $this->read;
     }
 
-    public function setUnread(bool $unread): self
+    public function setRead(bool $read): self
     {
-        $this->unread = $unread;
+        $this->read = $read;
 
         return $this;
     }

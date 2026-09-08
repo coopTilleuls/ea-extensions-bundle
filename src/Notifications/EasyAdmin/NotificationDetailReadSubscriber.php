@@ -30,11 +30,11 @@ final class NotificationDetailReadSubscriber
 
         /** @var Notification $notification */
         $notification = $event->getAdminContext()->getEntity()->getInstance();
-        if (!$notification->isUnread()) {
+        if ($notification->isRead()) {
             return;
         }
 
-        $notification->setUnread(false);
+        $notification->setRead(true);
         $this->entityManager->flush();
 
         $this->eventDispatcher->dispatch(new NotificationMarkedAsReadEvent($notification));

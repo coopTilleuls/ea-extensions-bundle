@@ -74,7 +74,7 @@ final class NotificationManagerTest extends TestCase
         self::assertSame($this->recipient1, $sent[0]->getRecipient());
         self::assertSame($this->recipient2, $sent[1]->getRecipient());
         self::assertNotSame($sent[0], $sent[1]);
-        self::assertTrue($sent[0]->isUnread());
+        self::assertFalse($sent[0]->isRead());
     }
 
     public function testSendFlushesOnlyWhenAskedTo(): void

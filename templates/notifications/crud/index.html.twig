@@ -11,9 +11,9 @@
 {% block table_body %}
     {% for entity in entities %}
         {% if entity.isAccessible %}
-            {% set entityUnreadField = entity.fields.getByProperty('unread') %}
-            {% set entityUnread = entityUnreadField ? entityUnreadField.getValue() : null %}
-            <tr data-id="{{ entity.primaryKeyValueAsString }}" class="{% if entityUnread %}ea-extensions-notification-unread{% endif %}"
+            {% set entityReadField = entity.fields.getByProperty('read') %}
+            {% set entityRead = entityReadField ? entityReadField.getValue() : null %}
+            <tr data-id="{{ entity.primaryKeyValueAsString }}" class="{% if entityReadField and not entityRead %}ea-extensions-notification-unread{% endif %}"
                 {% if entity.defaultActionUrl %}data-default-action-url="{{ entity.defaultActionUrl }}" role="link" tabindex="0"{% endif %}
             >
                 {% if has_batch_actions %}
