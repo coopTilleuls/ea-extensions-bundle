@@ -118,6 +118,40 @@ final class NotificationsTest extends AbstractFunctionalTestCase
         self::assertCount(1, $listener->treatmentChangedEvents);
     }
 
+    public function testTogglingTreatmentOnANotificationWithoutOneIsDenied(): void
+    {
+        $admin = $this->createRecipient('admin');
+
+        $withoutTreatment = $this->sendNotification('information', 'No treatment here', [$admin]);
+
+        $withTreatment = new Notification('validation', 'Has treatment')->addTreatment();
+        /** @var NotificationManager $manager */
+        $manager = static::getContainer()->get(NotificationManager::class);
+        [$sentWithTreatment] = $manager->send($withTreatment, [$admin], flush: true);
+
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        // Borrow a validly session-bound CSRF token from a notification that DOES have a
+        // treatment (the toggle switch, and its token, only render in that case) rather than
+        // minting one directly — see testTreatmentToggleMarksItAsDoneAndDispatchesTheEvent's own
+        // note on this — then repoint it at the one without.
+        $crawler = $this->client->request('GET', $this->crudUrl(NotificationCrudController::class, Action::DETAIL, ['entityId' => (string) $sentWithTreatment->getId()]));
+        $toggleUrl = $crawler->filter('input[id="treatment.pending"]')->closest('[data-ea-extensions--notification-toggle-toggle-url-value]')?->attr('data-ea-extensions--notification-toggle-toggle-url-value');
+        self::assertNotNull($toggleUrl);
+        parse_str((string) parse_url($toggleUrl, \PHP_URL_QUERY), $query);
+        \assert(\is_string($query['csrfToken']));
+
+        $forgedUrl = $this->crudUrl(NotificationCrudController::class, Action::EDIT, [
+            'entityId' => (string) $withoutTreatment->getId(),
+            'fieldName' => NotificationCrudController::ACTION_TREATMENT,
+            'csrfToken' => $query['csrfToken'],
+        ]);
+
+        $this->client->request('PATCH', $forgedUrl.'&newValue=true', server: ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
     private function createRecipient(string $username): FixtureNotificationRecipient
     {
         $recipient = new FixtureNotificationRecipient($username);
