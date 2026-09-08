@@ -7,6 +7,7 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportFileDownloader;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportFileWriter;
 use League\Flysystem\FilesystemOperator;
+use Symfony\Bundle\MercureBundle\MercureBundle;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -97,28 +98,63 @@ final class EAExtensionsBundle extends AbstractBundle
 
     public function prependExtension(ContainerConfigurator $container, ContainerBuilder $builder): void
     {
-        if (!$builder->hasExtension('doctrine')) {
-            return;
+        if ($builder->hasExtension('doctrine')) {
+            // Mapping a feature's entities unconditionally would force apps that disable it to
+            // still resolve its interface-typed associations (e.g. resolve_target_entities for
+            // Notification's recipient/sender) even though they never use it — so each mapping
+            // only gets registered when its own feature is actually enabled.
+            $mappings = [];
+
+            if ($this->isFeatureEnabled($builder, 'customizable_columns')) {
+                $mappings['EAExtensionsCustomizableColumns'] = [
+                    'type' => 'attribute',
+                    'dir' => $this->getPath().'/src/CustomizableColumns/Entity',
+                    'prefix' => 'CoopTilleuls\\Bundle\\EAExtensionsBundle\\CustomizableColumns\\Entity',
+                    'is_bundle' => false,
+                ];
+            }
+
+            if ($this->isFeatureEnabled($builder, 'notifications')) {
+                $mappings['EAExtensionsNotifications'] = [
+                    'type' => 'attribute',
+                    'dir' => $this->getPath().'/src/Notifications/Entity',
+                    'prefix' => 'CoopTilleuls\\Bundle\\EAExtensionsBundle\\Notifications\\Entity',
+                    'is_bundle' => false,
+                ];
+            }
+
+            if ([] !== $mappings) {
+                $container->extension('doctrine', ['orm' => ['mappings' => $mappings]]);
+            }
         }
 
-        $container->extension('doctrine', [
-            'orm' => [
-                'mappings' => [
-                    'EAExtensionsCustomizableColumns' => [
-                        'type' => 'attribute',
-                        'dir' => $this->getPath().'/src/CustomizableColumns/Entity',
-                        'prefix' => 'CoopTilleuls\\Bundle\\EAExtensionsBundle\\CustomizableColumns\\Entity',
-                        'is_bundle' => false,
-                    ],
-                    'EAExtensionsNotifications' => [
-                        'type' => 'attribute',
-                        'dir' => $this->getPath().'/src/Notifications/Entity',
-                        'prefix' => 'CoopTilleuls\\Bundle\\EAExtensionsBundle\\Notifications\\Entity',
-                        'is_bundle' => false,
-                    ],
+        // Needs to be prepended, not just set in loadExtension(): a plain (non-prepend)
+        // $container->extension('twig', ...) call there can lose to TwigBundle's own load() if it
+        // happens to run first, silently leaving the global undefined.
+        if ($builder->hasExtension('twig')) {
+            $container->extension('twig', [
+                'globals' => [
+                    'ea_extensions_notifications_enabled' => $this->isFeatureEnabled($builder, 'notifications'),
                 ],
-            ],
-        ]);
+            ]);
+        }
+    }
+
+    /**
+     * Config isn't processed yet at the prepend stage, so this reads the "enabled" flag straight
+     * out of the raw (not-yet-merged-with-defaults) config arrays — defaulting to true, matching
+     * this feature's own {@see configure()} schema default.
+     */
+    private function isFeatureEnabled(ContainerBuilder $builder, string $feature): bool
+    {
+        $enabled = true;
+        foreach ($builder->getExtensionConfig($this->extensionAlias) as $config) {
+            if (\array_key_exists($feature, $config) && \array_key_exists('enabled', $config[$feature])) {
+                $enabled = $config[$feature]['enabled'];
+            }
+        }
+
+        return $enabled;
     }
 
     /**
@@ -188,8 +224,14 @@ final class EAExtensionsBundle extends AbstractBundle
             $container->import('../config/notifications_services.php');
 
             if ($config['notifications']['mercure']['enabled']) {
+                // symfony/mercure and symfony/mercure-bundle are suggested, not required, so apps
+                // that never enable this option don't carry their weight.
                 if (!interface_exists(HubInterface::class)) {
                     throw new \LogicException('The "coop_tilleuls_ea_extensions.notifications.mercure.enabled" option requires the "symfony/mercure" package. Try running "composer require symfony/mercure".');
+                }
+
+                if (!class_exists(MercureBundle::class)) {
+                    throw new \LogicException('The "coop_tilleuls_ea_extensions.notifications.mercure.enabled" option requires the "symfony/mercure-bundle" package. Try running "composer require symfony/mercure-bundle".');
                 }
 
                 $container->import('../config/notifications_mercure_services.php');

@@ -51,6 +51,7 @@
     "suggest": {
         "league/flysystem": "To enable the CRUD export feature (coop_tilleuls_ea_extensions.crud_export.enabled).",
         "symfony/mercure": "To publish real-time notification events over Mercure (Notifications feature).",
+        "symfony/mercure-bundle": "To wire the Mercure hub service and the \"mercure()\" Twig function needed to enable real-time notifications.",
         "symfony/messenger": "To enable the CRUD export feature's async export mode.",
         "symfony/process": "To enable the CRUD export feature's XLSX export (CSV-to-XLSX conversion)."
     },
