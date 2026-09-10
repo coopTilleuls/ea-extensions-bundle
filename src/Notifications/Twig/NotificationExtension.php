@@ -39,7 +39,7 @@ final class NotificationExtension extends AbstractExtension
 
     public function getCurrentRecipientUnreadCount(): int
     {
-        return $this->notificationRepository->getUnreadCount($this->recipientResolver->resolveCurrentRecipient());
+        return $this->notificationRepository->getUnreadCount($this->recipientResolver->resolveCurrentRecipients());
     }
 
     public function getCurrentRecipientTopic(): ?string

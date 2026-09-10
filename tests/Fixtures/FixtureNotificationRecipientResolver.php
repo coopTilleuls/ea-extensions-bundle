@@ -33,4 +33,11 @@ final class FixtureNotificationRecipientResolver implements NotificationRecipien
 
         return $this->entityManager->getRepository(FixtureNotificationRecipient::class)->findOneBy(['username' => $identifier]);
     }
+
+    public function resolveCurrentRecipients(): iterable
+    {
+        $recipient = $this->resolveCurrentRecipient();
+
+        return null !== $recipient ? [$recipient] : [];
+    }
 }

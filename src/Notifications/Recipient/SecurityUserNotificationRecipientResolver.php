@@ -25,4 +25,11 @@ final class SecurityUserNotificationRecipientResolver implements NotificationRec
 
         return $user instanceof NotificationRecipientInterface ? $user : null;
     }
+
+    public function resolveCurrentRecipients(): iterable
+    {
+        $recipient = $this->resolveCurrentRecipient();
+
+        return null !== $recipient ? [$recipient] : [];
+    }
 }

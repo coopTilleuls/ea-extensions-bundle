@@ -42,6 +42,7 @@ final class SecurityUserNotificationRecipientResolverTest extends TestCase
         $resolver = new SecurityUserNotificationRecipientResolver($security);
 
         self::assertSame($user, $resolver->resolveCurrentRecipient());
+        self::assertSame([$user], [...$resolver->resolveCurrentRecipients()]);
     }
 
     public function testReturnsNullWhenNoUserIsLoggedIn(): void
@@ -52,6 +53,7 @@ final class SecurityUserNotificationRecipientResolverTest extends TestCase
         $resolver = new SecurityUserNotificationRecipientResolver($security);
 
         self::assertNull($resolver->resolveCurrentRecipient());
+        self::assertSame([], [...$resolver->resolveCurrentRecipients()]);
     }
 
     public function testReturnsNullWhenTheUserDoesNotImplementTheInterface(): void
@@ -62,5 +64,6 @@ final class SecurityUserNotificationRecipientResolverTest extends TestCase
         $resolver = new SecurityUserNotificationRecipientResolver($security);
 
         self::assertNull($resolver->resolveCurrentRecipient());
+        self::assertSame([], [...$resolver->resolveCurrentRecipients()]);
     }
 }

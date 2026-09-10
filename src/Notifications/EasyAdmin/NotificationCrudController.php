@@ -203,7 +203,7 @@ final class NotificationCrudController extends AbstractCrudController
     {
         $qb = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
 
-        return $this->notificationRepository->forRecipient($qb, $this->recipientResolver->resolveCurrentRecipient());
+        return $this->notificationRepository->forRecipients($qb, $this->recipientResolver->resolveCurrentRecipients());
     }
 
     /**
@@ -227,6 +227,6 @@ final class NotificationCrudController extends AbstractCrudController
     #[AdminRoute('/unread-count', name: 'unread_count')]
     public function unreadCount(): Response
     {
-        return new Response((string) $this->notificationRepository->getUnreadCount($this->recipientResolver->resolveCurrentRecipient()));
+        return new Response((string) $this->notificationRepository->getUnreadCount($this->recipientResolver->resolveCurrentRecipients()));
     }
 }

@@ -27,7 +27,7 @@ final class LatestNotificationsController
     public function __invoke(): Response
     {
         return new Response($this->twig->render('@EAExtensions/notifications/components/_latest_notifications_card.html.twig', [
-            'notifications' => $this->notificationRepository->getLastUnread($this->recipientResolver->resolveCurrentRecipient()),
+            'notifications' => $this->notificationRepository->getLastUnread($this->recipientResolver->resolveCurrentRecipients()),
         ]));
     }
 }

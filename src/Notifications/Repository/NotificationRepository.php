@@ -20,23 +20,31 @@ class NotificationRepository extends ServiceEntityRepository
         parent::__construct($registry, Notification::class);
     }
 
-    public function forRecipient(QueryBuilder $qb, ?NotificationRecipientInterface $recipient): QueryBuilder
+    /**
+     * @param iterable<NotificationRecipientInterface> $recipients
+     */
+    public function forRecipients(QueryBuilder $qb, iterable $recipients): QueryBuilder
     {
-        if (null === $recipient) {
+        $recipients = \is_array($recipients) ? $recipients : iterator_to_array($recipients, false);
+
+        if ([] === $recipients) {
             // No resolvable recipient (e.g. the current Security user doesn't map to one) —
-            // return no rows, rather than filtering on a null parameter.
+            // return no rows, rather than filtering on an empty IN().
             return $qb->andWhere('1 = 0');
         }
 
         $alias = $qb->getRootAliases()[0];
 
-        return $qb->andWhere("$alias.recipient = :recipient")
-            ->setParameter('recipient', $recipient);
+        return $qb->andWhere("$alias.recipient IN (:recipients)")
+            ->setParameter('recipients', $recipients);
     }
 
-    public function getUnreadCount(?NotificationRecipientInterface $recipient): int
+    /**
+     * @param iterable<NotificationRecipientInterface> $recipients
+     */
+    public function getUnreadCount(iterable $recipients): int
     {
-        $qb = $this->forRecipient($this->createQueryBuilder('n'), $recipient);
+        $qb = $this->forRecipients($this->createQueryBuilder('n'), $recipients);
 
         return (int) $qb->select('COUNT(n.id)')
             ->andWhere('n.read = FALSE')
@@ -45,11 +53,13 @@ class NotificationRepository extends ServiceEntityRepository
     }
 
     /**
+     * @param iterable<NotificationRecipientInterface> $recipients
+     *
      * @return list<Notification>
      */
-    public function getLastUnread(?NotificationRecipientInterface $recipient, int $limit = 3): array
+    public function getLastUnread(iterable $recipients, int $limit = 3): array
     {
-        $qb = $this->forRecipient($this->createQueryBuilder('n'), $recipient);
+        $qb = $this->forRecipients($this->createQueryBuilder('n'), $recipients);
 
         /* @var list<Notification> */
         return $qb->andWhere('n.read = FALSE')
