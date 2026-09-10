@@ -51,6 +51,11 @@ Each feature has its own setup/usage doc in [`docs/`](docs/):
 - [Configurable pagination](docs/pagination.md) — lets users pick how many rows show per page on any CRUD's index page.
 - [CRUD index export](docs/crud-export.md) — CSV/XLSX export of any CRUD's index page, sync or async.
 
+## JS controllers
+
+Standalone Stimulus controllers, reusable directly in your own form templates — see
+[`docs/js-controllers/`](docs/js-controllers/README.md) for the full list and setup.
+
 ## Development
 
 ```bash

@@ -97,3 +97,22 @@ jobs:
 
             -   name: Run PHPUnit
                 run: vendor/bin/phpunit
+
+    js-tests:
+        name: JS tests
+        runs-on: ubuntu-24.04
+        steps:
+            -   name: Checkout
+                uses: actions/checkout@v6
+
+            -   name: Setup Node
+                uses: actions/setup-node@v4
+                with:
+                    node-version: '22'
+                    cache: npm
+
+            -   name: Install npm dependencies
+                run: npm install
+
+            -   name: Run JS tests
+                run: npm test

@@ -4,3 +4,5 @@
 /.php-cs-fixer.cache
 /composer.lock
 /config/reference.php
+/node_modules/
+/package-lock.json

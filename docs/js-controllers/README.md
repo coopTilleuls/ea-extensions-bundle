@@ -1,0 +1,28 @@
+# JS controllers
+
+Standalone Stimulus controllers shipped by this bundle, meant to be reused directly in your own
+EasyAdmin form templates — unlike the [features](../../README.md#features) above, none of these
+require any PHP-side setup beyond the one-time importmap entry below.
+
+## Consumer app setup (one-time)
+
+Add an importmap entry for the bundle's JS entrypoint, if not already done for another feature
+in this bundle (see [customizable columns](../customizable-columns.md#consumer-app-setup-one-time)):
+
+```php
+// importmap.php
+'ea-extensions' => [
+    'path' => 'bundles/eaextensions/ea-extensions.js',
+    'entrypoint' => true,
+],
+```
+
+## Available controllers
+
+- [`refresh-choices-on-related-field-change`](refresh-choices-on-related-field-change.md) —
+  refreshes a TomSelect-enhanced autocomplete field's choices whenever one or several other
+  fields change, keeping only the results every listened field agrees on.
+- [`refresh-values-on-related-field-change`](refresh-values-on-related-field-change.md) —
+  refreshes a TomSelect-enhanced autocomplete field's choices whenever one related field changes,
+  with an optional fallback field and finer-grained behavior (auto-select on a single required
+  result, merge-vs-reset on first load, an always-on extra filter).

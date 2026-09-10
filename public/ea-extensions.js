@@ -11,6 +11,8 @@ import NotificationListUpdateController from './controllers/notification_list_up
 import NotificationReadUpdateController from './controllers/notification_read_update_controller.js';
 import NotificationToggleController from './controllers/notification_toggle_controller.js';
 import NotificationToggleLabelController from './controllers/notification_toggle_label_controller.js';
+import RefreshChoicesOnRelatedFieldChangeController from './controllers/refresh_choices_on_related_field_change_controller.js';
+import RefreshValuesOnRelatedFieldChangeController from './controllers/refresh_values_on_related_field_change_controller.js';
 
 // startStimulusApp() creates a brand new Stimulus Application every time it's called (no
 // built-in dedup) and always eagerly wires up every controller AssetMapper knows about
@@ -29,3 +31,5 @@ app.register('ea-extensions--notification-list-update', NotificationListUpdateCo
 app.register('ea-extensions--notification-read-update', NotificationReadUpdateController);
 app.register('ea-extensions--notification-toggle', NotificationToggleController);
 app.register('ea-extensions--notification-toggle-label', NotificationToggleLabelController);
+app.register('coop-tilleuls--ea-extensions--refresh-choices-on-related-field-change', RefreshChoicesOnRelatedFieldChangeController);
+app.register('coop-tilleuls--ea-extensions--refresh-values-on-related-field-change', RefreshValuesOnRelatedFieldChangeController);
