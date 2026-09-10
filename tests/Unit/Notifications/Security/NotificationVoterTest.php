@@ -5,50 +5,36 @@ declare(strict_types=1);
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Unit\Notifications\Security;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Entity\Notification;
-use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationRecipientResolverInterface;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Security\NotificationRelationCheckerInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Security\NotificationVoter;
-use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\StubNotificationRecipient;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
 
 final class NotificationVoterTest extends TestCase
 {
-    public function testGrantsAccessWhenTheSubjectsRecipientMatchesTheCurrentRecipient(): void
+    public function testGrantsAccessWhenTheRelationCheckerReturnsTrue(): void
     {
-        $notification = new Notification('information', 'Title')->setRecipient(new StubNotificationRecipient('recipient-1'));
-
-        $vote = $this->vote($notification, new StubNotificationRecipient('recipient-1'));
+        $vote = $this->vote(true);
 
         self::assertSame(VoterInterface::ACCESS_GRANTED, $vote);
     }
 
-    public function testDeniesAccessWhenTheSubjectsRecipientDiffersFromTheCurrentRecipient(): void
+    public function testDeniesAccessWhenTheRelationCheckerReturnsFalse(): void
     {
-        $notification = new Notification('information', 'Title')->setRecipient(new StubNotificationRecipient('recipient-1'));
-
-        $vote = $this->vote($notification, new StubNotificationRecipient('recipient-2'));
+        $vote = $this->vote(false);
 
         self::assertSame(VoterInterface::ACCESS_DENIED, $vote);
     }
 
-    public function testDeniesAccessWhenTheCurrentUserResolvesNoRecipient(): void
+    private function vote(bool $isRelated): int
     {
-        $notification = new Notification('information', 'Title')->setRecipient(new StubNotificationRecipient('recipient-1'));
+        $notification = new Notification('information', 'Title');
 
-        // e.g. an anonymous user, or a Security user that maps to no recipient — must never be
-        // treated as "related" just because both sides happen to compare as unresolved.
-        $vote = $this->vote($notification, null);
+        $relationChecker = $this->createMock(NotificationRelationCheckerInterface::class);
+        $relationChecker->method('isRelated')->with($notification)->willReturn($isRelated);
 
-        self::assertSame(VoterInterface::ACCESS_DENIED, $vote);
-    }
-
-    private function vote(Notification $notification, ?StubNotificationRecipient $currentRecipient): int
-    {
-        $resolver = $this->createMock(NotificationRecipientResolverInterface::class);
-        $resolver->method('resolveCurrentRecipient')->willReturn($currentRecipient);
-
-        $voter = new NotificationVoter($resolver);
+        $voter = new NotificationVoter($relationChecker);
 
         return $voter->vote($this->createStub(TokenInterface::class), $notification, [NotificationVoter::IS_RELATED]);
     }

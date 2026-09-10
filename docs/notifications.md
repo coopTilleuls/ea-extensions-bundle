@@ -67,16 +67,19 @@ doctrine:
 ```
 
 Sending code resolves and passes recipient entities itself (see "Sending a notification" below);
-reading "my notifications" (index, unread count, latest-notifications card) resolves the *current*
-recipient through the
-`CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationRecipientResolverInterface`
-service, aliased by default to `SecurityUserNotificationRecipientResolver` (the current Security
-user, when that user's class itself implements `NotificationRecipientInterface`).
+reading "my notifications" (index, unread count, latest-notifications card, and
+[the access voter](#restricting-who-sees-what)) resolves every identity that counts as "mine"
+through `NotificationRecipientResolverInterface::resolveCurrentRecipients()`, aliased by default
+to `SecurityUserNotificationRecipientResolver` (the current Security user alone, when that user's
+class itself implements `NotificationRecipientInterface`). Real-time updates use the separate,
+single-identity `resolveCurrentRecipient()` instead (see
+[Real-time updates](#real-time-updates-mercure)) — most apps only ever have one current identity,
+so both methods return "the same thing, wrapped differently" by default.
 
 If your app's Security user isn't itself the recipient entity (e.g. it's an in-memory user, an
 API token identity, or the recipient is keyed by something else like an "active responsibility"),
-`resolveCurrentRecipient()` returns `null` — "my notifications" reads then always come back empty,
-with no error. Override the alias with your own implementation:
+both methods return nothing resolvable by default — "my notifications" reads then always come back
+empty, with no error. Override the alias with your own implementation:
 
 ```php
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationRecipientInterface;
@@ -94,6 +97,16 @@ final class AppNotificationRecipientResolver implements NotificationRecipientRes
         // map $user to your actual recipient entity here, e.g. a repository lookup
         return $user instanceof SomeIdentity ? $this->recipientRepository->findForIdentity($user) : null;
     }
+
+    public function resolveCurrentRecipients(): iterable
+    {
+        // implement separately only when a single logged-in user can hold more than one valid
+        // recipient identity at once (e.g. a currently active one plus historical ones) —
+        // otherwise this is enough:
+        $recipient = $this->resolveCurrentRecipient();
+
+        return null !== $recipient ? [$recipient] : [];
+    }
 }
 ```
 
@@ -102,6 +115,34 @@ final class AppNotificationRecipientResolver implements NotificationRecipientRes
 services:
     CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationRecipientResolverInterface:
         alias: App\Notifications\AppNotificationRecipientResolver
+```
+
+## Restricting who sees what
+
+`NotificationVoter::IS_RELATED` delegates the actual decision to
+`CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Security\NotificationRelationCheckerInterface`,
+aliased by default to `DefaultNotificationRelationChecker` (grants access when the notification's
+recipient is one of `resolveCurrentRecipients()`). Override that alias when your access rules go
+beyond that — e.g. excluding some roles regardless of a recipient match:
+
+```php
+use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Entity\Notification;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Security\NotificationRelationCheckerInterface;
+
+final class AppNotificationRelationChecker implements NotificationRelationCheckerInterface
+{
+    public function isRelated(Notification $notification): bool
+    {
+        // your own rules here, e.g. excluding some roles regardless of a recipient match
+    }
+}
+```
+
+```yaml
+# config/services.yaml
+services:
+    CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Security\NotificationRelationCheckerInterface:
+        alias: App\Notifications\AppNotificationRelationChecker
 ```
 
 ## Sending a notification

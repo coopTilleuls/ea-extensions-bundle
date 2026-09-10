@@ -8,6 +8,8 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Publisher\NotificationP
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Publisher\NullNotificationPublisher;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationRecipientResolverInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\SecurityUserNotificationRecipientResolver;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Security\DefaultNotificationRelationChecker;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Security\NotificationRelationCheckerInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Topic\DefaultNotificationTopicResolver;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Topic\NotificationTopicResolverInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
@@ -38,6 +40,7 @@ return static function (ContainerConfigurator $container): void {
     ;
 
     $services->alias(NotificationRecipientResolverInterface::class, SecurityUserNotificationRecipientResolver::class);
+    $services->alias(NotificationRelationCheckerInterface::class, DefaultNotificationRelationChecker::class);
     $services->alias(NotificationTopicResolverInterface::class, DefaultNotificationTopicResolver::class);
     $services->alias(NotificationPublisherInterface::class, NullNotificationPublisher::class);
 };
