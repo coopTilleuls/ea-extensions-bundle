@@ -34,3 +34,5 @@ in this bundle (see [customizable columns](../customizable-columns.md#consumer-a
   hides a field depending on a boolean (checkbox/switch) field.
 - [`select-all-options`](select-all-options.md) — selects every available option on a multi-select
   field from a sibling button.
+- [`add-button-select`](add-button-select.md) — adds an "Add" button next to a multi-select field
+  that opens its dropdown.
