@@ -4,10 +4,17 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle;
 
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportFileDownloader;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportFileWriter;
+use League\Flysystem\FilesystemOperator;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
+use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\Bundle\AbstractBundle;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\Process\Process;
 
 final class EAExtensionsBundle extends AbstractBundle
 {
@@ -44,6 +51,31 @@ final class EAExtensionsBundle extends AbstractBundle
                     ->validate()
                         ->ifTrue(static fn (array $v): bool => $v['enabled'] && !\in_array($v['default_page_size'], $v['available_page_sizes'], true))
                         ->thenInvalid('The "pagination.default_page_size" value must be one of the "pagination.available_page_sizes" values.')
+                    ->end()
+                ->end()
+                ->arrayNode('crud_export')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')->defaultFalse()->end()
+                        ->integerNode('async_threshold')->defaultValue(1000)->end()
+                        ->integerNode('max_limit')->defaultValue(50000)->end()
+                        ->scalarNode('storage_service_id')->defaultNull()->end()
+                        ->scalarNode('action_icon')->defaultValue('fa fa-download')->end()
+                        ->arrayNode('csv')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->scalarNode('separator')->defaultValue(',')->end()
+                                ->booleanNode('with_bom')->defaultFalse()->end()
+                            ->end()
+                        ->end()
+                        ->arrayNode('xlsx')
+                            ->addDefaultsIfNotSet()
+                            ->children()
+                                ->booleanNode('enabled')->defaultFalse()->end()
+                                ->booleanNode('encryption_enabled')->defaultFalse()->end()
+                                ->scalarNode('csv2xlsx_binary')->defaultValue('csv2xlsx')->end()
+                            ->end()
+                        ->end()
                     ->end()
                 ->end()
             ->end()
@@ -92,6 +124,43 @@ final class EAExtensionsBundle extends AbstractBundle
             $builder->setParameter('coop_tilleuls_ea_extensions.pagination.max_page_size', $config['pagination']['max_page_size']);
 
             $container->import('../config/pagination_services.php');
+        }
+
+        if ($config['crud_export']['enabled']) {
+            // league/flysystem, symfony/messenger and symfony/process are suggested, not
+            // required, so apps that never enable this feature don't carry their weight.
+            if (!interface_exists(FilesystemOperator::class)) {
+                throw new \LogicException('The "coop_tilleuls_ea_extensions.crud_export.enabled" option requires the "league/flysystem" package. Try running "composer require league/flysystem".');
+            }
+
+            if (!interface_exists(MessageBusInterface::class)) {
+                throw new \LogicException('The "coop_tilleuls_ea_extensions.crud_export.enabled" option requires the "symfony/messenger" package. Try running "composer require symfony/messenger".');
+            }
+
+            if (!class_exists(Process::class)) {
+                throw new \LogicException('The "coop_tilleuls_ea_extensions.crud_export.enabled" option requires the "symfony/process" package (used for XLSX conversion, even when XLSX itself is disabled). Try running "composer require symfony/process".');
+            }
+
+            $builder->setParameter('coop_tilleuls_ea_extensions.crud_export.async_threshold', $config['crud_export']['async_threshold']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.crud_export.max_limit', $config['crud_export']['max_limit']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.crud_export.action_icon', $config['crud_export']['action_icon']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.crud_export.csv.separator', $config['crud_export']['csv']['separator']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.crud_export.csv.with_bom', $config['crud_export']['csv']['with_bom']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.crud_export.xlsx.enabled', $config['crud_export']['xlsx']['enabled']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.crud_export.xlsx.encryption_enabled', $config['crud_export']['xlsx']['encryption_enabled']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.crud_export.xlsx.csv2xlsx_binary', $config['crud_export']['xlsx']['csv2xlsx_binary']);
+
+            $container->import('../config/crud_export_services.php');
+
+            $storageServiceId = $config['crud_export']['storage_service_id'];
+            if (null === $storageServiceId) {
+                throw new InvalidConfigurationException('"coop_tilleuls_ea_extensions.crud_export.storage_service_id" must be set when crud_export is enabled.');
+            }
+
+            // Bound explicitly (never autowired by type) since a consumer app may have several
+            // unrelated League\Flysystem\FilesystemOperator services registered.
+            $builder->getDefinition(CrudExportFileWriter::class)->setArgument('$storage', new Reference($storageServiceId));
+            $builder->getDefinition(CrudExportFileDownloader::class)->setArgument('$storage', new Reference($storageServiceId));
         }
     }
 }

@@ -36,6 +36,23 @@ final class EAExtensionsBundleTest extends TestCase
         ]);
     }
 
+    public function testCrudExportIsDisabledByDefault(): void
+    {
+        // storage_service_id has no bundle-owned default, so this feature — unlike every
+        // other one — must stay opt-in, or a bare `composer require` fails to boot.
+        $bundle = new EAExtensionsBundle();
+        $extension = $bundle->getContainerExtension();
+        self::assertInstanceOf(ConfigurationExtensionInterface::class, $extension);
+
+        $container = new ContainerBuilder();
+        $configuration = $extension->getConfiguration([], $container);
+        self::assertNotNull($configuration);
+
+        $processed = new Processor()->processConfiguration($configuration, [[]]);
+
+        self::assertFalse($processed['crud_export']['enabled']);
+    }
+
     /**
      * @param array<string, mixed> $paginationConfig
      */

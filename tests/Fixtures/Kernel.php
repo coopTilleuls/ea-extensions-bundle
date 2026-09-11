@@ -7,6 +7,8 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures;
 use CoopTilleuls\Bundle\EAExtensionsBundle\EAExtensionsBundle;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use EasyCorp\Bundle\EasyAdminBundle\EasyAdminBundle;
+use League\Flysystem\Filesystem;
+use League\Flysystem\Local\LocalFilesystemAdapter;
 use Symfony\Bundle\FrameworkBundle\FrameworkBundle;
 use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
 use Symfony\Bundle\SecurityBundle\SecurityBundle;
@@ -14,6 +16,7 @@ use Symfony\Bundle\TwigBundle\TwigBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\Kernel as BaseKernel;
 use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 use Symfony\UX\TwigComponent\TwigComponentBundle;
@@ -48,6 +51,14 @@ final class Kernel extends BaseKernel
             'form' => true,
             'csrf_protection' => true,
             'session' => true,
+            'messenger' => [
+                'transports' => [
+                    'async' => 'in-memory://',
+                ],
+                'routing' => [
+                    'CoopTilleuls\\Bundle\\EAExtensionsBundle\\CrudExport\\Message\\ExportCrudMessage' => 'async',
+                ],
+            ],
         ]);
 
         $container->extension('twig', [
@@ -86,6 +97,7 @@ final class Kernel extends BaseKernel
                     'memory' => [
                         'users' => [
                             'admin' => ['password' => 'admin', 'roles' => ['ROLE_ADMIN']],
+                            'user' => ['password' => 'user', 'roles' => ['ROLE_USER']],
                         ],
                     ],
                 ],
@@ -100,6 +112,15 @@ final class Kernel extends BaseKernel
             ],
         ]);
 
+        $container->extension('coop_tilleuls_ea_extensions', [
+            'crud_export' => [
+                'enabled' => true,
+                'storage_service_id' => 'fixture.crud_export_storage',
+                'async_threshold' => 3,
+                'max_limit' => 10,
+            ],
+        ]);
+
         $services = $container->services()->defaults()->autowire()->autoconfigure();
         $services->set(FixtureDashboardController::class)->public();
         $services->set(FixtureCrudController::class)->public();
@@ -111,12 +132,27 @@ final class Kernel extends BaseKernel
         $services->set(FixtureLockedPaginationCrudController::class)->public();
         $services->set(FixtureMismatchedPaginationCrudController::class)->public();
         $services->set(FixtureDefaultOnlyMismatchedPaginationCrudController::class)->public();
+        $services->set(FixtureItemCrudController::class)->public();
+        $services->set(FixtureItemCrudControllerWithConfiguration::class)->public();
+        $services->set(FixtureItemCrudControllerDisabled::class)->public();
+        $services->set(FixtureItemCrudControllerForcedAsync::class)->public();
+        $services->set(FixtureItemCrudControllerForcedSync::class)->public();
+        $services->set(FixtureAmountExportResolver::class);
+
+        $services->set('fixture.crud_export_storage', Filesystem::class)
+            ->args([new Reference('fixture.crud_export_storage.adapter')])
+            ->public()
+        ;
+        $services->set('fixture.crud_export_storage.adapter', LocalFilesystemAdapter::class)
+            ->args([sys_get_temp_dir().'/ea-extensions-bundle/crud-export-storage'])
+        ;
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void
     {
         $routes->import('.', 'easyadmin.routes');
         $routes->import(__DIR__.'/../../src/CustomizableColumns/Controller/', 'attribute');
+        $routes->import(__DIR__.'/../../src/CrudExport/Controller/', 'attribute');
     }
 
     public function getCacheDir(): string
