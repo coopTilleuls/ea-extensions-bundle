@@ -30,3 +30,5 @@ in this bundle (see [customizable columns](../customizable-columns.md#consumer-a
   depending on whether another field's current value is in a whitelist or blacklist.
 - [`toggle-display-on-multiple-select`](toggle-display-on-multiple-select.md) — shows a field only
   once another multi-select field has at least a minimum number of items selected.
+- [`display-field-on-boolean-field-change`](display-field-on-boolean-field-change.md) — shows or
+  hides a field depending on a boolean (checkbox/switch) field.
