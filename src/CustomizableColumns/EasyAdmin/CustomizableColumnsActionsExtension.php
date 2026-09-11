@@ -51,8 +51,8 @@ final class CustomizableColumnsActionsExtension implements ActionsExtensionInter
             ->createAsGlobalAction()
             ->linkToUrl($url)
             ->setHtmlAttributes([
-                'data-controller' => 'ea-extensions--customizable-columns-modal',
-                'data-action' => 'ea-extensions--customizable-columns-modal#open:prevent',
+                'data-controller' => 'coop-tilleuls--ea-extensions--customizable-columns-modal',
+                'data-action' => 'coop-tilleuls--ea-extensions--customizable-columns-modal#open:prevent',
             ]);
 
         $actions->add(Crud::PAGE_INDEX, $action);

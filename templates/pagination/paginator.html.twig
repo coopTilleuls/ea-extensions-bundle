@@ -12,7 +12,7 @@
     <twig:block name="counter_extra">
         {% set ea_extensions_pagination_sizes = ea_extensions_pagination_available_page_sizes() %}
         {% if ea_extensions_pagination_sizes is not empty and not ea_extensions_pagination_is_embedded() %}
-            <select class="form-select mx-2" style="width: auto;" data-controller="ea-extensions--pagination-page-size" data-action="ea-extensions--pagination-page-size#navigate">
+            <select class="form-select mx-2" style="width: auto;" data-controller="coop-tilleuls--ea-extensions--pagination-page-size" data-action="coop-tilleuls--ea-extensions--pagination-page-size#navigate">
                 {% for option in ea_extensions_pagination_sizes %}
                     <option value="{{ path(app.request.attributes.get('_route'), app.request.query.all|merge({(ea_extensions_pagination_query_parameter()): option})) }}" {{ paginator.pageSize == option ? 'selected' : '' }}>
                         {{ option }}

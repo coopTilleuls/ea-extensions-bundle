@@ -34,16 +34,16 @@
 
         {% if customOptions.get('lazy') %}
             <div class="ea-crud-field-lazy"
-                 data-controller="ea-extensions--crud-field-lazy"
-                 data-ea-extensions--crud-field-lazy-crud-path-value="{{ fetchUrl }}"
-                 data-ea-extensions--crud-field-lazy-open-actions-in-modal-value="{{ customOptions.get('openActionsInModal') ? 'true' : 'false' }}">
-                <div data-ea-extensions--crud-field-lazy-target="placeholder" class="d-flex flex-column align-items-center py-5 gap-3">
-                    <div data-ea-extensions--crud-field-lazy-target="spinner" class="spinner-border text-secondary" role="status">
+                 data-controller="coop-tilleuls--ea-extensions--crud-field-lazy"
+                 data-coop-tilleuls--ea-extensions--crud-field-lazy-crud-path-value="{{ fetchUrl }}"
+                 data-coop-tilleuls--ea-extensions--crud-field-lazy-open-actions-in-modal-value="{{ customOptions.get('openActionsInModal') ? 'true' : 'false' }}">
+                <div data-coop-tilleuls--ea-extensions--crud-field-lazy-target="placeholder" class="d-flex flex-column align-items-center py-5 gap-3">
+                    <div data-coop-tilleuls--ea-extensions--crud-field-lazy-target="spinner" class="spinner-border text-secondary" role="status">
                         <span class="visually-hidden">Chargement…</span>
                     </div>
                     <button type="button"
-                            data-ea-extensions--crud-field-lazy-target="loadButton"
-                            data-action="ea-extensions--crud-field-lazy#load"
+                            data-coop-tilleuls--ea-extensions--crud-field-lazy-target="loadButton"
+                            data-action="coop-tilleuls--ea-extensions--crud-field-lazy#load"
                             class="btn btn-sm btn-outline-secondary d-none">
                         Charger
                     </button>
@@ -51,9 +51,9 @@
             </div>
         {% else %}
             <div class="ea-crud-field-eager"
-                 data-controller="ea-extensions--crud-field-eager"
-                 data-ea-extensions--crud-field-eager-crud-path-value="{{ fetchUrl }}"
-                 data-ea-extensions--crud-field-eager-open-actions-in-modal-value="{{ customOptions.get('openActionsInModal') ? 'true' : 'false' }}">
+                 data-controller="coop-tilleuls--ea-extensions--crud-field-eager"
+                 data-coop-tilleuls--ea-extensions--crud-field-eager-crud-path-value="{{ fetchUrl }}"
+                 data-coop-tilleuls--ea-extensions--crud-field-eager-open-actions-in-modal-value="{{ customOptions.get('openActionsInModal') ? 'true' : 'false' }}">
                 {{ render(fetchUrl) }}
             </div>
         {% endif %}

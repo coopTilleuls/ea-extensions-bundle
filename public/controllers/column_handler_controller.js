@@ -8,7 +8,7 @@ export default class extends Controller {
     static targets = ['row'];
 
     moveUp(event) {
-        const row = event.currentTarget.closest('[data-ea-extensions--column-handler-target="row"]');
+        const row = event.currentTarget.closest('[data-coop-tilleuls--ea-extensions--column-handler-target="row"]');
         const previous = row?.previousElementSibling;
         if (row && previous) {
             row.parentNode.insertBefore(row, previous);
@@ -16,7 +16,7 @@ export default class extends Controller {
     }
 
     moveDown(event) {
-        const row = event.currentTarget.closest('[data-ea-extensions--column-handler-target="row"]');
+        const row = event.currentTarget.closest('[data-coop-tilleuls--ea-extensions--column-handler-target="row"]');
         const next = row?.nextElementSibling;
         if (row && next) {
             row.parentNode.insertBefore(next, row);

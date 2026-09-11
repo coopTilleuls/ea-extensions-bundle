@@ -166,11 +166,11 @@ final class CrudFieldsTest extends AbstractFunctionalTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(
             1,
-            $crawler->filter('[data-ea-extensions--crud-field-eager-open-actions-in-modal-value="true"]')->count(),
+            $crawler->filter('[data-coop-tilleuls--ea-extensions--crud-field-eager-open-actions-in-modal-value="true"]')->count(),
         );
         self::assertGreaterThan(
             0,
-            $crawler->filter('[data-ea-extensions--crud-field-eager-open-actions-in-modal-value="false"]')->count(),
+            $crawler->filter('[data-coop-tilleuls--ea-extensions--crud-field-eager-open-actions-in-modal-value="false"]')->count(),
         );
         self::assertGreaterThan(0, $crawler->filter('template#ea-extensions-crud-field-action-modal-template')->count());
     }
@@ -186,7 +186,7 @@ final class CrudFieldsTest extends AbstractFunctionalTestCase
         self::assertResponseIsSuccessful();
 
         // "embedFiltered" is the only eager (non-lazy) embed wrapped in a card.
-        $fetchUrl = $crawler->filter('div.card [data-ea-extensions--crud-field-eager-crud-path-value]')->attr('data-ea-extensions--crud-field-eager-crud-path-value');
+        $fetchUrl = $crawler->filter('div.card [data-coop-tilleuls--ea-extensions--crud-field-eager-crud-path-value]')->attr('data-coop-tilleuls--ea-extensions--crud-field-eager-crud-path-value');
         self::assertNotNull($fetchUrl);
 
         $embedCrawler = $this->client->request('GET', $fetchUrl);

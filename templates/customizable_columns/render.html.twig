@@ -1,17 +1,17 @@
 {{ form_start(form, {attr: {id: 'ea-extensions-columns-form'}}) }}
-    <div class="ea-extensions-column-list" data-controller="ea-extensions--column-handler">
+    <div class="ea-extensions-column-list" data-controller="coop-tilleuls--ea-extensions--column-handler">
         {% for child in form %}
             {% if child.vars.name not in ['_token', 'save'] %}
-                <div class="ea-extensions-column-row d-flex align-items-center" data-ea-extensions--column-handler-target="row">
+                <div class="ea-extensions-column-row d-flex align-items-center" data-coop-tilleuls--ea-extensions--column-handler-target="row">
                     <div class="form-check flex-grow-1">
                         {{ form_widget(child) }}
                         {{ form_label(child) }}
                     </div>
                     <div class="d-flex flex-column align-items-center ms-3">
-                        <button type="button" class="btn btn-sm p-0 text-body-secondary" data-action="ea-extensions--column-handler#moveUp" aria-label="Monter">
+                        <button type="button" class="btn btn-sm p-0 text-body-secondary" data-action="coop-tilleuls--ea-extensions--column-handler#moveUp" aria-label="Monter">
                             <i class="fas fa-chevron-up"></i>
                         </button>
-                        <button type="button" class="btn btn-sm p-0 text-body-secondary" data-action="ea-extensions--column-handler#moveDown" aria-label="Descendre">
+                        <button type="button" class="btn btn-sm p-0 text-body-secondary" data-action="coop-tilleuls--ea-extensions--column-handler#moveDown" aria-label="Descendre">
                             <i class="fas fa-chevron-down"></i>
                         </button>
                     </div>

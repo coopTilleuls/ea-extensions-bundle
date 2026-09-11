@@ -24,7 +24,7 @@ final class PaginationTest extends AbstractFunctionalTestCase
 
         self::assertResponseIsSuccessful();
         self::assertCount(3, $crawler->filter('tbody tr'));
-        self::assertGreaterThan(0, $crawler->filter('select[data-controller="ea-extensions--pagination-page-size"]')->count());
+        self::assertGreaterThan(0, $crawler->filter('select[data-controller="coop-tilleuls--ea-extensions--pagination-page-size"]')->count());
     }
 
     public function testQueryOverrideChangesThePageSize(): void
@@ -63,7 +63,7 @@ final class PaginationTest extends AbstractFunctionalTestCase
         self::assertCount(2, $crawler->filter('tbody tr'));
         self::assertSame(
             ['2', '5'],
-            $crawler->filter('select[data-controller="ea-extensions--pagination-page-size"] option')->each(
+            $crawler->filter('select[data-controller="coop-tilleuls--ea-extensions--pagination-page-size"] option')->each(
                 static fn ($node): string => trim($node->text()),
             ),
         );
@@ -102,7 +102,7 @@ final class PaginationTest extends AbstractFunctionalTestCase
 
         self::assertResponseIsSuccessful();
         self::assertCount(3, $crawler->filter('tbody tr'));
-        self::assertCount(0, $crawler->filter('select[data-controller="ea-extensions--pagination-page-size"]'));
+        self::assertCount(0, $crawler->filter('select[data-controller="coop-tilleuls--ea-extensions--pagination-page-size"]'));
     }
 
     private function persistFixtureEntities(int $count): void

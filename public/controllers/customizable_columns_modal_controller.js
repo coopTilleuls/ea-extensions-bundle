@@ -20,7 +20,7 @@ export default class extends Controller {
 
         const wrapper = document.createElement('div');
         wrapper.innerHTML = `
-            <div class="modal fade" id="ea-extensions-columns-modal" data-controller="ea-extensions--customizable-columns-modal" tabindex="-1" aria-hidden="true">
+            <div class="modal fade" id="ea-extensions-columns-modal" data-controller="coop-tilleuls--ea-extensions--customizable-columns-modal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-lg modal-dialog-scrollable">
                     <div class="modal-content">
                         <div class="modal-header justify-content-between">
@@ -29,7 +29,7 @@ export default class extends Controller {
                         </div>
                         <div class="modal-body p-0"></div>
                         <div class="modal-footer d-flex">
-                            <button type="button" class="btn btn-sm btn-outline-secondary me-auto" data-action="ea-extensions--customizable-columns-modal#reset">
+                            <button type="button" class="btn btn-sm btn-outline-secondary me-auto" data-action="coop-tilleuls--ea-extensions--customizable-columns-modal#reset">
                                 <i class="fa fa-rotate-right"></i> Réinitialiser
                             </button>
                             <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">

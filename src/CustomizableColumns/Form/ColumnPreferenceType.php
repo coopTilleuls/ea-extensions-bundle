@@ -12,7 +12,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 /**
  * One checkbox per unlocked, authorized column, plus a "save as default" switch. Checked
  * columns are the ones currently selected; submission order of the checked fields becomes the
- * new column order (the "ea-extensions--column-handler" Stimulus controller reorders the DOM
+ * new column order (the "coop-tilleuls--ea-extensions--column-handler" Stimulus controller reorders the DOM
  * rows client-side). Applying is always transient (the chosen columns only affect the current
  * page view, via a query parameter) — checking the switch is what makes it persist.
  *

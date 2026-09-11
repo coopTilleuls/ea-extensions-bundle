@@ -57,9 +57,9 @@ export default class extends Controller {
         }
 
         const wrapper = document.createElement('div');
-        wrapper.setAttribute('data-controller', 'ea-extensions--crud-field-eager');
-        wrapper.setAttribute('data-ea-extensions--crud-field-eager-crud-path-value', this.crudPathValue);
-        wrapper.setAttribute('data-ea-extensions--crud-field-eager-open-actions-in-modal-value', this.openActionsInModalValue ? 'true' : 'false');
+        wrapper.setAttribute('data-controller', 'coop-tilleuls--ea-extensions--crud-field-eager');
+        wrapper.setAttribute('data-coop-tilleuls--ea-extensions--crud-field-eager-crud-path-value', this.crudPathValue);
+        wrapper.setAttribute('data-coop-tilleuls--ea-extensions--crud-field-eager-open-actions-in-modal-value', this.openActionsInModalValue ? 'true' : 'false');
         wrapper.innerHTML = await response.text();
 
         this.element.replaceChildren(wrapper);
@@ -73,7 +73,7 @@ export default class extends Controller {
         this.hideSpinner();
         this.placeholderTarget.innerHTML = `
             <div class="text-danger mb-2">Erreur lors du chargement.</div>
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="ea-extensions--crud-field-lazy#load">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-action="coop-tilleuls--ea-extensions--crud-field-lazy#load">
                 Réessayer
             </button>
         `;

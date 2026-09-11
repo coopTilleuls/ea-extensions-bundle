@@ -6,8 +6,8 @@ import CrudFieldLazyController from './controllers/crud_field_lazy_controller.js
 import PaginationPageSizeController from './controllers/pagination_page_size_controller.js';
 
 const app = startStimulusApp();
-app.register('ea-extensions--customizable-columns-modal', CustomizableColumnsModalController);
-app.register('ea-extensions--column-handler', ColumnHandlerController);
-app.register('ea-extensions--crud-field-eager', CrudFieldEagerController);
-app.register('ea-extensions--crud-field-lazy', CrudFieldLazyController);
-app.register('ea-extensions--pagination-page-size', PaginationPageSizeController);
+app.register('coop-tilleuls--ea-extensions--customizable-columns-modal', CustomizableColumnsModalController);
+app.register('coop-tilleuls--ea-extensions--column-handler', ColumnHandlerController);
+app.register('coop-tilleuls--ea-extensions--crud-field-eager', CrudFieldEagerController);
+app.register('coop-tilleuls--ea-extensions--crud-field-lazy', CrudFieldLazyController);
+app.register('coop-tilleuls--ea-extensions--pagination-page-size', PaginationPageSizeController);
