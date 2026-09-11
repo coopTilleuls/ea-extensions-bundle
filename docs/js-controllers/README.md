@@ -26,3 +26,7 @@ in this bundle (see [customizable columns](../customizable-columns.md#consumer-a
   refreshes a TomSelect-enhanced autocomplete field's choices whenever one related field changes,
   with an optional fallback field and finer-grained behavior (auto-select on a single required
   result, merge-vs-reset on first load, an always-on extra filter).
+- [`toggle-display-on-field-change`](toggle-display-on-field-change.md) — shows or hides a field
+  depending on whether another field's current value is in a whitelist or blacklist.
+- [`toggle-display-on-multiple-select`](toggle-display-on-multiple-select.md) — shows a field only
+  once another multi-select field has at least a minimum number of items selected.
