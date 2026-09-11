@@ -32,3 +32,5 @@ in this bundle (see [customizable columns](../customizable-columns.md#consumer-a
   once another multi-select field has at least a minimum number of items selected.
 - [`display-field-on-boolean-field-change`](display-field-on-boolean-field-change.md) — shows or
   hides a field depending on a boolean (checkbox/switch) field.
+- [`select-all-options`](select-all-options.md) — selects every available option on a multi-select
+  field from a sibling button.

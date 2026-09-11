@@ -16,6 +16,7 @@ import RefreshValuesOnRelatedFieldChangeController from './controllers/refresh_v
 import ToggleDisplayOnFieldChangeController from './controllers/toggle_display_on_field_change_controller.js';
 import ToggleDisplayOnMultipleSelectController from './controllers/toggle_display_on_multiple_select_controller.js';
 import DisplayFieldOnBooleanFieldChangeController from './controllers/display_field_on_boolean_field_change_controller.js';
+import SelectAllOptionsController from './controllers/select_all_options_controller.js';
 
 // startStimulusApp() creates a brand new Stimulus Application every time it's called (no
 // built-in dedup) and always eagerly wires up every controller AssetMapper knows about
@@ -39,3 +40,4 @@ app.register('coop-tilleuls--ea-extensions--refresh-values-on-related-field-chan
 app.register('coop-tilleuls--ea-extensions--toggle-display-on-field-change', ToggleDisplayOnFieldChangeController);
 app.register('coop-tilleuls--ea-extensions--toggle-display-on-multiple-select', ToggleDisplayOnMultipleSelectController);
 app.register('coop-tilleuls--ea-extensions--display-field-on-boolean-field-change', DisplayFieldOnBooleanFieldChangeController);
+app.register('coop-tilleuls--ea-extensions--select-all-options', SelectAllOptionsController);
