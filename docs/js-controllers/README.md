@@ -36,3 +36,5 @@ in this bundle (see [customizable columns](../customizable-columns.md#consumer-a
   field from a sibling button.
 - [`add-button-select`](add-button-select.md) — adds an "Add" button next to a multi-select field
   that opens its dropdown.
+- [`tomselect-optgroups`](tomselect-optgroups.md) — groups a TomSelect field's options under
+  named optgroups.
