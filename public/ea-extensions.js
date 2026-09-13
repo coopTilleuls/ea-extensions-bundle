@@ -19,6 +19,7 @@ import DisplayFieldOnBooleanFieldChangeController from './controllers/display_fi
 import SelectAllOptionsController from './controllers/select_all_options_controller.js';
 import AddButtonSelectController from './controllers/add_button_select_controller.js';
 import TomselectOptgroupsController from './controllers/tomselect_optgroups_controller.js';
+import CollectionFieldRequiredController from './controllers/collection_field_required_controller.js';
 
 // startStimulusApp() creates a brand new Stimulus Application every time it's called (no
 // built-in dedup) and always eagerly wires up every controller AssetMapper knows about
@@ -45,3 +46,4 @@ app.register('coop-tilleuls--ea-extensions--display-field-on-boolean-field-chang
 app.register('coop-tilleuls--ea-extensions--select-all-options', SelectAllOptionsController);
 app.register('coop-tilleuls--ea-extensions--add-button-select', AddButtonSelectController);
 app.register('coop-tilleuls--ea-extensions--tomselect-optgroups', TomselectOptgroupsController);
+app.register('coop-tilleuls--ea-extensions--collection-field-required', CollectionFieldRequiredController);
