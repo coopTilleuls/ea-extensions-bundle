@@ -1,0 +1,32 @@
+{% set notificationLink = ea_url()
+    .unsetAll()
+    .setController('CoopTilleuls\\Bundle\\EAExtensionsBundle\\Notifications\\EasyAdmin\\NotificationCrudController')
+    .setAction('index')
+    .generateUrl() %}
+{% set unreadCountUrl = ea_url()
+    .unsetAll()
+    .setController('CoopTilleuls\\Bundle\\EAExtensionsBundle\\Notifications\\EasyAdmin\\NotificationCrudController')
+    .setAction('unreadCount')
+    .generateUrl() %}
+
+{% set mercureLive = ea_extensions_notifications_mercure_enabled() and ea_extensions_notification_topic() %}
+<div class="ea-extensions-notification-bar me-2"
+    data-controller="ea-extensions--notification-read-update"
+    data-ea-extensions--notification-read-update-unread-count-url-value="{{ unreadCountUrl }}"
+    data-action="ea-extensions--real-time-notification:notification:new@window->ea-extensions--notification-read-update#refresh ea-extensions--notification-toggle:toggled@window->ea-extensions--notification-read-update#refresh"
+>
+    <a href="{{ notificationLink }}" class="text-secondary">
+        <i class="fa fa-fw fa-bell"></i>
+        <span class="ea-extensions-notification-label">{{ 'notifications.bar.label'|trans({}, 'EAExtensionsBundle', 'fr') }}</span>
+        <span
+            data-ea-extensions--notification-read-update-target="count"
+            data-count="{{ ea_extensions_notification_unread_count() }}"
+            class="badge badge-warning px-1"
+        ></span>
+    </a>
+</div>
+
+{% if mercureLive %}
+    {# see _notification_popover.html.twig for why this is a separate, only-included-here file #}
+    {{ include('@EAExtensions/notifications/components/_notification_popover.html.twig') }}
+{% endif %}

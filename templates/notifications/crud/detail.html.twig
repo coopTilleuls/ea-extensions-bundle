@@ -1,0 +1,40 @@
+{% extends '@!EasyAdmin/crud/detail.html.twig' %}
+
+{% block main %}
+    {% block detail_fields %}
+        {% set notification = entity.instance %}
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="form-fieldset-header py-0 px-0">
+                            <div class="form-fieldset-title">
+                                <h2 class="not-collapsible form-fieldset-title-content">
+                                    {{ notification.type|trans }} - {{ notification.title }}
+                                </h2>
+                                <p class="text-secondary fw-medium"><i class="fa-solid fa-calendar"></i> {{ notification.date|date('d/m/y - H\\hi') }}</p>
+                                {% if notification.contentKey %}
+                                    <p>{{ notification.contentKey|trans(notification.contentParams ?? {})|nl2br|raw }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if notification.component and notification.displayInNewCard == false %}
+                            {{ component(notification.component, notification.componentParams) }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% if notification.buttonUrl %}
+                    <a href="{{ notification.buttonUrl }}" class="btn btn-primary mt-2">{{ notification.buttonLabel|default('notifications.detail.default_button_label'|trans({}, 'EAExtensionsBundle', 'fr')) }}</a>
+                {% endif %}
+            </div>
+
+            {% block sender %}{% endblock %}
+        </div>
+        {% if notification.component and notification.displayInNewCard == true %}
+            {{ component(notification.component, notification.componentParams) }}
+        {% endif %}
+    {% endblock %}
+    {% block delete_form %}
+        {{ include('@EasyAdmin/crud/includes/_action_confirmation_modal.html.twig', with_context = false) }}
+    {% endblock delete_form %}
+{% endblock %}

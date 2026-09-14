@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\EAExtensionsBundle;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationRecipientInterface;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationRecipientResolverInterface;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\Entity\FixtureNotificationRecipient;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use EasyCorp\Bundle\EasyAdminBundle\EasyAdminBundle;
 use League\Flysystem\Filesystem;
@@ -22,7 +25,7 @@ use Symfony\Component\Routing\Loader\Configurator\RoutingConfigurator;
 use Symfony\UX\TwigComponent\TwigComponentBundle;
 use Twig\Extra\TwigExtraBundle\TwigExtraBundle;
 
-final class Kernel extends BaseKernel
+class Kernel extends BaseKernel
 {
     use MicroKernelTrait;
 
@@ -85,6 +88,9 @@ final class Kernel extends BaseKernel
                         'is_bundle' => false,
                     ],
                 ],
+                'resolve_target_entities' => [
+                    NotificationRecipientInterface::class => FixtureNotificationRecipient::class,
+                ],
             ],
         ]);
 
@@ -146,6 +152,16 @@ final class Kernel extends BaseKernel
         $services->set('fixture.crud_export_storage.adapter', LocalFilesystemAdapter::class)
             ->args([sys_get_temp_dir().'/ea-extensions-bundle/crud-export-storage'])
         ;
+
+        $services->set(RecordingNotificationEventListener::class)->public();
+        $services->set(FixturePopoverController::class)->public();
+        $services->set(FixtureNotificationRecipientResolver::class);
+        $services->alias(NotificationRecipientResolverInterface::class, FixtureNotificationRecipientResolver::class);
+    }
+
+    public function build(ContainerBuilder $container): void
+    {
+        $container->addCompilerPass(new MakeNotificationServicesPublicPass());
     }
 
     protected function configureRoutes(RoutingConfigurator $routes): void
@@ -153,6 +169,8 @@ final class Kernel extends BaseKernel
         $routes->import('.', 'easyadmin.routes');
         $routes->import(__DIR__.'/../../src/CustomizableColumns/Controller/', 'attribute');
         $routes->import(__DIR__.'/../../src/CrudExport/Controller/', 'attribute');
+        $routes->import(__DIR__.'/../../src/Notifications/Controller/', 'attribute');
+        $routes->import(__DIR__, 'attribute');
     }
 
     public function getCacheDir(): string

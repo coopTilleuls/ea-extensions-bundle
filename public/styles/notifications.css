@@ -1,0 +1,8 @@
+.ea-extensions-notification-popover {
+    top: 70px;
+    right: 20px;
+    z-index: 1020;
+    width: 380px;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 100px);
+}

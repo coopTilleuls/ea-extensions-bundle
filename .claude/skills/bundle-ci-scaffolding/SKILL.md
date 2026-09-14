@@ -116,6 +116,58 @@ it only replays the lock file. Fix is simply `composer update` (not `install`) t
 re-resolve from the current `composer.json`; the loud failure is the useful signal that
 this is needed, not a sign something's broken.
 
+## An optional dep's own loose transitive constraint can break `lowest`-deps even though `highest`-deps is fine
+
+Adding `symfony/mercure` (`^0.6.3|^1.0` in `require-dev`, backing the Notifications feature's
+optional Mercure support) broke the `lowest`-deps CI cell — `Call to undefined method
+Symfony\Component\HttpKernel\Event\ResponseEvent::isMasterRequest()` inside
+`vendor/symfony/web-link/EventListener/AddLinkHeaderListener.php`, on every single test (a global
+listener registered on `kernel.response`, so nothing runs). `symfony/web-link` isn't a direct
+dependency at all — it's pulled in transitively by `symfony/mercure`, whose own constraint on it
+is loose enough that `--prefer-lowest` resolves a `web-link` release old enough to still call the
+Symfony 5.3-deprecated/6.0-removed `isMasterRequest()` (`isMainRequest()`'s predecessor), even
+though every *other* component in the tree is correctly floored at `^6.4|^7.0`. `highest`-deps CI
+stayed green throughout (resolves `symfony/web-link` v7.4.x, long since renamed) — this class of
+break is invisible unless the `lowest`-deps cell is actually checked, not just assumed green
+because the PR's own diff didn't touch anything web-link-related.
+
+Fix: declare `symfony/web-link` explicitly in `require-dev` with the same `^6.4|^7.0` floor as
+every other Symfony component here, even though nothing in this bundle's own code imports it —
+that's enough to force `lowest`-deps to resolve a version whose code was actually kept in sync
+with the `isMasterRequest()` → `isMainRequest()` rename.
+
+General lesson: any new optional dependency (`suggest`/behind a `class_exists()`/`interface_exists()`
+guard) needs its *own* `composer install --prefer-lowest` re-checked after adding it, the same way
+a Rector rule does (see above) — it can drag in transitive packages this bundle never explicitly
+pins, and those packages' own lowest-satisfying versions aren't guaranteed to agree with this
+bundle's floor.
+
+Fixing the `web-link` issue above unmasked a second, unrelated `lowest`-deps failure underneath
+it: `RuntimeException: Failed to start the session because headers have already been sent by
+".../symfony/polyfill-php83/bootstrap.php"`, on the very first test that touches a session —
+every subsequent test then fails too ("did not remove its own exception handlers"), since the
+process-wide `headers_sent()` state it corrupts never resets. This one is **not** specific to
+Mercure — `symfony/clock` and `symfony/http-foundation` (both plain `require`, nothing to do with
+Notifications) already pull in `symfony/polyfill-php83`, and `lowest`-deps resolves an old release
+(v1.28.0) whose own `ldap_exop_sync()`/`ldap_connect_wallet()` polyfill declarations still use
+implicitly-nullable parameters. PHP 8.4 flags that as `E_DEPRECATED` **at compile time, the
+moment the file is `require`d** — regardless of the `if (!function_exists(...))` guard around it
+(that guard only skips *executing* the `function` statement at runtime; PHP still parses/compiles
+the whole file either way) — so with `display_errors` on (the default), raw deprecation text gets
+echoed to stdout before `session_start()` runs in that same simulated request, and PHP's session
+extension refuses to start once *any* output has already been sent. Setting
+`display_errors="0"` in `phpunit.xml.dist` does **not** fix this specific case: `<ini>`/`<server>`
+values there only apply once PHPUnit's own bootstrap runs, which is *after* Composer's
+`autoload.files` (and thus this polyfill file) has already executed — too late for a
+compile-time notice. `SYMFONY_DEPRECATIONS_HELPER=weak` (already set, see above) doesn't help
+either — that only stops phpunit-bridge from *failing the build* on collected deprecations, it
+doesn't touch this raw pre-bootstrap echo.
+
+Fix: same shape as `web-link` — declare `symfony/polyfill-php83` explicitly in `require-dev`
+(`^1.31`, the first release with the PHP-8.4-safe explicit `?type` signatures), forcing
+`lowest`-deps to resolve a version that was actually patched, rather than trying to suppress the
+symptom after the fact.
+
 ## No local `composer` binary
 
 This dev environment has PHP CLI available directly on the host (checked: 8.3.6) but no `composer` binary. Use the official image instead, always with `--user`, or vendor/lockfile end up root-owned and need `sudo` (unavailable non-interactively) or a throwaway `docker run ... alpine rm -f ...` to clean up:

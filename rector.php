@@ -9,6 +9,7 @@ use Rector\Config\RectorConfig;
 use Rector\Symfony\Symfony72\Rector\StmtsAwareInterface\PushRequestToRequestStackConstructorRector;
 use Rector\Symfony\Symfony73\Rector\Class_\ConstraintOptionsToNamedArgumentsRector;
 use Rector\Symfony\Symfony73\Rector\Class_\GetFiltersAndFunctionsToAsTwigAttributeRector;
+use Rector\Symfony\Symfony80\Rector\Class_\RemoveEraseCredentialsRector;
 use Rector\TypeDeclaration\Rector\ClassMethod\NarrowObjectReturnTypeRector;
 use Rector\TypeDeclaration\Rector\ClassMethod\ParamTypeByMethodCallTypeRector;
 
@@ -36,6 +37,11 @@ return RectorConfig::configure()
         // "lowest" support floor — applying it makes the function silently unregistered
         // under a lowest-deps install (confirmed: 500 "Unknown function" at runtime).
         GetFiltersAndFunctionsToAsTwigAttributeRector::class,
+        // Targets Symfony 8.0, ahead of this bundle's declared floor (symfony/security-bundle
+        // "^6.4|^7.0") — UserInterface::eraseCredentials() is still abstract on that range, so
+        // removing implementations breaks anonymous-class UserInterface implementers (confirmed:
+        // fatal "must implement the remaining methods" in SecurityUserNotificationRecipientResolverTest).
+        RemoveEraseCredentialsRector::class,
     ])
     ->withCodeQualityLevel(15)
 ;

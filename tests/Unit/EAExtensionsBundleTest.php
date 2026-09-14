@@ -53,6 +53,21 @@ final class EAExtensionsBundleTest extends TestCase
         self::assertFalse($processed['crud_export']['enabled']);
     }
 
+    public function testNotificationsAreEnabledByDefaultWithMercureDisabled(): void
+    {
+        $config = $this->processNotificationsConfig([]);
+
+        self::assertTrue($config['enabled']);
+        self::assertFalse($config['mercure']['enabled']);
+    }
+
+    public function testMercureCanBeExplicitlyEnabled(): void
+    {
+        $config = $this->processNotificationsConfig(['mercure' => ['enabled' => true]]);
+
+        self::assertTrue($config['mercure']['enabled']);
+    }
+
     /**
      * @param array<string, mixed> $paginationConfig
      */
@@ -69,5 +84,27 @@ final class EAExtensionsBundleTest extends TestCase
         new Processor()->processConfiguration($configuration, [
             ['pagination' => $paginationConfig],
         ]);
+    }
+
+    /**
+     * @param array<string, mixed> $notificationsConfig
+     *
+     * @return array<string, mixed>
+     */
+    private function processNotificationsConfig(array $notificationsConfig): array
+    {
+        $bundle = new EAExtensionsBundle();
+        $extension = $bundle->getContainerExtension();
+        self::assertInstanceOf(ConfigurationExtensionInterface::class, $extension);
+
+        $container = new ContainerBuilder();
+        $configuration = $extension->getConfiguration([], $container);
+        self::assertNotNull($configuration);
+
+        $processed = new Processor()->processConfiguration($configuration, [
+            ['notifications' => $notificationsConfig],
+        ]);
+
+        return $processed['notifications'];
     }
 }

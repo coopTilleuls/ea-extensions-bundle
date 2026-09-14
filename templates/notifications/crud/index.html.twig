@@ -1,0 +1,54 @@
+{% extends ea_extensions_notification_crud_index_parent_template() %}
+
+{% block main %}
+    {# Wraps the whole "main" block (table + results-count/pagination footer), not just
+       "datagrid" (the table alone) — the paginator/results-count is a sibling block rendered
+       right after "datagrid", not nested inside it, so scoping the controller to "datagrid"
+       alone would leave it unable to reach and refresh the results count. #}
+    <div data-controller="ea-extensions--notification-list-update"
+        data-action="ea-extensions--real-time-notification:notification:new@window->ea-extensions--notification-list-update#onNewNotification"
+    >
+        {{ parent() }}
+    </div>
+{% endblock main %}
+
+{% block table_body %}
+    {% for entity in entities %}
+        {% if entity.isAccessible %}
+            {% set entityReadField = entity.fields.getByProperty('read') %}
+            {% set entityRead = entityReadField ? entityReadField.getValue() : null %}
+            <tr data-id="{{ entity.primaryKeyValueAsString }}" class="{% if entityReadField and not entityRead %}ea-extensions-notification-unread{% endif %}"
+                {% if entity.defaultActionUrl %}data-default-action-url="{{ entity.defaultActionUrl }}" role="link" tabindex="0"{% endif %}
+            >
+                {% if has_batch_actions %}
+                    <td class="batch-actions-selector">
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input form-batch-checkbox" id="form-batch-checkbox-{{ loop.index0 }}" value="{{ entity.primaryKeyValue }}">
+                        </div>
+                    </td>
+                {% endif %}
+
+                {% for field in entity.fields %}
+                    {% set ea = ea() %}
+                    {% set is_searchable = null == ea.crud.searchFields or field.property in ea.crud.searchFields %}
+
+                    <td data-column="{{ field.property }}" data-label="{{ field.label|trans|e('html_attr') }}" class="{{ is_searchable ? 'searchable' }} {{ field.property == sort_field_name ? 'sorted' }} text-{{ field.textAlign }} {{ field.cssClass }}" dir="{{ ea.i18n.textDirection }}" {% for name, value in field.htmlAttributes %}{{ name }}="{{ value|e('html_attr') }}" {% endfor %}>
+                        {{ include(field.templatePath, { field: field, entity: entity }, with_context = false) }}
+                    </td>
+                {% endfor %}
+
+                {{ block('entity_actions') }}
+            </tr>
+        {% endif %}
+    {% else %}
+        {{ block('table_body_empty') }}
+    {% endfor %}
+
+    {% if some_results_are_hidden %}
+        <tr class="datagrid-row-empty">
+            <td class="text-center" colspan="100">
+                <span class="datagrid-row-empty-message"><i class="fa fa-lock mr-1"></i> {{ 'datagrid.hidden_results'|trans({}, 'EasyAdminBundle') }}</span>
+            </td>
+        </tr>
+    {% endif %}
+{% endblock table_body %}
