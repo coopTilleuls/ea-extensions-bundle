@@ -1,12 +1,16 @@
 {% extends ea_extensions_notification_crud_index_parent_template() %}
 
-{% block datagrid %}
+{% block main %}
+    {# Wraps the whole "main" block (table + results-count/pagination footer), not just
+       "datagrid" (the table alone) — the paginator/results-count is a sibling block rendered
+       right after "datagrid", not nested inside it, so scoping the controller to "datagrid"
+       alone would leave it unable to reach and refresh the results count. #}
     <div data-controller="ea-extensions--notification-list-update"
         data-action="ea-extensions--real-time-notification:notification:new@window->ea-extensions--notification-list-update#onNewNotification"
     >
         {{ parent() }}
     </div>
-{% endblock datagrid %}
+{% endblock main %}
 
 {% block table_body %}
     {% for entity in entities %}

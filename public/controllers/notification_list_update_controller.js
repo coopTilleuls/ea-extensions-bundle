@@ -14,5 +14,11 @@ export default class extends Controller {
         if (newTbody && currentTbody) {
             currentTbody.innerHTML = newTbody.innerHTML;
         }
+
+        const newCounter = doc.querySelector('.list-pagination-counter');
+        const currentCounter = this.element.querySelector('.list-pagination-counter');
+        if (newCounter && currentCounter) {
+            currentCounter.innerHTML = newCounter.innerHTML;
+        }
     }
 }
