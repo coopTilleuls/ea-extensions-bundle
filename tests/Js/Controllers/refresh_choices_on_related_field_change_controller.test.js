@@ -180,6 +180,29 @@ describe('refresh-choices-on-related-field-change controller', () => {
             expect(url.searchParams.get('orga_id_comparison')).toBe('=');
         });
 
+        it('does not double-encode the search query', async () => {
+            const { fieldElement, listenElement } = mountSingleField();
+            const fieldTomSelect = createMockTomSelect();
+            fieldElement.tomselect = fieldTomSelect;
+            listenElement.tomselect = createMockTomSelect({ value: '10', items: ['10'] });
+
+            global.fetch = vi.fn().mockResolvedValue({ json: vi.fn().mockResolvedValue({ results: [] }) });
+
+            start();
+
+            await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+
+            // URLSearchParams.append() already percent-encodes — passing an already-encoded
+            // value (e.g. via encodeURIComponent) would double-encode it (a space would come out
+            // as "%2520" instead of "%20").
+            fieldTomSelect.settings.load('café du monde', () => {});
+
+            await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
+
+            const url = new URL(global.fetch.mock.calls[1][0]);
+            expect(url.searchParams.get('query')).toBe('café du monde');
+        });
+
         it('disables the target when the listened field has no selected items', async () => {
             const { fieldElement, listenElement } = mountSingleField();
             const fieldTomSelect = createMockTomSelect();

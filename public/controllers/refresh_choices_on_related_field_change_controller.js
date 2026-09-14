@@ -126,7 +126,9 @@ export default class extends Controller {
             }
 
             if (query) {
-                url.searchParams.append('query', encodeURIComponent(query));
+                // URLSearchParams.append() already percent-encodes the value — encoding it here
+                // too would double-encode (a space becomes "%2520" instead of "%20").
+                url.searchParams.append('query', query);
             } else {
                 url.searchParams.delete('query');
             }
