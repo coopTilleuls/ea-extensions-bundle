@@ -11,13 +11,13 @@ Adds two things EasyAdmin's own menu handling doesn't support:
   listed first always gets marked "selected", regardless of which one the user actually clicked.
   A small helper lets you tag each ambiguous item individually, right where it's declared.
 
-Enabled by default; disable via:
+Disabled by default; enable via:
 
 ```yaml
 # config/packages/coop_tilleuls_ea_extensions.yaml
 coop_tilleuls_ea_extensions:
     menu_overrides:
-        enabled: false
+        enabled: true
 ```
 
 ## Nesting a menu deeper than 2 levels

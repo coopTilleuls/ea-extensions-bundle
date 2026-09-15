@@ -119,6 +119,18 @@ class Kernel extends BaseKernel
         ]);
 
         $container->extension('coop_tilleuls_ea_extensions', [
+            'menu_overrides' => [
+                'enabled' => true,
+            ],
+            'customizable_columns' => [
+                'enabled' => true,
+            ],
+            'pagination' => [
+                'enabled' => true,
+            ],
+            'notifications' => [
+                'enabled' => true,
+            ],
             'crud_export' => [
                 'enabled' => true,
                 'storage_service_id' => 'fixture.crud_export_storage',

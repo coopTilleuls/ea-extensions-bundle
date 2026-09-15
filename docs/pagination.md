@@ -2,13 +2,13 @@
 
 Lets users pick how many rows show per page on any CRUD's index page, via a `<select>`
 next to the pagination links. Works on any `AbstractCrudController` — no trait, no base
-class, no per-controller code required. Enabled by default; disable via:
+class, no per-controller code required. Disabled by default; enable via:
 
 ```yaml
 # config/packages/coop_tilleuls_ea_extensions.yaml
 coop_tilleuls_ea_extensions:
     pagination:
-        enabled: false
+        enabled: true
 ```
 
 ## Configuration

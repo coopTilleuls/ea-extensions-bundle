@@ -1,12 +1,12 @@
 # Customizable index columns
 
-Lets users choose and reorder which fields show on any CRUD's index page, with a saved-per-user preference. Works on any `AbstractCrudController` — no trait, no base class, no per-controller code required. Enabled by default; disable via:
+Lets users choose and reorder which fields show on any CRUD's index page, with a saved-per-user preference. Works on any `AbstractCrudController` — no trait, no base class, no per-controller code required. Disabled by default; enable via:
 
 ```yaml
 # config/packages/coop_tilleuls_ea_extensions.yaml
 coop_tilleuls_ea_extensions:
     customizable_columns:
-        enabled: false
+        enabled: true
 ```
 
 ## Consumer app setup (one-time)

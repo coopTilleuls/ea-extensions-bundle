@@ -2,13 +2,13 @@
 
 A ready-to-use notification feature: a `Notification` entity, a CRUD screen, an unread-count
 bell badge, a "latest notifications" dashboard card, and an optional real-time popover powered by
-Mercure. Enabled by default; disable via:
+Mercure. Disabled by default; enable via:
 
 ```yaml
 # config/packages/coop_tilleuls_ea_extensions.yaml
 coop_tilleuls_ea_extensions:
     notifications:
-        enabled: false
+        enabled: true
 ```
 
 ## Consumer app setup (one-time)

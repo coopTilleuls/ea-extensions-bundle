@@ -20,7 +20,7 @@ final class EAExtensionsBundleTest extends TestCase
 
     public function testDefaultPageSizeIsAmongTheDefaultAvailablePageSizes(): void
     {
-        $this->processPaginationConfig([]);
+        $this->processPaginationConfig(['enabled' => true]);
 
         $this->addToAssertionCount(1);
     }
@@ -31,33 +31,34 @@ final class EAExtensionsBundleTest extends TestCase
         $this->expectExceptionMessage('The "pagination.default_page_size" value must be one of the "pagination.available_page_sizes" values.');
 
         $this->processPaginationConfig([
+            'enabled' => true,
             'default_page_size' => 30,
             'available_page_sizes' => [10, 25, 50, 100],
         ]);
     }
 
-    public function testCrudExportIsDisabledByDefault(): void
+    public function testMenuOverridesIsDisabledByDefault(): void
     {
-        // storage_service_id has no bundle-owned default, so this feature — unlike every
-        // other one — must stay opt-in, or a bare `composer require` fails to boot.
-        $bundle = new EAExtensionsBundle();
-        $extension = $bundle->getContainerExtension();
-        self::assertInstanceOf(ConfigurationExtensionInterface::class, $extension);
-
-        $container = new ContainerBuilder();
-        $configuration = $extension->getConfiguration([], $container);
-        self::assertNotNull($configuration);
-
-        $processed = new Processor()->processConfiguration($configuration, [[]]);
-
-        self::assertFalse($processed['crud_export']['enabled']);
+        self::assertFalse($this->processDefaultConfig()['menu_overrides']['enabled']);
     }
 
-    public function testNotificationsAreEnabledByDefaultWithMercureDisabled(): void
+    public function testCustomizableColumnsIsDisabledByDefault(): void
+    {
+        self::assertFalse($this->processDefaultConfig()['customizable_columns']['enabled']);
+    }
+
+    public function testCrudExportIsDisabledByDefault(): void
+    {
+        // storage_service_id has no bundle-owned default, so this feature must stay opt-in,
+        // or a bare `composer require` fails to boot.
+        self::assertFalse($this->processDefaultConfig()['crud_export']['enabled']);
+    }
+
+    public function testNotificationsAreDisabledByDefaultWithMercureDisabled(): void
     {
         $config = $this->processNotificationsConfig([]);
 
-        self::assertTrue($config['enabled']);
+        self::assertFalse($config['enabled']);
         self::assertFalse($config['mercure']['enabled']);
     }
 
@@ -66,6 +67,22 @@ final class EAExtensionsBundleTest extends TestCase
         $config = $this->processNotificationsConfig(['mercure' => ['enabled' => true]]);
 
         self::assertTrue($config['mercure']['enabled']);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function processDefaultConfig(): array
+    {
+        $bundle = new EAExtensionsBundle();
+        $extension = $bundle->getContainerExtension();
+        self::assertInstanceOf(ConfigurationExtensionInterface::class, $extension);
+
+        $container = new ContainerBuilder();
+        $configuration = $extension->getConfiguration([], $container);
+        self::assertNotNull($configuration);
+
+        return new Processor()->processConfiguration($configuration, [[]]);
     }
 
     /**
