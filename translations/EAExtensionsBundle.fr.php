@@ -33,4 +33,7 @@ return [
             'default_button_label' => 'Voir la fiche',
         ],
     ],
+    'add_button_select' => [
+        'label' => 'Ajouter',
+    ],
 ];
