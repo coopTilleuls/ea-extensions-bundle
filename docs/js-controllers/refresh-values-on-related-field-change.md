@@ -104,6 +104,8 @@ useful for "pick a second, different X" fields. `defaultEnable` is set to `true`
 stays pickable even while `authorA` is still empty (there's nothing to exclude yet, not "nothing
 to show yet").
 
+> :warning: The bundle doesn't include filtering/exclusion process; it simply calls a URL with the pre-defined parameters. You have to implement this yourself in the relevant crud controller
+
 ## Note on `listenFallback`
 
 The fallback field's own change handler decides whether to act based on the `listen` field's

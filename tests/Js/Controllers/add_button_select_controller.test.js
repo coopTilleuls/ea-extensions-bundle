@@ -35,6 +35,43 @@ describe('add-button-select controller', () => {
         await waitFor(() => expect(container.querySelector('.add-to-select')).not.toBeNull());
     });
 
+    it('labels the button "Add" by default', async () => {
+        const container = mountDOM(`
+            <div data-controller="${IDENTIFIER}">
+                <div class="form-widget">
+                    <select multiple></select>
+                </div>
+            </div>
+        `);
+        container.querySelector('select').tomselect = { open: vi.fn() };
+
+        start();
+
+        await waitFor(() => expect(container.querySelector('.add-to-select')?.textContent.trim()).toBe('Add'));
+    });
+
+    it('uses the label value as the button text, escaped', async () => {
+        const container = mountDOM(`
+            <div data-controller="${IDENTIFIER}" data-${IDENTIFIER}-label-value="Ajouter &lt;b&gt;">
+                <div class="form-widget">
+                    <select multiple></select>
+                </div>
+            </div>
+        `);
+        container.querySelector('select').tomselect = { open: vi.fn() };
+
+        start();
+
+        const button = await waitFor(() => {
+            const btn = container.querySelector('.add-to-select');
+            expect(btn).not.toBeNull();
+            return btn;
+        });
+        expect(button.textContent.trim()).toBe('Ajouter <b>');
+        expect(button.querySelector('b')).toBeNull();
+        expect(button.querySelector('i.fa-plus')).not.toBeNull();
+    });
+
     it('does not create a button for a select outside its own scope', async () => {
         const outside = mountDOM(`
             <div class="form-widget">

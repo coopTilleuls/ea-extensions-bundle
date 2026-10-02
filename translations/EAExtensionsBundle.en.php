@@ -33,4 +33,7 @@ return [
             'default_button_label' => 'View',
         ],
     ],
+    'add_button_select' => [
+        'label' => 'Add',
+    ],
 ];

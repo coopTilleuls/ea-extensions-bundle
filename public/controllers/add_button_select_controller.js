@@ -5,14 +5,22 @@ import { Controller } from '@hotwired/stimulus';
  * scope, that opens the field's dropdown when clicked — useful when a multi-select renders with
  * no visible input of its own once one or more items are already selected.
  *
- * I/O: none — just put `data-controller` on an element that wraps whichever multi-select
- * field(s) should get the button (a single field's own row is enough, no need to scope this to
- * the whole form).
+ * Put `data-controller` on an element that wraps whichever multi-select field(s) should get the
+ * button (a single field's own row is enough, no need to scope this to the whole form).
+ *
+ * I/O:
+ *   values:
+ *      - label (String, optional, default "Add"): the button's text — pass the translated
+ *        `add_button_select.label` message (`EAExtensionsBundle` domain) to localize it
  *
  * The button is disabled/enabled together with the select itself.
  */
 /* stimulusFetch: 'lazy' */
 export default class extends Controller {
+    static values = {
+        label: { type: String, default: 'Add' },
+    };
+
     connect() {
         this.disabledObservers = [];
         this.handledSelects = new WeakSet();
@@ -62,7 +70,8 @@ export default class extends Controller {
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'add-to-select btn btn-link mt-2 ps-0';
-        button.innerHTML = '<i class="fas fa-plus"></i> Ajouter';
+        button.innerHTML = '<i class="fas fa-plus"></i> ';
+        button.append(this.labelValue);
         button.disabled = isDisabled;
 
         return button;
