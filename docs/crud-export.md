@@ -6,10 +6,10 @@ download or, for large result sets, an asynchronous background job. The current 
 is **not** preserved — the export query drops it and returns rows unordered — only the
 filter/search criteria carry over. Works on any `AbstractCrudController`.
 
-Unlike the bundle's other features, this one is **disabled by default**: it has a mandatory
-setting (`storage_service_id`, see below) with no bundle-owned default, so enabling it
-unconditionally would break `composer update`/`docker compose up` for any app that hasn't
-configured it yet. Enable it explicitly once storage is configured:
+**Disabled by default**, like every other feature in this bundle — this one additionally has a
+mandatory setting (`storage_service_id`, see below) with no bundle-owned default, so enabling it
+without configuring storage first would break at boot time. Enable it explicitly once storage is
+configured:
 
 ```yaml
 # config/packages/coop_tilleuls_ea_extensions.yaml

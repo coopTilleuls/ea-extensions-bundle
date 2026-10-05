@@ -29,19 +29,19 @@ final class EAExtensionsBundle extends AbstractBundle
                 ->arrayNode('menu_overrides')
                     ->addDefaultsIfNotSet()
                     ->children()
-                        ->booleanNode('enabled')->defaultTrue()->end()
+                        ->booleanNode('enabled')->defaultFalse()->end()
                     ->end()
                 ->end()
                 ->arrayNode('customizable_columns')
                     ->addDefaultsIfNotSet()
                     ->children()
-                        ->booleanNode('enabled')->defaultTrue()->end()
+                        ->booleanNode('enabled')->defaultFalse()->end()
                     ->end()
                 ->end()
                 ->arrayNode('pagination')
                     ->addDefaultsIfNotSet()
                     ->children()
-                        ->booleanNode('enabled')->defaultTrue()->end()
+                        ->booleanNode('enabled')->defaultFalse()->end()
                         ->scalarNode('query_parameter')->defaultValue('itemsPerPage')->end()
                         ->integerNode('default_page_size')->defaultValue(25)->end()
                         ->arrayNode('available_page_sizes')
@@ -83,7 +83,7 @@ final class EAExtensionsBundle extends AbstractBundle
                 ->arrayNode('notifications')
                     ->addDefaultsIfNotSet()
                     ->children()
-                        ->booleanNode('enabled')->defaultTrue()->end()
+                        ->booleanNode('enabled')->defaultFalse()->end()
                         ->arrayNode('mercure')
                             ->addDefaultsIfNotSet()
                             ->children()
@@ -142,12 +142,12 @@ final class EAExtensionsBundle extends AbstractBundle
 
     /**
      * Config isn't processed yet at the prepend stage, so this reads the "enabled" flag straight
-     * out of the raw (not-yet-merged-with-defaults) config arrays — defaulting to true, matching
+     * out of the raw (not-yet-merged-with-defaults) config arrays — defaulting to false, matching
      * this feature's own {@see configure()} schema default.
      */
     private function isFeatureEnabled(ContainerBuilder $builder, string $feature): bool
     {
-        $enabled = true;
+        $enabled = false;
         foreach ($builder->getExtensionConfig($this->extensionAlias) as $config) {
             if (\array_key_exists($feature, $config) && \array_key_exists('enabled', $config[$feature])) {
                 $enabled = $config[$feature]['enabled'];
