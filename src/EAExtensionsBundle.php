@@ -98,6 +98,19 @@ final class EAExtensionsBundle extends AbstractBundle
                         ->booleanNode('enabled')->defaultFalse()->end()
                     ->end()
                 ->end()
+                ->arrayNode('tab_navigation')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')->defaultFalse()->end()
+                    ->end()
+                ->end()
+                ->arrayNode('back_to_top')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')->defaultFalse()->end()
+                        ->integerNode('threshold')->defaultValue(300)->min(0)->end()
+                    ->end()
+                ->end()
             ->end()
         ;
     }
@@ -246,6 +259,16 @@ final class EAExtensionsBundle extends AbstractBundle
 
         if ($config['index_only_search']['enabled']) {
             $container->import('../config/index_only_search_services.php');
+        }
+
+        if ($config['tab_navigation']['enabled']) {
+            $container->import('../config/tab_navigation_services.php');
+        }
+
+        if ($config['back_to_top']['enabled']) {
+            $builder->setParameter('coop_tilleuls_ea_extensions.back_to_top.threshold', $config['back_to_top']['threshold']);
+
+            $container->import('../config/back_to_top_services.php');
         }
     }
 }

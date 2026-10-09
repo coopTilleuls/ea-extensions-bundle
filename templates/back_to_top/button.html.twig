@@ -1,0 +1,13 @@
+{# Injected at the end of every EasyAdmin page's <body> by BackToTopListener (see docs/back-to-top.md).
+   Starts hidden: the "coop-tilleuls--ea-extensions--back-to-top" controller shows it once the page
+   is scrolled past "threshold" (back_to_top.threshold config, or the controller's own 300px default
+   when this template is included by hand without it). #}
+<button type="button"
+        class="ea-extensions-back-to-top btn btn-secondary rounded-circle shadow-sm d-none"
+        aria-label="{{ 'back_to_top.label'|trans({}, 'EAExtensionsBundle') }}"
+        title="{{ 'back_to_top.label'|trans({}, 'EAExtensionsBundle') }}"
+        data-controller="coop-tilleuls--ea-extensions--back-to-top"
+        {% if threshold is defined %}data-coop-tilleuls--ea-extensions--back-to-top-threshold-value="{{ threshold }}"{% endif %}
+        data-action="coop-tilleuls--ea-extensions--back-to-top#scrollToTop">
+    <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+</button>

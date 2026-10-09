@@ -36,4 +36,11 @@ return [
     'add_button_select' => [
         'label' => 'Ajouter',
     ],
+    'tab_navigation' => [
+        'previous' => 'Onglet précédent',
+        'next' => 'Onglet suivant',
+    ],
+    'back_to_top' => [
+        'label' => 'Retour en haut de page',
+    ],
 ];

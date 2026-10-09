@@ -140,6 +140,13 @@ class Kernel extends BaseKernel
             'index_only_search' => [
                 'enabled' => true,
             ],
+            'tab_navigation' => [
+                'enabled' => true,
+            ],
+            'back_to_top' => [
+                'enabled' => true,
+                'threshold' => 150,
+            ],
         ]);
 
         $services = $container->services()->defaults()->autowire()->autoconfigure();
@@ -159,6 +166,7 @@ class Kernel extends BaseKernel
         $services->set(FixtureItemCrudControllerForcedAsync::class)->public();
         $services->set(FixtureItemCrudControllerForcedSync::class)->public();
         $services->set(FixtureIndexOnlySearchCrudController::class)->public();
+        $services->set(FixtureTabbedCrudController::class)->public();
         $services->set(FixtureAmountExportResolver::class);
 
         $services->set('fixture.crud_export_storage', Filesystem::class)

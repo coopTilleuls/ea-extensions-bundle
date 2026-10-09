@@ -7,11 +7,13 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudFields\CrudFieldLayout;
 use CoopTilleuls\Bundle\EAExtensionsBundle\MenuOverrides\MenuItemTag;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
+use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * The menu built here is a 3-level-deep menu (Level 1 > Level 2 > leaf) whose two leaves both
@@ -43,6 +45,17 @@ final class FixtureDashboardController extends AbstractDashboardController
         // Pagination's own override (crud/paginator) is NOT applied here — it's a standard
         // Symfony bundle-template override, see templates/bundles/EasyAdminBundle/crud/paginator.html.twig.
         return CrudFieldLayout::applyIfEmbedded(Crud::new(), $this->requestStack->getCurrentRequest());
+    }
+
+    /**
+     * A non-CRUD admin page extending EasyAdmin's layout (vendor's index() renders a standalone
+     * welcome page that doesn't) — used to prove page-wide features such as back-to-top aren't
+     * limited to CRUD pages.
+     */
+    #[AdminRoute('/custom-page', name: 'custom_page')]
+    public function customPage(): Response
+    {
+        return $this->render('@EasyAdmin/page/content.html.twig');
     }
 
     public function configureMenuItems(): iterable

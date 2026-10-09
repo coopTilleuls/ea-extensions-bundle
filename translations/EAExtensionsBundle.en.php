@@ -36,4 +36,11 @@ return [
     'add_button_select' => [
         'label' => 'Add',
     ],
+    'tab_navigation' => [
+        'previous' => 'Previous tab',
+        'next' => 'Next tab',
+    ],
+    'back_to_top' => [
+        'label' => 'Back to top',
+    ],
 ];

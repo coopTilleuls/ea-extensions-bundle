@@ -1,4 +1,6 @@
 import './styles/notifications.css';
+import './styles/tab_navigation.css';
+import './styles/back_to_top.css';
 import { startStimulusApp } from '@symfony/stimulus-bundle';
 import CustomizableColumnsModalController from './controllers/customizable_columns_modal_controller.js';
 import ColumnHandlerController from './controllers/column_handler_controller.js';
@@ -20,6 +22,8 @@ import SelectAllOptionsController from './controllers/select_all_options_control
 import AddButtonSelectController from './controllers/add_button_select_controller.js';
 import TomselectOptgroupsController from './controllers/tomselect_optgroups_controller.js';
 import CollectionFieldRequiredController from './controllers/collection_field_required_controller.js';
+import TabNavigationController from './controllers/tab_navigation_controller.js';
+import BackToTopController from './controllers/back_to_top_controller.js';
 
 // startStimulusApp() creates a brand new Stimulus Application every time it's called (no
 // built-in dedup) and always eagerly wires up every controller AssetMapper knows about
@@ -47,3 +51,5 @@ app.register('coop-tilleuls--ea-extensions--select-all-options', SelectAllOption
 app.register('coop-tilleuls--ea-extensions--add-button-select', AddButtonSelectController);
 app.register('coop-tilleuls--ea-extensions--tomselect-optgroups', TomselectOptgroupsController);
 app.register('coop-tilleuls--ea-extensions--collection-field-required', CollectionFieldRequiredController);
+app.register('coop-tilleuls--ea-extensions--tab-navigation', TabNavigationController);
+app.register('coop-tilleuls--ea-extensions--back-to-top', BackToTopController);
