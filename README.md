@@ -50,6 +50,7 @@ Each feature has its own setup/usage doc in [`docs/`](docs/):
 - [CrudFields](docs/crud-fields.md) — embed one CrudController's index listing inside another entity's page (e.g. a detail page tab).
 - [Configurable pagination](docs/pagination.md) — lets users pick how many rows show per page on any CRUD's index page.
 - [CRUD index export](docs/crud-export.md) — CSV/XLSX export of any CRUD's index page, sync or async.
+- [Index-only search](docs/index-only-search.md) — shows the top-bar search box on index pages only, not on detail/edit/new pages.
 
 ## JS controllers
 
