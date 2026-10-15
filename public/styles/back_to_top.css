@@ -1,0 +1,19 @@
+/* Keeps the floating button from covering the last row at the bottom of the page. Class set by the
+   back-to-top controller the first time the button shows, so never on a page that fits the screen. */
+body.ea-extensions-back-to-top-space-reserved .content-wrapper {
+    padding-bottom: 5rem;
+}
+
+/* Floating "Back to top" button, below Bootstrap's modal backdrop (1050) */
+.ea-extensions-back-to-top {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1030;
+}

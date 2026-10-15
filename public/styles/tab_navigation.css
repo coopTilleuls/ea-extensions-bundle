@@ -1,0 +1,7 @@
+/* Initial state, before the tab-navigation controller connects (and without JS): no "previous"
+   button on the first pane, no "next" button on the last one, no buttons at all on a single pane. */
+.form-tabs-content > .tab-content > .tab-pane:first-child .ea-extensions-tab-navigation-previous,
+.form-tabs-content > .tab-content > .tab-pane:last-child .ea-extensions-tab-navigation-next,
+.form-tabs-content > .tab-content > .tab-pane:only-child > .ea-extensions-tab-navigation-buttons {
+    display: none;
+}

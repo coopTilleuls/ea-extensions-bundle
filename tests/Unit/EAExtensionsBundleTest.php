@@ -67,6 +67,35 @@ final class EAExtensionsBundleTest extends TestCase
         self::assertFalse($this->processDefaultConfig()['index_only_search']['enabled']);
     }
 
+    public function testTabNavigationIsDisabledByDefault(): void
+    {
+        self::assertFalse($this->processDefaultConfig()['tab_navigation']['enabled']);
+    }
+
+    public function testBackToTopIsDisabledByDefaultWithA300pxThreshold(): void
+    {
+        $config = $this->processDefaultConfig()['back_to_top'];
+
+        self::assertFalse($config['enabled']);
+        self::assertSame(300, $config['threshold']);
+    }
+
+    public function testNegativeBackToTopThresholdIsRejected(): void
+    {
+        $bundle = new EAExtensionsBundle();
+        $extension = $bundle->getContainerExtension();
+        self::assertInstanceOf(ConfigurationExtensionInterface::class, $extension);
+
+        $configuration = $extension->getConfiguration([], new ContainerBuilder());
+        self::assertNotNull($configuration);
+
+        $this->expectException(InvalidConfigurationException::class);
+
+        new Processor()->processConfiguration($configuration, [
+            ['back_to_top' => ['enabled' => true, 'threshold' => -1]],
+        ]);
+    }
+
     public function testMercureCanBeExplicitlyEnabled(): void
     {
         $config = $this->processNotificationsConfig(['mercure' => ['enabled' => true]]);

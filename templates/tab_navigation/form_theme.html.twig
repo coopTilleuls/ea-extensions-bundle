@@ -1,0 +1,27 @@
+{# Appended last to every CRUD's form themes by TabNavigationFormThemeListener (see
+   docs/tab-navigation.md). It deliberately extends nothing: as the highest-priority theme, an
+   {% extends '@EasyAdmin/crud/form_theme.html.twig' %} here would make every vendor block it
+   inherits win over the app's own form theme overrides too. Hence these two blocks copy vendor's
+   markup instead of calling parent(), only adding the "coop-tilleuls--ea-extensions--tab-navigation"
+   controller on the panes wrapper and the "Previous tab / Next tab" buttons at the bottom of each pane. #}
+{% block ea_form_tabpane_group_open_row %}
+    <div class="form-tabs-content" data-controller="coop-tilleuls--ea-extensions--tab-navigation">
+        <div class="tab-content">
+{% endblock ea_form_tabpane_group_open_row %}
+
+{% block ea_form_tabpane_close_row %}
+        </div>
+        <div class="ea-extensions-tab-navigation-buttons d-flex justify-content-end gap-2 mt-3" data-coop-tilleuls--ea-extensions--tab-navigation-target="buttonGroup">
+            <twig:ea:Button type="button" class="ea-extensions-tab-navigation-previous" icon="fa-solid fa-chevron-left"
+                            data-coop-tilleuls--ea-extensions--tab-navigation-target="previousButton"
+                            data-action="coop-tilleuls--ea-extensions--tab-navigation#previous">
+                {{ 'tab_navigation.previous'|trans({}, 'EAExtensionsBundle') }}
+            </twig:ea:Button>
+            <twig:ea:Button type="button" class="ea-extensions-tab-navigation-next" icon="fa-solid fa-chevron-right" withTrailingIcon
+                            data-coop-tilleuls--ea-extensions--tab-navigation-target="nextButton"
+                            data-action="coop-tilleuls--ea-extensions--tab-navigation#next">
+                {{ 'tab_navigation.next'|trans({}, 'EAExtensionsBundle') }}
+            </twig:ea:Button>
+        </div>
+    </div>
+{% endblock ea_form_tabpane_close_row %}

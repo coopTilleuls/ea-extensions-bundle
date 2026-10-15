@@ -1,0 +1,7 @@
+{# Stands for a consumer app's own form theme: proves the tab-navigation theme gets appended to the
+   app's form themes rather than replacing them. #}
+{% extends '@EasyAdmin/crud/form_theme.html.twig' %}
+
+{% block ea_form_tablist_row %}
+    <div class="fixture-app-form-theme">{{ parent() }}</div>
+{% endblock ea_form_tablist_row %}

@@ -51,6 +51,8 @@ Each feature has its own setup/usage doc in [`docs/`](docs/):
 - [Configurable pagination](docs/pagination.md) — lets users pick how many rows show per page on any CRUD's index page.
 - [CRUD index export](docs/crud-export.md) — CSV/XLSX export of any CRUD's index page, sync or async.
 - [Index-only search](docs/index-only-search.md) — shows the top-bar search box on index pages only, not on detail/edit/new pages.
+- [Tab navigation](docs/tab-navigation.md) — "Previous tab" / "Next tab" buttons at the bottom of each tab of any tabbed form.
+- [Back to top](docs/back-to-top.md) — floating "Back to top" button on every admin page, shown once scrolled.
 
 ## JS controllers
 
