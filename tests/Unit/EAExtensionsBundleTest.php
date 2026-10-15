@@ -62,6 +62,11 @@ final class EAExtensionsBundleTest extends TestCase
         self::assertFalse($config['mercure']['enabled']);
     }
 
+    public function testIndexOnlySearchIsDisabledByDefault(): void
+    {
+        self::assertFalse($this->processDefaultConfig()['index_only_search']['enabled']);
+    }
+
     public function testMercureCanBeExplicitlyEnabled(): void
     {
         $config = $this->processNotificationsConfig(['mercure' => ['enabled' => true]]);

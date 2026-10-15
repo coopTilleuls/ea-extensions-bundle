@@ -137,6 +137,9 @@ class Kernel extends BaseKernel
                 'async_threshold' => 3,
                 'max_limit' => 10,
             ],
+            'index_only_search' => [
+                'enabled' => true,
+            ],
         ]);
 
         $services = $container->services()->defaults()->autowire()->autoconfigure();
@@ -155,6 +158,7 @@ class Kernel extends BaseKernel
         $services->set(FixtureItemCrudControllerDisabled::class)->public();
         $services->set(FixtureItemCrudControllerForcedAsync::class)->public();
         $services->set(FixtureItemCrudControllerForcedSync::class)->public();
+        $services->set(FixtureIndexOnlySearchCrudController::class)->public();
         $services->set(FixtureAmountExportResolver::class);
 
         $services->set('fixture.crud_export_storage', Filesystem::class)

@@ -92,6 +92,12 @@ final class EAExtensionsBundle extends AbstractBundle
                         ->end()
                     ->end()
                 ->end()
+                ->arrayNode('index_only_search')
+                    ->addDefaultsIfNotSet()
+                    ->children()
+                        ->booleanNode('enabled')->defaultFalse()->end()
+                    ->end()
+                ->end()
             ->end()
         ;
     }
@@ -236,6 +242,10 @@ final class EAExtensionsBundle extends AbstractBundle
 
                 $container->import('../config/notifications_mercure_services.php');
             }
+        }
+
+        if ($config['index_only_search']['enabled']) {
+            $container->import('../config/index_only_search_services.php');
         }
     }
 }
