@@ -4,8 +4,8 @@ const controllerNamesFrom = (element) => (element.getAttribute(CONTROLLER_ATTRIB
 
 /**
  * Registers each controller only once an element using it shows up in the DOM, so a page only
- * downloads the controllers (and the stylesheets they import) it actually uses — the same
- * mechanism as symfony/stimulus-bundle's lazy controllers, which only covers the host app's own
+ * downloads the controllers (and the stylesheets they import) it actually uses. Same mechanism
+ * as symfony/stimulus-bundle's lazy controllers, which only cover the host app's own
  * controllers.json. The loaders must be literal `() => import('./...')` calls: AssetMapper then
  * maps those modules without preloading them.
  *

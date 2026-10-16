@@ -14,8 +14,8 @@ coop_tilleuls_ea_extensions:
 
 ## Consumer app setup (one-time)
 
-Only the [shared setup](../README.md#setup-one-time-shared-by-every-feature) (Twig and JavaScript) — it provides the
-`coop-tilleuls--ea-extensions--tab-navigation` Stimulus controller and its stylesheet.
+Only the [shared setup](../README.md#setup-one-time-shared-by-every-feature) (Twig and JavaScript).
+It provides the `coop-tilleuls--ea-extensions--tab-navigation` Stimulus controller and its stylesheet.
 
 ## Behavior
 

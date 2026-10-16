@@ -91,23 +91,23 @@ Every feature is **disabled by default** and enabled under `coop_tilleuls_ea_ext
 `config/packages/coop_tilleuls_ea_extensions.yaml`. Each doc in [`docs/`](docs/) covers its
 configuration and any setup beyond the shared one above:
 
-| Feature | Uses the JS entrypoint | Extra setup |
-|---|---|---|
-| [Menu overrides](docs/menu-overrides.md) — infinite-depth submenus, correct active item when two items share a destination | no | include a template in your menu template |
-| [Customizable index columns](docs/customizable-columns.md) — per-user choice and ordering of index columns | yes | routes, migration |
-| [CrudFields](docs/crud-fields.md) — embed a CrudController's index listing in another page | yes | one call in the dashboard's `configureCrud()` |
-| [Configurable pagination](docs/pagination.md) — page-size selector on index pages | yes | two template overrides |
-| [CRUD index export](docs/crud-export.md) — CSV/XLSX export of index pages, sync or async | no | extra packages, routes, storage, Messenger routing |
-| [Index-only search](docs/index-only-search.md) — top-bar search box on index pages only | no | none |
-| [Tab navigation](docs/tab-navigation.md) — "Previous tab" / "Next tab" buttons on tabbed forms | yes | none |
-| [Back to top](docs/back-to-top.md) — floating "Back to top" button | yes | none |
-| [Notifications](docs/notifications.md) — notification entity, CRUD, unread badge, optional real-time popover (Mercure) | yes | routes, menu item, recipient mapping, migration, layout include |
+| Feature | What it does | Uses the JS entrypoint | Extra setup |
+|---|---|---|---|
+| [Menu overrides](docs/menu-overrides.md) | infinite-depth submenus, correct active item when two items share a destination | no | include a template in your menu template |
+| [Customizable index columns](docs/customizable-columns.md) | per-user choice and ordering of index columns | yes | routes, migration |
+| [CrudFields](docs/crud-fields.md) | embed a CrudController's index listing in another page | yes | one call in the dashboard's `configureCrud()` |
+| [Configurable pagination](docs/pagination.md) | page-size selector on index pages | yes | two template overrides |
+| [CRUD index export](docs/crud-export.md) | CSV/XLSX export of index pages, sync or async | no | extra packages, routes, storage, Messenger routing |
+| [Index-only search](docs/index-only-search.md) | top-bar search box on index pages only | no | none |
+| [Tab navigation](docs/tab-navigation.md) | "Previous tab" / "Next tab" buttons on tabbed forms | yes | none |
+| [Back to top](docs/back-to-top.md) | floating "Back to top" button | yes | none |
+| [Notifications](docs/notifications.md) | notification entity, CRUD, unread badge, optional real-time popover (Mercure) | yes | routes, menu item, recipient mapping, migration, layout include |
 
 ## JS controllers
 
 Standalone Stimulus controllers, reusable directly in your own form templates, needing only the
-[JavaScript setup](#javascript) — see [`docs/js-controllers/`](docs/js-controllers/README.md)
-for the full list.
+[JavaScript setup](#javascript). The full list is in
+[`docs/js-controllers/`](docs/js-controllers/README.md).
 
 ## Development
 
