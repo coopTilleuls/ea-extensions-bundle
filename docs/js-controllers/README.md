@@ -2,20 +2,11 @@
 
 Standalone Stimulus controllers shipped by this bundle, meant to be reused directly in your own
 EasyAdmin form templates — unlike the [features](../../README.md#features) above, none of these
-require any PHP-side setup beyond the one-time importmap entry below.
+require any PHP-side setup beyond the one-time JavaScript setup below.
 
 ## Consumer app setup (one-time)
 
-Add an importmap entry for the bundle's JS entrypoint, if not already done for another feature
-in this bundle (see [customizable columns](../customizable-columns.md#consumer-app-setup-one-time)):
-
-```php
-// importmap.php
-'ea-extensions' => [
-    'path' => 'bundles/eaextensions/ea-extensions.js',
-    'entrypoint' => true,
-],
-```
+Only the [JavaScript setup](../../README.md#javascript).
 
 ## Available controllers
 

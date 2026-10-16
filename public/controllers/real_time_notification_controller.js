@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import '../styles/notifications.css';
 
 export default class extends Controller {
     static values = {
