@@ -1,26 +1,24 @@
 ---
 name: bundle-ci-scaffolding
-description: How to scaffold a new standalone coopTilleuls Symfony bundle with a working PHPUnit/PHPStan/PHP-CS-Fixer/Rector CI pipeline — repo/submodule wiring and the composer/test-kernel gotchas hit doing it for EAExtensionsBundle
+description: How to scaffold a new standalone coopTilleuls Symfony bundle with a working PHPUnit/PHPStan/PHP-CS-Fixer/Rector CI pipeline — monorepo/split wiring and the composer/test-kernel gotchas hit doing it for EAExtensionsBundle
 ---
 
 # Scaffolding a new coopTilleuls bundle + CI
 
 This is the generic procedure — distinct from `theme-bundle-workflow`, which covers `ThemeBundle`'s own three-repo dev/verify loop, not how to bootstrap a *new* bundle from nothing.
 
-## Repo / submodule pattern
+## Repo / split pattern
 
-New standalone bundle → own private GitHub repo under the `coopTilleuls` org → wired into `cgt-test` as a git submodule at `src/<Namespace>/Bundle/<BundleName>` (same as `ThemeBundle` at `src/CGT/Bundle/ThemeBundle`).
+Bundles are developed inside `cgt-test` (monorepo), at `src/<Namespace>/Bundle/<BundleName>` (same as `ThemeBundle` at `src/CGT/Bundle/ThemeBundle`). Each one is published to its own **read-only** private repo under the `coopTilleuls` org by `cgt-test`'s `.github/workflows/split.yml` (`git subtree split`), which is what projects install through composer.
 
-Sequence that actually works:
-1. Scaffold the bundle's files directly at the target path (plain directory, no git yet).
-2. `git init -b main`, commit, `git remote add origin <url>`, push — get it live as a real, non-empty repo first.
-3. From the `cgt-test` root: `rm -rf` that directory, then `git submodule add <url> <path>`. Adding a submodule over a directory that's already populated (but not itself set up as that exact remote's checkout) doesn't register cleanly — wiping and re-cloning via `submodule add` is the reliable path to a correct `.gitmodules` entry + gitlink.
-
-**Gitlink staleness gotcha**: if you push a follow-up fix commit to the submodule *after* already `git add`-ing it in the superproject, the superproject's recorded gitlink can go stale — `git status` in the superproject shows the submodule path as modified with "(nouveaux commits)". Re-`git add <submodule-path>` before the superproject commit (or amend) to pick up the submodule's actual current HEAD.
+Sequence for a new bundle:
+1. Scaffold the bundle's files directly at the target path in `cgt-test`, with its own `composer.json` and tooling; add its psr-4 entry to `cgt-test`'s root `composer.json`.
+2. Add a `.github/workflows/<bundle>.yml` in `cgt-test` modelled on `theme-bundle.yml` (a `changes` job + `working-directory` jobs), and `<bundle dir>/.github/workflows/close-pull-request.yml` copied from an existing bundle.
+3. Create the empty GitHub repo, give the split token write access to it, and add a `prefix`/`repository` entry to `split.yml`'s matrix. The first push to `main` publishes it.
 
 ## CI/tooling convention
 
-For a new bundle's PHPUnit/PHPStan/PHP-CS-Fixer/Rector setup, mirror **`cgt-cogitiel`**'s rulesets — confirmed explicitly by the user as the source of truth for this. Do NOT mirror `cgt-test` itself (the app has zero tooling configured — no PHPUnit/PHPStan/CS-Fixer/CI at all). `ThemeBundle` (`cgt-theme-bundle`) *does* now have its own CI too (added 2026-08-25 — Playwright screenshot-regression tests, not PHPUnit, but the same PHPStan/CS-Fixer/Rector/PHP-8.4-floor scaffolding applies) — see its own copy of this skill for what differs (a fixture *app*, not just a fixture kernel, since it needs to actually render themed pages for screenshots).
+For a new bundle's PHPUnit/PHPStan/PHP-CS-Fixer/Rector setup, mirror **`cgt-cogitiel`**'s rulesets — confirmed explicitly by the user as the source of truth for this. Do NOT mirror `cgt-test` itself (the app has zero tooling configured — no PHPUnit/PHPStan/CS-Fixer/CI at all). `ThemeBundle` (`cgt-theme-bundle`) *does* now have its own CI too (added 2026-08-25 — Playwright screenshot-regression tests, not PHPUnit, but the same PHPStan/CS-Fixer/Rector/PHP-8.4-floor scaffolding applies) — see its copy of this skill for what differs (a fixture *app*, not just a fixture kernel, since it needs to actually render themed pages for screenshots).
 
 Reuse from cgt-cogitiel:
 - **PHPStan**: level 8, `phpstan/phpstan-symfony` + `phpstan/extension-installer`.

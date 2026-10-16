@@ -1,5 +1,8 @@
 # EAExtensionsBundle
 
+> [!IMPORTANT]
+> This repository is read-only: it is generated automatically from [coopTilleuls/cgt-test](https://github.com/coopTilleuls/cgt-test). Please open issues and pull requests there.
+
 EasyAdmin extensions bundle for Les-Tilleuls.coop / coopTilleuls projects.
 
 ## Installation
