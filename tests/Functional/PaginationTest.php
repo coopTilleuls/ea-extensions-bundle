@@ -27,6 +27,18 @@ final class PaginationTest extends AbstractFunctionalTestCase
         self::assertGreaterThan(0, $crawler->filter('select[data-controller="ea-extensions--pagination-page-size"]')->count());
     }
 
+    public function testSelectorHasNoInlineStyleSoAStrictContentSecurityPolicyKeepsItsLayout(): void
+    {
+        $this->persistFixtureEntities(3);
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureCrudController::class));
+
+        $selector = $crawler->filter('select[data-controller="ea-extensions--pagination-page-size"]');
+        self::assertNull($selector->attr('style'));
+        self::assertStringContainsString('w-auto', (string) $selector->attr('class'));
+    }
+
     public function testQueryOverrideChangesThePageSize(): void
     {
         $this->persistFixtureEntities(5);
