@@ -77,8 +77,7 @@ class Kernel extends BaseKernel
                 'driver' => 'pdo_sqlite',
                 'path' => '%kernel.cache_dir%/test.db',
             ],
-            'orm' => [
-                'auto_generate_proxy_classes' => true,
+            'orm' => DoctrineOrmConfig::withProxyOptions([
                 'auto_mapping' => false,
                 'mappings' => [
                     'EAExtensionsFixtures' => [
@@ -91,7 +90,7 @@ class Kernel extends BaseKernel
                 'resolve_target_entities' => [
                     NotificationRecipientInterface::class => FixtureNotificationRecipient::class,
                 ],
-            ],
+            ]),
         ]);
 
         $container->extension('security', [

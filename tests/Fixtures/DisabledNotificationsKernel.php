@@ -63,10 +63,9 @@ final class DisabledNotificationsKernel extends BaseKernel
                 'driver' => 'pdo_sqlite',
                 'path' => '%kernel.cache_dir%/test.db',
             ],
-            'orm' => [
-                'auto_generate_proxy_classes' => true,
+            'orm' => DoctrineOrmConfig::withProxyOptions([
                 'auto_mapping' => false,
-            ],
+            ]),
         ]);
 
         $container->extension('security', [

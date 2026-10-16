@@ -24,7 +24,7 @@ final class MercureNotificationPublisher implements NotificationPublisherInterfa
     public function publish(string $topic, array $payload): void
     {
         try {
-            // Private: only a subscriber presenting a JWT whose "mercure.subscribe" claim
+            // Private: only a subscriber presenting a JWT whose subscribe authorization
             // covers this exact topic receives it — see _notification_popover.html.twig's
             // mercure() call, which requests that claim for the current recipient's own topic.
             $this->hub->publish(new Update([$topic], json_encode($payload, JSON_THROW_ON_ERROR), private: true));

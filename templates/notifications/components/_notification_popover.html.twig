@@ -10,6 +10,7 @@
 <div class="ea-extensions-notification-popover card shadow position-fixed d-none border-0"
     data-controller="ea-extensions--mercure-hub ea-extensions--real-time-notification"
     data-ea-extensions--mercure-hub-hub-url-value="{{ mercure(null, {subscribe: ea_extensions_notification_topic()}) }}"
+    data-ea-extensions--mercure-hub-protocol-version-value="{{ ea_extensions_notifications_mercure_protocol_version() }}"
     data-ea-extensions--real-time-notification-target="popover"
     data-ea-extensions--real-time-notification-topic-value="{{ ea_extensions_notification_topic() }}"
     data-ea-extensions--real-time-notification-ea-extensions--mercure-hub-outlet="[data-controller~='ea-extensions--mercure-hub']"

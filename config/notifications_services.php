@@ -25,6 +25,7 @@ return static function (ContainerConfigurator $container): void {
         ->exclude([
             __DIR__.'/../src/Notifications/{Entity,Controller}',
             __DIR__.'/../src/Notifications/Publisher/MercureNotificationPublisher.php',
+            __DIR__.'/../src/Notifications/Twig/NotificationMercureExtension.php',
             __DIR__.'/../src/Notifications/**/*Interface.php',
         ])
     ;

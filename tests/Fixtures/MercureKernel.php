@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures;
 
+use Composer\InstalledVersions;
 use Symfony\Bundle\MercureBundle\MercureBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -42,17 +43,25 @@ final class MercureKernel extends Kernel
             ],
         ]);
 
+        $hub = [
+            // Must share a second-level domain with the test client's own host
+            // (KernelBrowser defaults to "localhost") — Authorization::setCookie()
+            // refuses to set a cookie for a hub it considers a different site.
+            'url' => 'https://localhost/.well-known/mercure',
+            'jwt' => [
+                'secret' => '!TestOnlyMercureHubJWTSecretKey!',
+            ],
+        ];
+
+        // mercure-bundle 0.6 defaults to the Mercure 1.0 protocol; the subscriber-cookie
+        // assertions target the legacy one ("mercureAuthorization" cookie, "mercure" JWT claim).
+        if (version_compare((string) InstalledVersions::getVersion('symfony/mercure-bundle'), '0.6.0', '>=')) {
+            $hub['protocol_version'] = '0.x';
+        }
+
         $container->extension('mercure', [
             'hubs' => [
-                'default' => [
-                    // Must share a second-level domain with the test client's own host
-                    // (KernelBrowser defaults to "localhost") — Authorization::setCookie()
-                    // refuses to set a cookie for a hub it considers a different site.
-                    'url' => 'https://localhost/.well-known/mercure',
-                    'jwt' => [
-                        'secret' => '!TestOnlyMercureHubJWTSecretKey!',
-                    ],
-                ],
+                'default' => $hub,
             ],
         ]);
 

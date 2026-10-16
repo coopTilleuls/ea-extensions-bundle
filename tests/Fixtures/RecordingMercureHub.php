@@ -8,6 +8,7 @@ use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Jwt\StaticTokenProvider;
 use Symfony\Component\Mercure\Jwt\TokenFactoryInterface;
 use Symfony\Component\Mercure\Jwt\TokenProviderInterface;
+use Symfony\Component\Mercure\ProtocolVersion;
 use Symfony\Component\Mercure\Update;
 
 /**
@@ -39,6 +40,17 @@ final class RecordingMercureHub implements HubInterface
     public function getFactory(): ?TokenFactoryInterface
     {
         return null;
+    }
+
+    // symfony/mercure >=0.9 interface methods; the ProtocolVersion return type is only resolved when called.
+    public function getProtocolVersion(): ProtocolVersion
+    {
+        return ProtocolVersion::Legacy;
+    }
+
+    public function getCookieName(): string
+    {
+        return ProtocolVersion::Legacy->getDefaultCookieName();
     }
 
     public function publish(Update $update): string

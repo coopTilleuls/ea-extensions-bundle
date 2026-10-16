@@ -5,6 +5,7 @@ export default class extends Controller {
     static values = {
         hubUrl: String,
         lastMercureId: String,
+        protocolVersion: { type: String, default: '0.x' },
     }
 
     initialize() {
@@ -71,11 +72,12 @@ export default class extends Controller {
 
         if (this.topics.size === 0) return;
 
+        const isV1 = this.protocolVersionValue === '1.0';
         const url = new URL(this.hubUrlValue);
-        this.topics.forEach(topic => url.searchParams.append('topic', topic));
+        this.topics.forEach(topic => url.searchParams.append(isV1 ? 'match' : 'topic', topic));
 
         if (this.lastMercureIdValue) {
-            url.searchParams.append('lastEventID', this.lastMercureIdValue);
+            url.searchParams.append(isV1 ? 'last_event_id' : 'lastEventID', this.lastMercureIdValue);
         }
 
         this.mercure = new EventSource(url.toString(), { withCredentials: true });
