@@ -50,10 +50,10 @@ final class TabNavigationAndBackToTopRegistrationTest extends TestCase
             $dispatcher = $kernel->getContainer()->get('event_dispatcher');
 
             // Lazy listeners are resolved by getListeners() into [$instance, $method] pairs.
-            return array_values(array_map(
+            return array_map(
                 static fn (callable|array $listener): string => \is_array($listener) && \is_object($listener[0]) ? $listener[0]::class : get_debug_type($listener),
                 $dispatcher->getListeners($eventName),
-            ));
+            );
         } finally {
             $kernel->shutdown();
         }
