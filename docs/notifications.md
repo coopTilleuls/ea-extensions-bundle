@@ -215,8 +215,14 @@ publishes nothing — `NotificationManager` always depends on
 `NotificationPublisherInterface`, aliased to a no-op `NullNotificationPublisher` by default.
 
 Notifications are published as **private** Mercure updates: only a subscriber presenting a JWT
-whose `mercure.subscribe` claim covers that exact topic receives it (the bundle's own
+whose subscribe authorization (`mercure.subscribe` claim in the legacy protocol,
+`authorization_details` in Mercure 1.0) covers that exact topic receives it (the bundle's own
 `notification_bar.html.twig` requests that claim for the current recipient's own topic when
 rendering the popover). This means the hub's `jwt.secret` (`config/packages/mercure.yaml`) is
 load-bearing for security, not just for publishing — without it, subscriber JWTs can't be minted
 and the popover never receives anything, but skipping it is not a safe fallback.
+
+Both Mercure protocols are supported. The popover subscribes with the query parameters of the
+default hub's `protocol_version` (`symfony/mercure-bundle` ≥ 0.6): `match` / `last_event_id` for
+`1.0`, `topic` / `lastEventID` for `0.x`. With `symfony/mercure` < 0.9 (no protocol version), the
+legacy protocol is assumed.

@@ -81,4 +81,20 @@ final class NotificationsMercureTest extends AbstractFunctionalTestCase
         $claims = json_decode(base64_decode(strtr($encodedPayload, '-_', '+/')), true, flags: JSON_THROW_ON_ERROR);
         self::assertSame(['/notifications/'.$admin->getId()], $claims['mercure']['subscribe']);
     }
+
+    public function testThePopoverTellsTheHubControllerWhichProtocolToSpeak(): void
+    {
+        $admin = new FixtureNotificationRecipient('admin');
+        /** @var EntityManagerInterface $entityManager */
+        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $entityManager->persist($admin);
+        $entityManager->flush();
+
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+        $crawler = $this->client->request('GET', '/_fixtures/notification-popover');
+
+        self::assertResponseIsSuccessful();
+        // RecordingMercureHub speaks the legacy protocol, which is also the fallback on symfony/mercure < 0.9.
+        self::assertSame('0.x', $crawler->filter('[data-controller~="ea-extensions--mercure-hub"]')->attr('data-ea-extensions--mercure-hub-protocol-version-value'));
+    }
 }
