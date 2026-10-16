@@ -13,6 +13,8 @@ coop_tilleuls_ea_extensions:
 
 ## Consumer app setup (one-time)
 
+On top of the [shared setup](../README.md#setup-one-time-shared-by-every-feature) (Twig and JavaScript):
+
 1. Import the bundle's notification routes, e.g. in `config/routes/ea_extensions.yaml`:
    ```yaml
    ea_extensions_notifications:
@@ -20,12 +22,8 @@ coop_tilleuls_ea_extensions:
        type: attribute
    ```
    `NotificationCrudController`'s own routes are registered automatically once it's added to a
-   Dashboard's menu (see step 3).
-2. Register `TwigExtraBundle` and `TwigComponentBundle` in `config/bundles.php`, and configure
-   `twig_component.anonymous_template_directory` — same one-time setup as every other feature in
-   this bundle, see [customizable-columns.md](customizable-columns.md) step 2 for the exact
-   snippet.
-3. Add `NotificationCrudController` to your Dashboard's menu:
+   Dashboard's menu (see step 2).
+2. Add `NotificationCrudController` to your Dashboard's menu:
    ```php
    use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\EasyAdmin\NotificationCrudController;
 
@@ -34,15 +32,12 @@ coop_tilleuls_ea_extensions:
    It's a ready-to-use CRUD controller, but if you want more specific feature, write your own controller
    instead (reusing `NotificationRepository`, `NotificationManager`, `NotificationVoter`, and
    `NotificationTreatmentFilter` as plain autowired services).
-4. Add an importmap entry for the bundle's JS entrypoint and load it on every admin page — same
-   `ea-extensions` entry as every other feature, see
-   [customizable-columns.md](customizable-columns.md) step 3.
-5. Point Doctrine at your recipient entity — required before the next step, since
+3. Point Doctrine at your recipient entity — required before the next step, since
    `Notification::$recipient` is typed against an interface Doctrine can't map without it. See
    [Recipients](#recipients) below.
-6. Run `doctrine:migrations:diff` after installing to generate the `ea_extensions_notification`
+4. Run `doctrine:migrations:diff` after installing to generate the `ea_extensions_notification`
    and `ea_extensions_notification_treatment` tables.
-7. Embed the bell/popover bar and the "latest notifications" card wherever you want them in your
+5. Embed the bell/popover bar and the "latest notifications" card wherever you want them in your
    own layout:
    ```twig
    {{ include('@EAExtensions/notifications/components/notification_bar.html.twig') }}

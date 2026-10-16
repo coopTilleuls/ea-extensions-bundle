@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import '../styles/back_to_top.css';
 import throttle from './utils/throttle.js';
 
 const SPACE_RESERVED_CLASS = 'ea-extensions-back-to-top-space-reserved';

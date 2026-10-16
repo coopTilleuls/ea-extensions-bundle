@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import '../styles/tab_navigation.css';
 
 /**
  * "Previous tab / Next tab" buttons at the bottom of each pane of an EasyAdmin tabbed form.

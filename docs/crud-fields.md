@@ -7,16 +7,9 @@ including hiding that controller's own actions (see below).
 
 ## Consumer app setup (one-time)
 
-1. Add an importmap entry for the bundle's JS entrypoint, if not already done for another
-   feature in this bundle (see [customizable columns](customizable-columns.md#consumer-app-setup-one-time)):
-   ```php
-   // importmap.php
-   'ea-extensions' => [
-       'path' => 'bundles/eaextensions/ea-extensions.js',
-       'entrypoint' => true,
-   ],
-   ```
-2. Call `CrudFieldLayout::applyIfEmbedded()` once from your `DashboardController`'s own
+On top of the [shared setup](../README.md#setup-one-time-shared-by-every-feature) (Twig and JavaScript):
+
+Call `CrudFieldLayout::applyIfEmbedded()` once from your `DashboardController`'s own
    `configureCrud()`, so an embed's fetch strips the sidebar/topbar/full-page chrome while
    keeping the target controller's own `crud/index` template (vendor's, or your theme's own
    override) rendering 100% normally — table, action buttons/dropdowns, pagination and filters

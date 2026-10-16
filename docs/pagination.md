@@ -33,7 +33,9 @@ instead — it never reaches EasyAdmin's own paginator, which would otherwise th
 
 ## Consumer app setup (one-time)
 
-Create these two plain Symfony bundle-template overrides in your app — no PHP involved, and
+On top of the [shared setup](../README.md#setup-one-time-shared-by-every-feature) (Twig and
+JavaScript — the page-size `<select>` is driven by a Stimulus controller), create these two plain
+Symfony bundle-template overrides in your app — no PHP involved, and
 both a one-liner pointing at a template this bundle ships:
 
 ```twig

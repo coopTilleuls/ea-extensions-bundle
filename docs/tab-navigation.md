@@ -14,9 +14,7 @@ coop_tilleuls_ea_extensions:
 
 ## Consumer app setup (one-time)
 
-Load the bundle's JS entrypoint on every admin page — same `ea-extensions` importmap entry and
-`configureAssets()` call as every other feature, see
-[customizable-columns.md](customizable-columns.md) step 3. It registers the
+Only the [shared setup](../README.md#setup-one-time-shared-by-every-feature) (Twig and JavaScript) — it provides the
 `coop-tilleuls--ea-extensions--tab-navigation` Stimulus controller and its stylesheet.
 
 ## Behavior

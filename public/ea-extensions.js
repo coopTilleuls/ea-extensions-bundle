@@ -1,29 +1,5 @@
-import './styles/notifications.css';
-import './styles/tab_navigation.css';
-import './styles/back_to_top.css';
 import { startStimulusApp } from '@symfony/stimulus-bundle';
-import CustomizableColumnsModalController from './controllers/customizable_columns_modal_controller.js';
-import ColumnHandlerController from './controllers/column_handler_controller.js';
-import CrudFieldEagerController from './controllers/crud_field_eager_controller.js';
-import CrudFieldLazyController from './controllers/crud_field_lazy_controller.js';
-import PaginationPageSizeController from './controllers/pagination_page_size_controller.js';
-import MercureHubController from './controllers/mercure_hub_controller.js';
-import RealTimeNotificationController from './controllers/real_time_notification_controller.js';
-import NotificationListUpdateController from './controllers/notification_list_update_controller.js';
-import NotificationReadUpdateController from './controllers/notification_read_update_controller.js';
-import NotificationToggleController from './controllers/notification_toggle_controller.js';
-import NotificationToggleLabelController from './controllers/notification_toggle_label_controller.js';
-import RefreshChoicesOnRelatedFieldChangeController from './controllers/refresh_choices_on_related_field_change_controller.js';
-import RefreshValuesOnRelatedFieldChangeController from './controllers/refresh_values_on_related_field_change_controller.js';
-import ToggleDisplayOnFieldChangeController from './controllers/toggle_display_on_field_change_controller.js';
-import ToggleDisplayOnMultipleSelectController from './controllers/toggle_display_on_multiple_select_controller.js';
-import DisplayFieldOnBooleanFieldChangeController from './controllers/display_field_on_boolean_field_change_controller.js';
-import SelectAllOptionsController from './controllers/select_all_options_controller.js';
-import AddButtonSelectController from './controllers/add_button_select_controller.js';
-import TomselectOptgroupsController from './controllers/tomselect_optgroups_controller.js';
-import CollectionFieldRequiredController from './controllers/collection_field_required_controller.js';
-import TabNavigationController from './controllers/tab_navigation_controller.js';
-import BackToTopController from './controllers/back_to_top_controller.js';
+import { registerLazyControllers } from './lazy_controllers.js';
 
 // startStimulusApp() creates a brand new Stimulus Application every time it's called (no
 // built-in dedup) and always eagerly wires up every controller AssetMapper knows about
@@ -31,25 +7,30 @@ import BackToTopController from './controllers/back_to_top_controller.js';
 // one already exists (e.g. another standalone-capable bundle's own entry ran first), avoids
 // ending up with two Applications both bound to the same document and double-handling events.
 const app = window.Stimulus ??= startStimulusApp();
-app.register('ea-extensions--customizable-columns-modal', CustomizableColumnsModalController);
-app.register('ea-extensions--column-handler', ColumnHandlerController);
-app.register('ea-extensions--crud-field-eager', CrudFieldEagerController);
-app.register('ea-extensions--crud-field-lazy', CrudFieldLazyController);
-app.register('ea-extensions--pagination-page-size', PaginationPageSizeController);
-app.register('ea-extensions--mercure-hub', MercureHubController);
-app.register('ea-extensions--real-time-notification', RealTimeNotificationController);
-app.register('ea-extensions--notification-list-update', NotificationListUpdateController);
-app.register('ea-extensions--notification-read-update', NotificationReadUpdateController);
-app.register('ea-extensions--notification-toggle', NotificationToggleController);
-app.register('ea-extensions--notification-toggle-label', NotificationToggleLabelController);
-app.register('coop-tilleuls--ea-extensions--refresh-choices-on-related-field-change', RefreshChoicesOnRelatedFieldChangeController);
-app.register('coop-tilleuls--ea-extensions--refresh-values-on-related-field-change', RefreshValuesOnRelatedFieldChangeController);
-app.register('coop-tilleuls--ea-extensions--toggle-display-on-field-change', ToggleDisplayOnFieldChangeController);
-app.register('coop-tilleuls--ea-extensions--toggle-display-on-multiple-select', ToggleDisplayOnMultipleSelectController);
-app.register('coop-tilleuls--ea-extensions--display-field-on-boolean-field-change', DisplayFieldOnBooleanFieldChangeController);
-app.register('coop-tilleuls--ea-extensions--select-all-options', SelectAllOptionsController);
-app.register('coop-tilleuls--ea-extensions--add-button-select', AddButtonSelectController);
-app.register('coop-tilleuls--ea-extensions--tomselect-optgroups', TomselectOptgroupsController);
-app.register('coop-tilleuls--ea-extensions--collection-field-required', CollectionFieldRequiredController);
-app.register('coop-tilleuls--ea-extensions--tab-navigation', TabNavigationController);
-app.register('coop-tilleuls--ea-extensions--back-to-top', BackToTopController);
+
+// Lazy: a controller (and the stylesheet it imports) is only downloaded once a page uses it,
+// so features left disabled cost nothing.
+registerLazyControllers(app, {
+    'ea-extensions--customizable-columns-modal': () => import('./controllers/customizable_columns_modal_controller.js'),
+    'ea-extensions--column-handler': () => import('./controllers/column_handler_controller.js'),
+    'ea-extensions--crud-field-eager': () => import('./controllers/crud_field_eager_controller.js'),
+    'ea-extensions--crud-field-lazy': () => import('./controllers/crud_field_lazy_controller.js'),
+    'ea-extensions--pagination-page-size': () => import('./controllers/pagination_page_size_controller.js'),
+    'ea-extensions--mercure-hub': () => import('./controllers/mercure_hub_controller.js'),
+    'ea-extensions--real-time-notification': () => import('./controllers/real_time_notification_controller.js'),
+    'ea-extensions--notification-list-update': () => import('./controllers/notification_list_update_controller.js'),
+    'ea-extensions--notification-read-update': () => import('./controllers/notification_read_update_controller.js'),
+    'ea-extensions--notification-toggle': () => import('./controllers/notification_toggle_controller.js'),
+    'ea-extensions--notification-toggle-label': () => import('./controllers/notification_toggle_label_controller.js'),
+    'coop-tilleuls--ea-extensions--refresh-choices-on-related-field-change': () => import('./controllers/refresh_choices_on_related_field_change_controller.js'),
+    'coop-tilleuls--ea-extensions--refresh-values-on-related-field-change': () => import('./controllers/refresh_values_on_related_field_change_controller.js'),
+    'coop-tilleuls--ea-extensions--toggle-display-on-field-change': () => import('./controllers/toggle_display_on_field_change_controller.js'),
+    'coop-tilleuls--ea-extensions--toggle-display-on-multiple-select': () => import('./controllers/toggle_display_on_multiple_select_controller.js'),
+    'coop-tilleuls--ea-extensions--display-field-on-boolean-field-change': () => import('./controllers/display_field_on_boolean_field_change_controller.js'),
+    'coop-tilleuls--ea-extensions--select-all-options': () => import('./controllers/select_all_options_controller.js'),
+    'coop-tilleuls--ea-extensions--add-button-select': () => import('./controllers/add_button_select_controller.js'),
+    'coop-tilleuls--ea-extensions--tomselect-optgroups': () => import('./controllers/tomselect_optgroups_controller.js'),
+    'coop-tilleuls--ea-extensions--collection-field-required': () => import('./controllers/collection_field_required_controller.js'),
+    'coop-tilleuls--ea-extensions--tab-navigation': () => import('./controllers/tab_navigation_controller.js'),
+    'coop-tilleuls--ea-extensions--back-to-top': () => import('./controllers/back_to_top_controller.js'),
+});
