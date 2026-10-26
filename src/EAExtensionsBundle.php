@@ -49,6 +49,7 @@ final class EAExtensionsBundle extends AbstractBundle
                             ->defaultValue([10, 25, 50, 100])
                         ->end()
                         ->integerNode('max_page_size')->defaultNull()->end()
+                        ->integerNode('autocomplete_page_size')->defaultNull()->min(1)->end()
                     ->end()
                     ->validate()
                         ->ifTrue(static fn (array $v): bool => $v['enabled'] && !\in_array($v['default_page_size'], $v['available_page_sizes'], true))
@@ -196,6 +197,7 @@ final class EAExtensionsBundle extends AbstractBundle
             $builder->setParameter('coop_tilleuls_ea_extensions.pagination.default_page_size', $config['pagination']['default_page_size']);
             $builder->setParameter('coop_tilleuls_ea_extensions.pagination.available_page_sizes', $config['pagination']['available_page_sizes']);
             $builder->setParameter('coop_tilleuls_ea_extensions.pagination.max_page_size', $config['pagination']['max_page_size']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.pagination.autocomplete_page_size', $config['pagination']['autocomplete_page_size']);
 
             $container->import('../config/pagination_services.php');
         }

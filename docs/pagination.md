@@ -20,6 +20,7 @@ coop_tilleuls_ea_extensions:
         default_page_size: 25           # applied when a controller declares no default of its own
         available_page_sizes: [10, 25, 50, 100]
         max_page_size: null             # optional hard cap; any requested/declared value above it is clamped
+        autocomplete_page_size: null    # page size of autocomplete requests, see "Autocomplete requests" below
 ```
 
 `default_page_size` must be one of `available_page_sizes` — otherwise the selector never shows
@@ -59,8 +60,26 @@ CrudController needs to declare.
 
 ## Optional per-controller fine-tuning
 
-Implement `CoopTilleuls\Bundle\EAExtensionsBundle\Pagination\PaginationConfigurationInterface`
-to declare a different default and/or a different selector list for one controller:
+Each of the two settings has its own interface, so a controller only declares what it changes:
+
+- `CoopTilleuls\Bundle\EAExtensionsBundle\Pagination\DefaultPageSizeProviderInterface` for
+  `getDefaultPageSize()`, the page size applied when the request doesn't ask for one;
+- `CoopTilleuls\Bundle\EAExtensionsBundle\Pagination\AvailablePageSizesProviderInterface` for
+  `getAvailablePageSizes()`, the sizes offered in the selector.
+
+To change only the default:
+
+```php
+final class JournalCrudController extends AbstractCrudController implements DefaultPageSizeProviderInterface
+{
+    public static function getDefaultPageSize(AdminContext $context): ?int
+    {
+        return 50;
+    }
+}
+```
+
+To change both, implement `PaginationConfigurationInterface`, which extends the two:
 
 ```php
 final class JournalCrudController extends AbstractCrudController implements PaginationConfigurationInterface
@@ -78,23 +97,40 @@ final class JournalCrudController extends AbstractCrudController implements Pagi
 ```
 
 Both methods receive the current `AdminContext`, so a controller can vary its answer by
-request — e.g. a bigger page size only when acting as an autocomplete source:
+request. For example, a bigger page size only when acting as an autocomplete source:
 
 ```php
 public static function getDefaultPageSize(AdminContext $context): ?int
 {
-    return 'autocomplete' === $context->getRequest()->query->get('crudAction') ? 1000 : null;
+    return 'autocomplete' === $context->getCrud()?->getCurrentAction() ? 1000 : null;
 }
 ```
 
-Returning `null` from either method falls back to the bundle-wide config value. Returning
-an **empty array** from `getAvailablePageSizes()` locks the page size: the selector is
-hidden and the query-string override is ignored, so the controller's own
-`getDefaultPageSize()` (or the bundle default, if that's also `null`) always applies.
+Not implementing an interface, or returning `null` from its method, falls back to the
+bundle-wide config value. Returning an **empty array** from `getAvailablePageSizes()` locks
+the page size: the selector is hidden and the query-string override is ignored, so the
+controller's own `getDefaultPageSize()` (or the bundle default, if there's none) always
+applies.
 
-When both methods return a non-empty, non-null value, the default must be one of the
-available sizes — same rule as the bundle-wide config, checked per request since either
-method can vary its answer. A mismatch throws a `LogicException` naming the controller.
+A controller default must be one of the available sizes: the controller's own list, or the
+bundle-wide one when it declares none. The bundle-wide config follows the same rule. Since
+either method can vary its answer, the check runs on every request, and a mismatch throws a
+`LogicException` naming the controller. A locked (empty) list skips the check.
+
+### Autocomplete requests
+
+When the controller serves as the autocomplete source of an `AssociationField`, the page size
+comes from, in order:
+
+1. the controller's `getDefaultPageSize()`, if it implements `DefaultPageSizeProviderInterface`
+   and the method returns a value;
+2. `autocomplete_page_size`, if set;
+3. EasyAdmin's own `Crud::setPaginatorPageSize()` (20 unless configured).
+
+The bundle-wide `default_page_size` never applies to autocompletes, and neither does any list
+of available sizes: the autocomplete dropdown has no selector, so its page size can be any
+value, such as 1000. The `itemsPerPage` query parameter is ignored there, and `max_page_size`
+still caps the value.
 
 ## Interaction with CrudFields
 

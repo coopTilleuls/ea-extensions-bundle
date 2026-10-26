@@ -159,6 +159,9 @@ class Kernel extends BaseKernel
         $services->set(FixtureLockedPaginationCrudController::class)->public();
         $services->set(FixtureMismatchedPaginationCrudController::class)->public();
         $services->set(FixtureDefaultOnlyMismatchedPaginationCrudController::class)->public();
+        $services->set(FixtureDefaultOnlyPaginationCrudController::class)->public();
+        $services->set(FixtureAvailableSizesOnlyPaginationCrudController::class)->public();
+        $services->set(FixtureAutocompletePaginationCrudController::class)->public();
         $services->set(FixtureItemCrudController::class)->public();
         $services->set(FixtureItemCrudControllerWithConfiguration::class)->public();
         $services->set(FixtureItemCrudControllerDisabled::class)->public();

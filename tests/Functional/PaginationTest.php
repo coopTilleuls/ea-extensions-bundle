@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Functional;
 
-use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\Entity\FixtureEntity;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureAutocompletePaginationCrudController;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureAvailableSizesOnlyPaginationCrudController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureCrudController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureDefaultOnlyMismatchedPaginationCrudController;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureDefaultOnlyPaginationCrudController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureLockedPaginationCrudController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureMismatchedPaginationCrudController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixturePaginationCrudController;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Core\User\InMemoryUser;
 
 final class PaginationTest extends AbstractFunctionalTestCase
 {
+    use PaginationTestTrait;
+
     public function testIndexUsesTheBundleDefaultPageSizeForAPlainController(): void
     {
         $this->persistFixtureEntities(3);
@@ -81,6 +84,41 @@ final class PaginationTest extends AbstractFunctionalTestCase
         );
     }
 
+    public function testControllerDeclaringOnlyItsDefaultKeepsTheBundleWideList(): void
+    {
+        $this->persistFixtureEntities(12);
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureDefaultOnlyPaginationCrudController::class));
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(10, $crawler->filter('tbody tr'));
+        self::assertSame(
+            ['10', '25', '50', '100'],
+            $crawler->filter('select[data-controller="ea-extensions--pagination-page-size"] option')->each(
+                static fn ($node): string => trim($node->text()),
+            ),
+        );
+    }
+
+    public function testControllerDeclaringOnlyItsAvailableSizesKeepsTheBundleWideDefault(): void
+    {
+        $this->persistFixtureEntities(3);
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureAvailableSizesOnlyPaginationCrudController::class));
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(3, $crawler->filter('tbody tr'));
+        self::assertSame(
+            ['2', '25'],
+            $crawler->filter('select[data-controller="ea-extensions--pagination-page-size"] option')->each(
+                static fn ($node): string => trim($node->text()),
+            ),
+        );
+        self::assertSame('25', trim($crawler->filter('select[data-controller="ea-extensions--pagination-page-size"] option[selected]')->text()));
+    }
+
     public function testControllerDeclaredDefaultNotInItsOwnAvailableSizesThrows(): void
     {
         $this->client->catchExceptions(false);
@@ -117,19 +155,36 @@ final class PaginationTest extends AbstractFunctionalTestCase
         self::assertCount(0, $crawler->filter('select[data-controller="ea-extensions--pagination-page-size"]'));
     }
 
-    private function persistFixtureEntities(int $count): void
+    public function testAutocompleteAppliesTheControllerDefaultEvenOutsideTheAvailableSizes(): void
     {
-        /** @var EntityManagerInterface $entityManager */
-        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $this->persistFixtureEntities(30);
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
 
-        for ($i = 0; $i < $count; ++$i) {
-            $entity = new FixtureEntity();
-            $entity->setTitle('Title '.$i);
-            $entity->setDescription('Description');
-            $entity->setNote('Note');
-            $entityManager->persist($entity);
-        }
+        $this->client->request('GET', $this->autocompleteUrl(FixtureAutocompletePaginationCrudController::class, ['itemsPerPage' => '2']));
 
-        $entityManager->flush();
+        self::assertResponseIsSuccessful();
+        self::assertCount(30, $this->autocompleteResults());
+    }
+
+    public function testAutocompleteControllerDefaultDoesNotLeakIntoTheIndex(): void
+    {
+        $this->persistFixtureEntities(30);
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureAutocompletePaginationCrudController::class));
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(25, $crawler->filter('tbody tr'));
+    }
+
+    public function testAutocompleteKeepsTheEasyAdminPageSizeForAPlainController(): void
+    {
+        $this->persistFixtureEntities(30);
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $this->client->request('GET', $this->autocompleteUrl(FixtureCrudController::class));
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(20, $this->autocompleteResults());
     }
 }

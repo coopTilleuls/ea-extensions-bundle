@@ -15,7 +15,7 @@ return static function (ContainerConfigurator $container): void {
     ;
 
     $services->load('CoopTilleuls\\Bundle\\EAExtensionsBundle\\Pagination\\', __DIR__.'/../src/Pagination/')
-        ->exclude(__DIR__.'/../src/Pagination/PaginationConfigurationInterface.php')
+        ->exclude(__DIR__.'/../src/Pagination/*Interface.php')
     ;
 
     $services->set(PageSizeResolver::class)
