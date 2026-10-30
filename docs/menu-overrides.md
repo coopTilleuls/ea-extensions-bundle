@@ -90,6 +90,40 @@ matcher does), an *untagged* item sitting one level up from a correctly-tagged, 
 leaf would still get selected too — the fallback only compares plain paths, which two same-CRUD
 items always share.
 
+## Menu items linking to a filtered index
+
+A menu item can point to a pre-filtered index by setting the `filters` route parameter on its DTO:
+
+```php
+use CoopTilleuls\Bundle\EAExtensionsBundle\MenuOverrides\MenuItemTag;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
+
+$activeMembers = MenuItem::linkTo(MemberCrudController::class, 'Active members');
+$activeMembers->getAsDto()->setRouteParameter(EA::FILTERS, [
+    'status' => ['comparison' => '=', 'value' => 'active'],
+]);
+MenuItemTag::new($activeMembers, 'active_members');
+```
+
+The exact-URL-match pass compares the current URL both with and without its filters: the item
+above is selected on its own filtered index, and an unfiltered item stays selected once the
+visitor filters its index.
+
+On a sub-page (edit, detail, new...), the CRUD-index fallback first looks for an item with the same
+path and the same tag as the index, ignoring the item's other query parameters such as its
+filters. Tag the filtered item: otherwise its sub-pages highlight the unfiltered item linking to
+the same index.
+
+## Menu items linking to another action than the index
+
+When nothing matches exactly, the CRUD-index fallback also looks at items linking to other actions
+of the current CRUD controller, comparing only their path and tag:
+
+- an item linking to the current page's own action wins over the index item, e.g. a custom
+  "summary" action reached with extra query parameters;
+- an item linking to any other action of the controller is selected when no item links to its
+  index, e.g. a custom dashboard action used as the controller's only menu entry.
+
 ## Highlighting a menu item from a link you generate yourself
 
 A menu item's own URL gets tagged via `MenuItemTag::new()` above, but sometimes the link that
@@ -145,5 +179,7 @@ match still wins over the alias.
   controller/action or route) → `MenuItemTag::new()` on the menu item(s).
 - **You're generating a link yourself** to a destination that should highlight a `MenuItemTag`-ged
   menu item → `MenuItemTag::applyTo()`/`appendToUrl()` on that link.
+- **A menu item links to a pre-filtered index** and should stay highlighted on its sub-pages →
+  `MenuItemTag::new()` on that menu item.
 - **A whole controller has no menu item at all** and should always highlight another controller's
   index entry when nothing else matches → `MenuHighlightAliasInterface` on that controller.

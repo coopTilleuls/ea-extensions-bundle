@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Functional;
 
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\Entity\FixtureEntity;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\Kernel;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DomCrawler\Crawler;
 
@@ -127,6 +129,137 @@ final class MenuOverridesTest extends WebTestCase
         $untaggedSibling = $this->findMenuItemByLabel($crawler, 'Untagged Sibling');
 
         self::assertStringContainsString('ea-menu-overrides__item--selected', $this->cssClasses($untaggedSibling));
+    }
+
+    public function testItemLinkingToAFilteredIndexIsSelectedOnThatIndex(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/admin/fixture');
+        $filteredHref = $this->findMenuItemByLabel($crawler, 'Filtered')->filter('a')->attr('href');
+        self::assertNotNull($filteredHref);
+        self::assertStringContainsString('filters', $filteredHref);
+
+        $crawler = $client->request('GET', $filteredHref);
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($crawler, 'Filtered')));
+        self::assertStringNotContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($crawler, 'Untagged Sibling')));
+    }
+
+    public function testUntaggedItemLinkingToAFilteredIndexWinsOverTheUnfilteredItemListedBefore(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/admin/fixture');
+        $filteredHref = $this->findMenuItemByLabel($crawler, 'Filtered Untagged')->filter('a')->attr('href');
+        self::assertNotNull($filteredHref);
+        self::assertStringNotContainsString('menuEntry', $filteredHref);
+
+        $crawler = $client->request('GET', $filteredHref);
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($crawler, 'Filtered Untagged')));
+        self::assertStringNotContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($crawler, 'Untagged Sibling')));
+    }
+
+    #[DataProvider('listingParametersProvider')]
+    public function testUntaggedFilteredItemStaysSelectedWhenTheListIsSortedSearchedOrResized(string $listingParameters): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/admin/fixture?filters[title][comparison]=%3D&filters[title][value]=baz&'.$listingParameters);
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($client->getCrawler(), 'Filtered Untagged')));
+    }
+
+    /**
+     * @return iterable<string, array{string}>
+     */
+    public static function listingParametersProvider(): iterable
+    {
+        yield 'sort' => ['sort[title]=DESC'];
+        yield 'search' => ['query=baz'];
+        yield 'page size' => ['itemsPerPage=10'];
+    }
+
+    public function testUnfilteredItemIsSelectedOnceAnotherFilterIsAddedToAnUntaggedFilteredItem(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/admin/fixture?filters[title][comparison]=%3D&filters[title][value]=baz&filters[description][comparison]=like&filters[description][value]=x');
+
+        self::assertResponseIsSuccessful();
+
+        $crawler = $client->getCrawler();
+        self::assertStringContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($crawler, 'Untagged Sibling')));
+        self::assertStringNotContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($crawler, 'Filtered Untagged')));
+    }
+
+    public function testUntaggedFilteredItemStaysSelectedOnTheDetailPageOfOneOfItsRows(): void
+    {
+        $client = static::createClient();
+
+        $entity = new FixtureEntity();
+        $entity->setTitle('baz');
+        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        \assert($entityManager instanceof EntityManagerInterface);
+        $entityManager->persist($entity);
+        $entityManager->flush();
+
+        $client->request('GET', '/admin/fixture/'.$entity->getId().'?filters[title][comparison]=%3D&filters[title][value]=baz');
+
+        self::assertResponseIsSuccessful();
+
+        $crawler = $client->getCrawler();
+        self::assertStringContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($crawler, 'Filtered Untagged')));
+        self::assertStringNotContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($crawler, 'Untagged Sibling')));
+    }
+
+    public function testUnfilteredItemStaysSelectedOnceItsIndexIsFiltered(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/admin/fixture?menuEntry=variant-a&filters[title][comparison]=%3D&filters[title][value]=bar');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($client->getCrawler(), 'Leaf A')));
+    }
+
+    public function testFilteredItemStaysSelectedOnASubPageOfItsIndex(): void
+    {
+        $client = static::createClient();
+        $client->request('GET', '/admin/fixture/new?menuEntry=filtered&filters[title][comparison]=%3D&filters[title][value]=foo');
+
+        self::assertResponseIsSuccessful();
+
+        $crawler = $client->getCrawler();
+        self::assertStringContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($crawler, 'Filtered')));
+        self::assertStringNotContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($crawler, 'Untagged Sibling')));
+    }
+
+    public function testItemLinkingToTheCurrentActionWinsOverTheIndexItem(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/admin/fixture');
+        $tabbedNewHref = $this->findMenuItemByLabel($crawler, 'Tabbed New')->filter('a')->attr('href');
+        self::assertNotNull($tabbedNewHref);
+
+        $crawler = $client->request('GET', $tabbedNewHref.'?extra=1');
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($crawler, 'Tabbed New')));
+        self::assertStringNotContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($crawler, 'Tabbed List')));
+    }
+
+    public function testItemLinkingToAnotherActionIsSelectedWhenNoItemLinksToTheIndex(): void
+    {
+        $client = static::createClient();
+        $crawler = $client->request('GET', '/admin/fixture');
+        $paginationNewHref = $this->findMenuItemByLabel($crawler, 'Pagination New')->filter('a')->attr('href');
+        self::assertNotNull($paginationNewHref);
+        self::assertStringEndsWith('/new', $paginationNewHref);
+
+        $crawler = $client->request('GET', substr($paginationNewHref, 0, -\strlen('/new')));
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('ea-menu-overrides__item--selected', $this->cssClasses($this->findMenuItemByLabel($crawler, 'Pagination New')));
     }
 
     private function findMenuItemByLabel(Crawler $crawler, string $label): Crawler

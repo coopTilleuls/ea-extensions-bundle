@@ -6,6 +6,7 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportFileDownloader;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportFileWriter;
+use CoopTilleuls\Bundle\EAExtensionsBundle\MenuOverrides\EasyAdmin\RecursiveMenuItemMatcher;
 use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\MercureBundle\MercureBundle;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
@@ -184,6 +185,12 @@ final class EAExtensionsBundle extends AbstractBundle
     {
         if ($config['menu_overrides']['enabled']) {
             $container->import('../config/menu_overrides_services.php');
+
+            // the page size parameter only exists when pagination is enabled
+            if ($config['pagination']['enabled']) {
+                $container->services()->get(RecursiveMenuItemMatcher::class)
+                    ->arg('$pageSizeQueryParameter', $config['pagination']['query_parameter']);
+            }
         }
 
         if ($config['customizable_columns']['enabled']) {

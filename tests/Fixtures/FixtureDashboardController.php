@@ -8,9 +8,11 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\CrudFields\CrudFieldLayout;
 use CoopTilleuls\Bundle\EAExtensionsBundle\MenuOverrides\MenuItemTag;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminDashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Dashboard;
 use EasyCorp\Bundle\EasyAdminBundle\Config\MenuItem;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractDashboardController;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -73,5 +75,20 @@ final class FixtureDashboardController extends AbstractDashboardController
         $level2 = MenuItem::subMenu('Level 2')->setSubItems([$leafA, $leafB]);
 
         yield MenuItem::subMenu('Level 1')->setSubItems([$level2]);
+
+        $filtered = MenuItem::linkTo(FixtureCrudController::class, 'Filtered');
+        $filtered->getAsDto()->setRouteParameter(EA::FILTERS, ['title' => ['comparison' => '=', 'value' => 'foo']]);
+        MenuItemTag::new($filtered, 'filtered');
+
+        yield $filtered;
+
+        $filteredUntagged = MenuItem::linkTo(FixtureCrudController::class, 'Filtered Untagged');
+        $filteredUntagged->getAsDto()->setRouteParameter(EA::FILTERS, ['title' => ['comparison' => '=', 'value' => 'baz']]);
+
+        yield $filteredUntagged;
+
+        yield MenuItem::linkTo(FixtureTabbedCrudController::class, 'Tabbed List');
+        yield MenuItem::linkTo(FixtureTabbedCrudController::class, 'Tabbed New')->setAction(Action::NEW);
+        yield MenuItem::linkTo(FixturePaginationCrudController::class, 'Pagination New')->setAction(Action::NEW);
     }
 }

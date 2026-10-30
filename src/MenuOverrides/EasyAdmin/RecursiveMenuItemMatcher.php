@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\MenuOverrides\EasyAdmin;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\MenuOverrides\MenuHighlightAliasInterface;
+use CoopTilleuls\Bundle\EAExtensionsBundle\MenuOverrides\MenuItemTag;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Controller\CrudControllerInterface;
@@ -16,8 +17,7 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Replaces EasyAdmin's own {@see \EasyCorp\Bundle\EasyAdminBundle\Menu\MenuItemMatcher}, which
  * has two depth-related bugs once a menu nests beyond 2 levels or reuses the same destination
- * for two different items (exactly what {@see \CoopTilleuls\Bundle\EAExtensionsBundle\MenuOverrides\MenuItemTag}
- * exists for):
+ * for two different items (exactly what {@see MenuItemTag} exists for):
  *
  * 1. Its "mark expanded" pass only ever looks one level down: a top-level item is expanded when
  *    one of its *direct* sub-items is selected, but a selected item nested three levels deep
@@ -47,6 +47,8 @@ final readonly class RecursiveMenuItemMatcher implements MenuItemMatcherInterfac
 {
     public function __construct(
         private AdminUrlGeneratorInterface $adminUrlGenerator,
+        // pagination.query_parameter, ignored like the sort or the search; null when pagination is disabled
+        private ?string $pageSizeQueryParameter = null,
     ) {
     }
 
@@ -57,7 +59,15 @@ final readonly class RecursiveMenuItemMatcher implements MenuItemMatcherInterfac
      */
     public function markSelectedMenuItem(array $menuItems, Request $request): array
     {
-        $foundExactMatch = $this->doMarkSelectedMenuItem($menuItems, $this->currentUrl($request));
+        // the URL with its filters is searched in the whole tree before the URL without them
+        $foundExactMatch = false;
+        foreach ($this->currentUrls($request) as $currentUrl) {
+            if ($this->doMarkSelectedMenuItem($menuItems, $currentUrl)) {
+                $foundExactMatch = true;
+
+                break;
+            }
+        }
 
         if (!$foundExactMatch) {
             $this->applyCrudIndexFallback($menuItems, $request);
@@ -66,14 +76,26 @@ final readonly class RecursiveMenuItemMatcher implements MenuItemMatcherInterfac
         return $this->doMarkExpandedMenuItem($menuItems);
     }
 
-    private function currentUrl(Request $request): string
+    /**
+     * The current URL both with its filters, matching a menu item that links to a pre-filtered
+     * index, and without them, matching an unfiltered menu item once the visitor filters its index.
+     * The first one is searched in the whole tree before the second, so that an unfiltered item
+     * listed earlier doesn't win over the pre-filtered item linking to the exact current URL.
+     *
+     * @return list<string>
+     */
+    private function currentUrls(Request $request): array
     {
         $path = $request->getBasePath().$request->getPathInfo();
-        $queryParams = $request->query->all();
-        unset($queryParams[EA::SORT], $queryParams[EA::PAGE], $queryParams[EA::QUERY], $queryParams[EA::FILTERS]);
+        $queryParams = $this->withoutListingParameters($request->query->all());
         ksort($queryParams);
 
-        return [] === $queryParams ? $path : $path.'?'.http_build_query($queryParams);
+        $withFilters = [] === $queryParams ? $path : $path.'?'.http_build_query($queryParams);
+
+        unset($queryParams[EA::FILTERS]);
+        $withoutFilters = [] === $queryParams ? $path : $path.'?'.http_build_query($queryParams);
+
+        return [$withFilters, $withoutFilters];
     }
 
     /**
@@ -113,6 +135,10 @@ final readonly class RecursiveMenuItemMatcher implements MenuItemMatcherInterfac
      * (e.g. so that visiting any page of a menu-less sub-resource controller highlights its
      * parent entity's entry).
      *
+     * An item linking to the current page's own path wins over the index one (e.g. a custom
+     * "summary" action reached with extra query parameters), and an item linking to another action
+     * of the controller is used when none links to its index (e.g. a custom dashboard action).
+     *
      * @param MenuItemDto[] $menuItems
      */
     private function applyCrudIndexFallback(array $menuItems, Request $request): void
@@ -122,12 +148,38 @@ final readonly class RecursiveMenuItemMatcher implements MenuItemMatcherInterfac
             return;
         }
 
+        $tag = $request->query->all()[MenuItemTag::QUERY_PARAMETER] ?? null;
+        $tag = \is_string($tag) ? $tag : null;
+
+        // an item linking to the current page itself, with the same tag, wins over the index item
+        $currentPath = $request->getBasePath().$request->getPathInfo();
+        if ($this->matchPathAndTagInMenuItems(static fn (string $linkPath): bool => $linkPath === $currentPath, $tag, $menuItems)) {
+            return;
+        }
+
         if (is_subclass_of($crudControllerFqcn, MenuHighlightAliasInterface::class)) {
             $crudControllerFqcn = $crudControllerFqcn::getMenuHighlightAlias();
         }
 
-        $queryParams = $request->query->all();
-        unset($queryParams[EA::SORT], $queryParams[EA::PAGE], $queryParams[EA::QUERY], $queryParams[EA::FILTERS]);
+        // index URL with no query parameter: its path is used by every step below
+        $indexUrlWithoutQueryParams = $this->adminUrlGenerator->unsetAll()->setAll([
+            EA::DASHBOARD_CONTROLLER_FQCN => $request->attributes->get(EA::DASHBOARD_CONTROLLER_FQCN),
+            EA::CRUD_CONTROLLER_FQCN => $crudControllerFqcn,
+            EA::CRUD_ACTION => Action::INDEX,
+        ])->generateUrl();
+
+        $indexPath = parse_url($indexUrlWithoutQueryParams, \PHP_URL_PATH) ?: '';
+
+        // e.g. the detail page of a book opened from a pre-filtered "featured books" index, whose
+        // filters EasyAdmin carries over to the links of its rows
+        $filters = $request->query->all()[EA::FILTERS] ?? null;
+        if (\is_array($filters) && [] !== $filters && $this->matchPathAndTagInMenuItems(static fn (string $linkPath): bool => $linkPath === $indexPath, $tag, $menuItems, $filters)) {
+            return;
+        }
+
+        // index URL keeping the current query parameters, except the listing ones and the filters
+        $queryParams = $this->withoutListingParameters($request->query->all());
+        unset($queryParams[EA::FILTERS]);
 
         $indexUrlWithQueryParams = $this->adminUrlGenerator->unsetAll()->setAll(array_merge($queryParams, [
             EA::DASHBOARD_CONTROLLER_FQCN => $request->attributes->get(EA::DASHBOARD_CONTROLLER_FQCN),
@@ -139,13 +191,57 @@ final readonly class RecursiveMenuItemMatcher implements MenuItemMatcherInterfac
             return;
         }
 
-        $indexUrlWithoutQueryParams = $this->adminUrlGenerator->unsetAll()->setAll([
-            EA::DASHBOARD_CONTROLLER_FQCN => $request->attributes->get(EA::DASHBOARD_CONTROLLER_FQCN),
-            EA::CRUD_CONTROLLER_FQCN => $crudControllerFqcn,
-            EA::CRUD_ACTION => Action::INDEX,
-        ])->generateUrl();
+        // the index item, whatever its filters
+        if ($this->matchPathAndTagInMenuItems(static fn (string $linkPath): bool => $linkPath === $indexPath, $tag, $menuItems)) {
+            return;
+        }
+
+        // pretty URLs nest every action of a CRUD controller under its index path
+        if ($this->matchPathAndTagInMenuItems(static fn (string $linkPath): bool => str_starts_with($linkPath, rtrim($indexPath, '/').'/'), $tag, $menuItems)) {
+            return;
+        }
 
         $this->matchUrlInMenuItems($indexUrlWithoutQueryParams, $menuItems);
+    }
+
+    /**
+     * Ignores every query parameter of the menu item's link except its {@see MenuItemTag}, e.g. the
+     * filters of an item linking to a pre-filtered index — unless $filters is given, in which case
+     * the link's filters must be those ones.
+     *
+     * @param \Closure(string): bool       $pathMatches
+     * @param MenuItemDto[]                $menuItems
+     * @param array<array-key, mixed>|null $filters
+     */
+    private function matchPathAndTagInMenuItems(\Closure $pathMatches, ?string $tag, array $menuItems, ?array $filters = null): bool
+    {
+        foreach ($menuItems as $menuItemDto) {
+            if ($menuItemDto->isMenuSection()) {
+                continue;
+            }
+
+            $linkUrl = $menuItemDto->getLinkUrl();
+            if (null !== $linkUrl && '' !== $linkUrl) {
+                parse_str(parse_url($linkUrl, \PHP_URL_QUERY) ?: '', $linkQueryParams);
+                $linkTag = $linkQueryParams[MenuItemTag::QUERY_PARAMETER] ?? null;
+
+                // loose comparison: both filter arrays come from separately parsed URLs, so their keys may be ordered differently
+                if ($linkTag === $tag
+                    && (null === $filters || $filters == ($linkQueryParams[EA::FILTERS] ?? null))
+                    && $pathMatches(parse_url($linkUrl, \PHP_URL_PATH) ?: '')) {
+                    $menuItemDto->setSelected(true);
+
+                    return true;
+                }
+            }
+
+            $subItems = $menuItemDto->getSubItems();
+            if ([] !== $subItems && $this->matchPathAndTagInMenuItems($pathMatches, $tag, $subItems, $filters)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -172,6 +268,24 @@ final readonly class RecursiveMenuItemMatcher implements MenuItemMatcherInterfac
         }
 
         return false;
+    }
+
+    /**
+     * Removes the query parameters that only change how a list is displayed: sort, page, search and
+     * page size.
+     *
+     * @param array<array-key, mixed> $queryParams
+     *
+     * @return array<array-key, mixed>
+     */
+    private function withoutListingParameters(array $queryParams): array
+    {
+        unset($queryParams[EA::SORT], $queryParams[EA::PAGE], $queryParams[EA::QUERY]);
+        if (null !== $this->pageSizeQueryParameter) {
+            unset($queryParams[$this->pageSizeQueryParameter]);
+        }
+
+        return $queryParams;
     }
 
     private function normalizedLinkUrl(MenuItemDto $menuItemDto): ?string
