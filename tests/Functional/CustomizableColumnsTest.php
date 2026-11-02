@@ -7,7 +7,10 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Functional;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\ColumnSelectionResolver;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\Entity\FixtureEntity;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureCrudController;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureCrudControllerWithColumnNames;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureCrudControllerWithConfiguration;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureCrudControllerWithFieldsFilter;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureCrudControllerWithUserDefaultColumns;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\Security\Core\User\InMemoryUser;
@@ -35,7 +38,14 @@ final class CustomizableColumnsTest extends AbstractFunctionalTestCase
         $crawler = $this->client->request('GET', $this->crudUrl(FixtureCrudController::class));
 
         self::assertResponseIsSuccessful();
-        self::assertGreaterThan(0, $crawler->filter('a:contains("Personnaliser les colonnes")')->count());
+        $button = $crawler->filter('button:contains("Personnaliser les colonnes")');
+        self::assertCount(1, $button);
+        self::assertSame('button', $button->attr('type'));
+        self::assertNotNull($button->attr('disabled'));
+        self::assertStringStartsWith(
+            '/_ea-extensions/customizable-columns/render?',
+            (string) $button->attr('data-ea-extensions--customizable-columns-modal-url-value'),
+        );
     }
 
     public function testQueryOverrideFiltersAndReordersColumns(): void
@@ -73,6 +83,35 @@ final class CustomizableColumnsTest extends AbstractFunctionalTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame(['id', 'note'], $this->getColumnProperties($crawler));
+    }
+
+    public function testDefaultColumnsCanDependOnTheCurrentUser(): void
+    {
+        $this->persistFixtureEntity();
+
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureCrudControllerWithUserDefaultColumns::class));
+        self::assertResponseIsSuccessful();
+        self::assertSame(['id', 'title', 'note'], $this->getColumnProperties($crawler));
+
+        $this->client->loginUser(new InMemoryUser('user', 'user', ['ROLE_USER']));
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureCrudControllerWithUserDefaultColumns::class));
+        self::assertResponseIsSuccessful();
+        self::assertSame(['id'], $this->getColumnProperties($crawler));
+    }
+
+    public function testRenderEndpointPreChecksTheDefaultColumnsOfTheCurrentUser(): void
+    {
+        $this->client->loginUser(new InMemoryUser('user', 'user', ['ROLE_USER']));
+
+        $crawler = $this->client->request('GET', '/_ea-extensions/customizable-columns/render', [
+            'crudControllerFqcn' => FixtureCrudControllerWithUserDefaultColumns::class,
+        ]);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('input[type="checkbox"][name="columns[id]"][checked]'));
+        self::assertCount(0, $crawler->filter('input[type="checkbox"][name="columns[title]"][checked]'));
+        self::assertCount(1, $crawler->filter('input[type="checkbox"][name="columns[title]"]'));
     }
 
     public function testRenderEndpointPreChecksTheCurrentSelection(): void
@@ -141,6 +180,117 @@ final class CustomizableColumnsTest extends AbstractFunctionalTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSame(['note', 'title'], $this->getColumnProperties($crawler));
+    }
+
+    public function testDefaultColumnsMatchOnColumnNameRatherThanOnGeneratedProperty(): void
+    {
+        $this->persistFixtureEntity();
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureCrudControllerWithColumnNames::class));
+
+        self::assertResponseIsSuccessful();
+        $properties = $this->getColumnProperties($crawler);
+        self::assertCount(2, $properties);
+        self::assertSame('id', $properties[0]);
+        self::assertStringStartsWith(FixtureCrudControllerWithColumnNames::VIRTUAL_PROPERTY_PREFIX, $properties[1]);
+    }
+
+    public function testQueryOverrideUsesColumnNames(): void
+    {
+        $this->persistFixtureEntity();
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureCrudControllerWithColumnNames::class, extraParams: [
+            ColumnSelectionResolver::QUERY_PARAM => 'computed,heading',
+        ]));
+
+        self::assertResponseIsSuccessful();
+        $properties = $this->getColumnProperties($crawler);
+        self::assertCount(2, $properties);
+        self::assertStringStartsWith(FixtureCrudControllerWithColumnNames::VIRTUAL_PROPERTY_PREFIX, $properties[0]);
+        self::assertSame('title', $properties[1]);
+    }
+
+    public function testRenderEndpointListsColumnNames(): void
+    {
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $crawler = $this->client->request('GET', '/_ea-extensions/customizable-columns/render', [
+            'crudControllerFqcn' => FixtureCrudControllerWithColumnNames::class,
+        ]);
+
+        self::assertResponseIsSuccessful();
+        foreach (['id', 'heading', 'computed'] as $column) {
+            self::assertCount(1, $crawler->filter(sprintf('input[type="checkbox"][name="columns[%s]"]', $column)));
+        }
+    }
+
+    public function testSavedPreferenceSurvivesARegeneratedProperty(): void
+    {
+        $this->persistFixtureEntity();
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $redirectUrl = $this->crudUrl(FixtureCrudControllerWithColumnNames::class);
+
+        $this->client->request(
+            'POST',
+            '/_ea-extensions/customizable-columns/save?'.http_build_query([
+                'crudControllerFqcn' => FixtureCrudControllerWithColumnNames::class,
+                'redirectUrl' => $redirectUrl,
+            ]),
+            ['columns' => ['heading' => '1', 'computed' => '1', 'save' => '1']],
+        );
+
+        $crawler = $this->client->request('GET', $redirectUrl);
+
+        self::assertResponseIsSuccessful();
+        $properties = $this->getColumnProperties($crawler);
+        self::assertCount(2, $properties);
+        self::assertSame('title', $properties[0]);
+        self::assertStringStartsWith(FixtureCrudControllerWithColumnNames::VIRTUAL_PROPERTY_PREFIX, $properties[1]);
+    }
+
+    public function testFieldsFilterSkipsFormattingHiddenColumns(): void
+    {
+        $this->persistFixtureEntity();
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+        FixtureCrudControllerWithFieldsFilter::$noteFormatCount = 0;
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureCrudControllerWithFieldsFilter::class));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(['id', 'title'], $this->getColumnProperties($crawler));
+        self::assertSame(0, FixtureCrudControllerWithFieldsFilter::$noteFormatCount);
+    }
+
+    public function testFieldsFilterAppliesTheQueryOverride(): void
+    {
+        $this->persistFixtureEntity();
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+        FixtureCrudControllerWithFieldsFilter::$noteFormatCount = 0;
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureCrudControllerWithFieldsFilter::class, extraParams: [
+            ColumnSelectionResolver::QUERY_PARAM => 'note,id',
+        ]));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(['note', 'id'], $this->getColumnProperties($crawler));
+        self::assertSame(1, FixtureCrudControllerWithFieldsFilter::$noteFormatCount);
+    }
+
+    public function testRenderEndpointListsColumnsHiddenByTheFieldsFilter(): void
+    {
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $crawler = $this->client->request('GET', '/_ea-extensions/customizable-columns/render', [
+            'crudControllerFqcn' => FixtureCrudControllerWithFieldsFilter::class,
+        ]);
+
+        self::assertResponseIsSuccessful();
+        foreach (['id', 'title', 'note'] as $column) {
+            self::assertCount(1, $crawler->filter(sprintf('input[type="checkbox"][name="columns[%s]"]', $column)));
+        }
     }
 
     private function persistFixtureEntity(): void

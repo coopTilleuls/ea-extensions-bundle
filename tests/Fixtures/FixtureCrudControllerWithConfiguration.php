@@ -28,12 +28,12 @@ final class FixtureCrudControllerWithConfiguration extends AbstractCrudControlle
         yield TextField::new('note');
     }
 
-    public static function getLockedColumns(): array
+    public function getLockedColumns(): array
     {
         return ['id'];
     }
 
-    public static function getDefaultColumns(): array
+    public function getDefaultColumns(): array
     {
         return ['id', 'title'];
     }

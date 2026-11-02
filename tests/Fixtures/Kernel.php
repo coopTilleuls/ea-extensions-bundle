@@ -153,6 +153,9 @@ class Kernel extends BaseKernel
         $services->set(FixtureCrudController::class)->public();
         $services->set(FixtureSubResourceCrudController::class)->public();
         $services->set(FixtureCrudControllerWithConfiguration::class)->public();
+        $services->set(FixtureCrudControllerWithColumnNames::class)->public();
+        $services->set(FixtureCrudControllerWithFieldsFilter::class)->public();
+        $services->set(FixtureCrudControllerWithUserDefaultColumns::class)->public();
         $services->set(FixtureEmbeddingCrudController::class)->public();
         $services->set(FixtureEmbeddedTargetCrudController::class)->public();
         $services->set(FixturePaginationCrudController::class)->public();

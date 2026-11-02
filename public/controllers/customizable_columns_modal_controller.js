@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import '../styles/customizable_columns.css';
 
 /**
  * Builds a Bootstrap modal on the fly and fills it with the fetched column picker form.
@@ -7,10 +8,14 @@ import { Controller } from '@hotwired/stimulus';
  * CrudController with zero Twig template changes.
  */
 export default class extends Controller {
-    open(event) {
-        event.preventDefault();
+    static values = { url: String };
 
-        fetch(this.element.getAttribute('href'))
+    connect() {
+        this.element.removeAttribute('disabled');
+    }
+
+    open() {
+        fetch(this.urlValue)
             .then((response) => response.text())
             .then((html) => this.showModal(html));
     }
@@ -21,13 +26,13 @@ export default class extends Controller {
         const wrapper = document.createElement('div');
         wrapper.innerHTML = `
             <div class="modal fade" id="ea-extensions-columns-modal" data-controller="ea-extensions--customizable-columns-modal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-lg modal-dialog-scrollable">
+                <div class="modal-dialog modal-dialog-scrollable">
                     <div class="modal-content">
                         <div class="modal-header justify-content-between">
                             <h5 class="modal-title"><i class="fa fa-columns fa-fw"></i> Personnaliser les colonnes</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body p-0"></div>
+                        <div class="modal-body"></div>
                         <div class="modal-footer d-flex">
                             <button type="button" class="btn btn-sm btn-outline-secondary me-auto" data-action="ea-extensions--customizable-columns-modal#reset">
                                 <i class="fa fa-rotate-right"></i> Réinitialiser

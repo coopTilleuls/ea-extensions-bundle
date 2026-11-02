@@ -25,7 +25,7 @@ class ColumnPreference
     private string $ownerId;
 
     /**
-     * @var array<string, list<string>> CrudController FQCN => ordered property list
+     * @var array<string, list<string>> CrudController FQCN => ordered column name list
      */
     #[ORM\Column(type: 'json')]
     private array $columnsByController = [];

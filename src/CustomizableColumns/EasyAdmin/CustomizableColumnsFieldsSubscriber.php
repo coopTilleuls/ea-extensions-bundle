@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\EasyAdmin;
 
+use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\ColumnName;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\ColumnsConfigurationResolver;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\ColumnSelectionResolver;
-use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\CustomizableColumnsConfigurationInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\EntityCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\FieldDto;
@@ -17,6 +18,7 @@ final class CustomizableColumnsFieldsSubscriber
 {
     public function __construct(
         private readonly ColumnSelectionResolver $resolver,
+        private readonly ColumnsConfigurationResolver $configurationResolver,
     ) {
     }
 
@@ -37,12 +39,7 @@ final class CustomizableColumnsFieldsSubscriber
             return;
         }
 
-        $lockedColumns = [];
-        $defaultColumns = [];
-        if (is_subclass_of($crudControllerFqcn, CustomizableColumnsConfigurationInterface::class)) {
-            $lockedColumns = $crudControllerFqcn::getLockedColumns();
-            $defaultColumns = $crudControllerFqcn::getDefaultColumns();
-        }
+        [$lockedColumns, $defaultColumns] = $this->configurationResolver->resolve($crudControllerFqcn, $context->getRequest());
 
         foreach ($entities as $entityDto) {
             $fields = $entityDto->getFields();
@@ -50,21 +47,19 @@ final class CustomizableColumnsFieldsSubscriber
                 continue;
             }
 
-            /** @var list<string> $availableProperties */
-            $availableProperties = [];
-            /** @var array<string, FieldDto> $fieldsByProperty */
-            $fieldsByProperty = [];
+            /** @var array<string, FieldDto> $fieldsByColumn */
+            $fieldsByColumn = [];
             foreach ($fields as $fieldDto) {
-                $availableProperties[] = $fieldDto->getProperty();
-                $fieldsByProperty[$fieldDto->getProperty()] = $fieldDto;
+                $fieldsByColumn[ColumnName::of($fieldDto)] = $fieldDto;
             }
+            $availableColumns = array_keys($fieldsByColumn);
 
             $selectedColumns = $this->resolver->resolve(
                 $context->getRequest(),
                 $crudControllerFqcn,
                 $context->getRequest()->query->getString(ColumnSelectionResolver::QUERY_PARAM),
-                $availableProperties,
-                [] === $defaultColumns ? $availableProperties : $defaultColumns,
+                $availableColumns,
+                [] === $defaultColumns ? $availableColumns : $defaultColumns,
                 $lockedColumns,
             );
 
@@ -72,11 +67,11 @@ final class CustomizableColumnsFieldsSubscriber
                 continue;
             }
 
-            foreach ($fieldsByProperty as $fieldDto) {
+            foreach ($fieldsByColumn as $fieldDto) {
                 $fields->unset($fieldDto);
             }
-            foreach ($selectedColumns as $property) {
-                $fields->add($fieldsByProperty[$property]);
+            foreach ($selectedColumns as $column) {
+                $fields->add($fieldsByColumn[$column]);
             }
         }
     }

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Controller;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\AvailableColumnsResolver;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\ColumnsConfigurationResolver;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\ColumnSelectionResolver;
-use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\CustomizableColumnsConfigurationInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Form\ColumnPreferenceType;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Storage\ColumnPreferenceStorageInterface;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -23,6 +23,7 @@ final class ColumnPreferenceController
     public function __construct(
         private readonly AvailableColumnsResolver $availableColumnsResolver,
         private readonly ColumnSelectionResolver $columnSelectionResolver,
+        private readonly ColumnsConfigurationResolver $columnsConfigurationResolver,
         private readonly ColumnPreferenceStorageInterface $storage,
         private readonly FormFactoryInterface $formFactory,
         private readonly Environment $twig,
@@ -37,7 +38,7 @@ final class ColumnPreferenceController
         $availableFields = $this->availableColumnsResolver->resolve($crudControllerFqcn, $request);
         $availableProperties = array_keys($availableFields);
 
-        [$lockedColumns, $defaultColumns] = $this->getConfiguration($crudControllerFqcn);
+        [$lockedColumns, $defaultColumns] = $this->columnsConfigurationResolver->resolve($crudControllerFqcn, $request);
 
         $selectedColumns = $this->columnSelectionResolver->resolve(
             $request,
@@ -82,7 +83,7 @@ final class ColumnPreferenceController
     {
         $crudControllerFqcn = $this->getCrudControllerFqcn($request);
 
-        [$lockedColumns] = $this->getConfiguration($crudControllerFqcn);
+        [$lockedColumns] = $this->columnsConfigurationResolver->resolve($crudControllerFqcn, $request);
         $availableProperties = array_keys($this->availableColumnsResolver->resolve($crudControllerFqcn, $request));
 
         $submittedFields = $request->request->all('columns');
@@ -145,17 +146,5 @@ final class ColumnPreferenceController
         }
 
         return $crudControllerFqcn;
-    }
-
-    /**
-     * @return array{0: list<string>, 1: list<string>}
-     */
-    private function getConfiguration(string $crudControllerFqcn): array
-    {
-        if (is_subclass_of($crudControllerFqcn, CustomizableColumnsConfigurationInterface::class)) {
-            return [$crudControllerFqcn::getLockedColumns(), $crudControllerFqcn::getDefaultColumns()];
-        }
-
-        return [[], []];
     }
 }

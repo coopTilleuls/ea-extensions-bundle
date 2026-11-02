@@ -22,9 +22,9 @@ final class ColumnSelectionResolver
     }
 
     /**
-     * @param list<string> $availableProperties properties actually authorized/displayable, in their natural order
-     * @param list<string> $defaultProperties   properties shown when nothing is saved/overridden
-     * @param list<string> $lockedProperties    properties that are always included, regardless of selection
+     * @param list<string> $availableProperties column names actually authorized/displayable, in their natural order
+     * @param list<string> $defaultProperties   column names shown when nothing is saved/overridden
+     * @param list<string> $lockedProperties    column names that are always included, regardless of selection
      *
      * @return list<string>
      */

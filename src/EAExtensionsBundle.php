@@ -6,6 +6,9 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportFileDownloader;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportFileWriter;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Repository\ColumnPreferenceRepository;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Storage\ColumnPreferenceStorageInterface;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Storage\SecurityUserColumnPreferenceStorage;
 use CoopTilleuls\Bundle\EAExtensionsBundle\MenuOverrides\EasyAdmin\RecursiveMenuItemMatcher;
 use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\MercureBundle\MercureBundle;
@@ -37,6 +40,7 @@ final class EAExtensionsBundle extends AbstractBundle
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->booleanNode('enabled')->defaultFalse()->end()
+                        ->scalarNode('storage_service_id')->defaultNull()->end()
                     ->end()
                 ->end()
                 ->arrayNode('pagination')
@@ -126,7 +130,9 @@ final class EAExtensionsBundle extends AbstractBundle
             // only gets registered when its own feature is actually enabled.
             $mappings = [];
 
-            if ($this->isFeatureEnabled($builder, 'customizable_columns')) {
+            // A custom storage keeps preferences elsewhere. Mapping the default entity would only add
+            // an unused table to migrations and fixture purges.
+            if ($this->isFeatureEnabled($builder, 'customizable_columns') && null === $this->getRawFeatureOption($builder, 'customizable_columns', 'storage_service_id')) {
                 $mappings['EAExtensionsCustomizableColumns'] = [
                     'type' => 'attribute',
                     'dir' => $this->getPath().'/src/CustomizableColumns/Entity',
@@ -168,14 +174,22 @@ final class EAExtensionsBundle extends AbstractBundle
      */
     private function isFeatureEnabled(ContainerBuilder $builder, string $feature): bool
     {
-        $enabled = false;
+        return (bool) $this->getRawFeatureOption($builder, $feature, 'enabled');
+    }
+
+    /**
+     * Same raw read as {@see isFeatureEnabled()}: the last config defining the option wins, null otherwise.
+     */
+    private function getRawFeatureOption(ContainerBuilder $builder, string $feature, string $option): mixed
+    {
+        $value = null;
         foreach ($builder->getExtensionConfig($this->extensionAlias) as $config) {
-            if (\array_key_exists($feature, $config) && \array_key_exists('enabled', $config[$feature])) {
-                $enabled = $config[$feature]['enabled'];
+            if (\array_key_exists($feature, $config) && \array_key_exists($option, $config[$feature])) {
+                $value = $config[$feature][$option];
             }
         }
 
-        return $enabled;
+        return $value;
     }
 
     /**
@@ -195,6 +209,15 @@ final class EAExtensionsBundle extends AbstractBundle
 
         if ($config['customizable_columns']['enabled']) {
             $container->import('../config/services.php');
+
+            $storageServiceId = $config['customizable_columns']['storage_service_id'];
+            if (null !== $storageServiceId) {
+                // prependExtension() leaves the entity unmapped here, so the default storage and its
+                // repository would reference a class Doctrine doesn't know.
+                $builder->removeDefinition(SecurityUserColumnPreferenceStorage::class);
+                $builder->removeDefinition(ColumnPreferenceRepository::class);
+                $builder->setAlias(ColumnPreferenceStorageInterface::class, $storageServiceId);
+            }
         }
 
         $container->import('../config/crud_fields_services.php');

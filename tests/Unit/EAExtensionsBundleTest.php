@@ -52,9 +52,12 @@ final class EAExtensionsBundleTest extends TestCase
         self::assertFalse($this->processDefaultConfig()['menu_overrides']['enabled']);
     }
 
-    public function testCustomizableColumnsIsDisabledByDefault(): void
+    public function testCustomizableColumnsIsDisabledByDefaultWithTheDefaultStorage(): void
     {
-        self::assertFalse($this->processDefaultConfig()['customizable_columns']['enabled']);
+        $config = $this->processDefaultConfig()['customizable_columns'];
+
+        self::assertFalse($config['enabled']);
+        self::assertNull($config['storage_service_id']);
     }
 
     public function testCrudExportIsDisabledByDefault(): void

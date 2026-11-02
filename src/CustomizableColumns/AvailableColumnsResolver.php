@@ -24,11 +24,12 @@ final class AvailableColumnsResolver
     public function __construct(
         private readonly ControllerFactory $controllerFactory,
         private readonly AuthorizationCheckerInterface $authorizationChecker,
+        private readonly CustomizableColumnsFieldsFilter $fieldsFilter,
     ) {
     }
 
     /**
-     * @return array<string, FieldDto> keyed by property name, in configureFields()'s natural order
+     * @return array<string, FieldDto> keyed by column name (see {@see ColumnName}), in configureFields()'s natural order
      */
     public function resolve(string $crudControllerFqcn, Request $request): array
     {
@@ -37,7 +38,10 @@ final class AvailableColumnsResolver
             throw new NotFoundHttpException(sprintf('"%s" is not a valid CRUD controller.', $crudControllerFqcn));
         }
 
-        $fields = new FieldCollection($controller->configureFields(Crud::PAGE_INDEX));
+        // Spread inside the callback: a configureFields() generator would otherwise run once the filter is back on
+        $fields = new FieldCollection($this->fieldsFilter->withoutFiltering(
+            static fn (): array => [...$controller->configureFields(Crud::PAGE_INDEX)],
+        ));
 
         $availableFields = [];
         foreach ($fields as $fieldDto) {
@@ -47,7 +51,7 @@ final class AvailableColumnsResolver
             if (!$this->authorizationChecker->isGranted(Permission::EA_VIEW_FIELD, $fieldDto)) {
                 continue;
             }
-            $availableFields[$fieldDto->getProperty()] = $fieldDto;
+            $availableFields[ColumnName::of($fieldDto)] = $fieldDto;
         }
 
         return $availableFields;

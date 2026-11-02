@@ -1,0 +1,21 @@
+/* EasyAdmin lays .modal-content out on a grid, where the body row grows to its full content
+   height and .modal-dialog-scrollable clips the footer off. Let the body row shrink and scroll
+   instead, so the footer buttons stay visible however many columns the list has. */
+#ea-extensions-columns-modal .modal-content {
+    grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+/* Stretch the scrolling body over .modal-content's 1rem side padding and give it back as
+   inner padding. An overlay scrollbar then sits in that gutter, away from the move arrows. */
+#ea-extensions-columns-modal .modal-body {
+    overflow-y: auto;
+    margin-inline: -1rem;
+    padding-inline: 1rem;
+}
+
+/* Rows move in the DOM, so these selectors follow every reorder without JS.
+   visibility keeps the arrow column aligned across rows. */
+#ea-extensions-columns-modal .ea-extensions-column-row:first-child [data-action$="#moveUp"],
+#ea-extensions-columns-modal .ea-extensions-column-row:last-child [data-action$="#moveDown"] {
+    visibility: hidden;
+}

@@ -10,6 +10,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Action\ActionsExtensionInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Twig\Component\Option\ButtonType;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 final class CustomizableColumnsActionsExtension implements ActionsExtensionInterface
@@ -49,10 +50,16 @@ final class CustomizableColumnsActionsExtension implements ActionsExtensionInter
         $action = Action::new(self::ACTION_NAME, 'Personnaliser les colonnes')
             ->setIcon('fa fa-columns')
             ->createAsGlobalAction()
+            // We use a combination of several solutions to avoid a race condition if user clicks too early:
+            // - using a button to avoid render of a href attribute
+            ->renderAsButton(ButtonType::Button)
+            // - disabled the button by default, stimulus controller will reactivate it
             ->linkToUrl($url)
             ->setHtmlAttributes([
+                'disabled' => 'disabled',
                 'data-controller' => 'ea-extensions--customizable-columns-modal',
-                'data-action' => 'ea-extensions--customizable-columns-modal#open:prevent',
+                'data-ea-extensions--customizable-columns-modal-url-value' => $url,
+                'data-action' => 'ea-extensions--customizable-columns-modal#open',
             ]);
 
         $actions->add(Crud::PAGE_INDEX, $action);

@@ -7,11 +7,11 @@
                         {{ form_widget(child) }}
                         {{ form_label(child) }}
                     </div>
-                    <div class="d-flex flex-column align-items-center ms-3">
-                        <button type="button" class="btn btn-sm p-0 text-body-secondary" data-action="ea-extensions--column-handler#moveUp" aria-label="Monter">
+                    <div class="d-flex flex-column align-items-center ms-3 me-3">
+                        <button type="button" class="btn btn-sm px-2 py-0 text-body-secondary" data-action="ea-extensions--column-handler#moveUp" aria-label="Monter">
                             <i class="fas fa-chevron-up"></i>
                         </button>
-                        <button type="button" class="btn btn-sm p-0 text-body-secondary" data-action="ea-extensions--column-handler#moveDown" aria-label="Descendre">
+                        <button type="button" class="btn btn-sm px-2 py-0 text-body-secondary" data-action="ea-extensions--column-handler#moveDown" aria-label="Descendre">
                             <i class="fas fa-chevron-down"></i>
                         </button>
                     </div>
@@ -23,7 +23,7 @@
         {% do form.save.setRendered %}
         <div class="card p-3 my-3 ea-extensions-save-switch">
             <label class="d-flex align-items-center justify-content-between gap-3" for="{{ form.save.vars.id }}">
-                <span class="text-nowrap"><i class="fas fa-star me-2"></i>{{ form.save.vars.label }}</span>
+                <span class="d-flex align-items-center"><i class="fas fa-star me-2"></i><span>{{ form.save.vars.label }}</span></span>
                 <twig:ea:Switch
                     name="{{ form.save.vars.full_name }}"
                     id="{{ form.save.vars.id }}"
