@@ -1,0 +1,95 @@
+{
+    "controllers": {
+        "@coop-tilleuls/ea-extensions-bundle": {
+            "customizable-columns-modal": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "column-handler": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "crud-field-eager": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "crud-field-lazy": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "pagination-page-size": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "mercure-hub": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "real-time-notification": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "notification-list-update": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "notification-read-update": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "notification-toggle": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "notification-toggle-label": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "refresh-choices-on-related-field-change": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "refresh-values-on-related-field-change": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "toggle-display-on-field-change": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "toggle-display-on-multiple-select": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "display-field-on-boolean-field-change": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "select-all-options": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "add-button-select": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "tomselect-optgroups": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "collection-field-required": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "tab-navigation": {
+                "enabled": true,
+                "fetch": "lazy"
+            },
+            "back-to-top": {
+                "enabled": true,
+                "fetch": "lazy"
+            }
+        }
+    },
+    "entrypoints": []
+}

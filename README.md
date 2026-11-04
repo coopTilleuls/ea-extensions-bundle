@@ -88,6 +88,13 @@ Controllers are registered lazily: a page only downloads the controllers (and th
 whose `data-controller` it actually contains, so loading the entrypoint everywhere costs nothing
 for disabled features.
 
+Since `ea-extensions.js` registers the controllers itself, tools reading the Symfony UX layout
+(such as [Symfony Language Tools](https://github.com/symfony/language-tools)) can't see them.
+`assets/package.json` and `assets/controllers.json` declare them for those tools only: the app
+doesn't need to add anything to its own `assets/controllers.json`. A controller added to
+`ea-extensions.js` must be declared in both files too, which `tests/Js/stimulus_manifest.test.js`
+checks.
+
 ## Features
 
 Every feature is **disabled by default** and enabled under `coop_tilleuls_ea_extensions` in

@@ -1,0 +1,140 @@
+{
+    "name": "@coop-tilleuls/ea-extensions-bundle",
+    "private": true,
+    "symfony": {
+        "controllers": {
+            "customizable-columns-modal": {
+                "main": "../public/controllers/customizable_columns_modal_controller.js",
+                "name": "ea-extensions--customizable-columns-modal",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "column-handler": {
+                "main": "../public/controllers/column_handler_controller.js",
+                "name": "ea-extensions--column-handler",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "crud-field-eager": {
+                "main": "../public/controllers/crud_field_eager_controller.js",
+                "name": "ea-extensions--crud-field-eager",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "crud-field-lazy": {
+                "main": "../public/controllers/crud_field_lazy_controller.js",
+                "name": "ea-extensions--crud-field-lazy",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "pagination-page-size": {
+                "main": "../public/controllers/pagination_page_size_controller.js",
+                "name": "ea-extensions--pagination-page-size",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "mercure-hub": {
+                "main": "../public/controllers/mercure_hub_controller.js",
+                "name": "ea-extensions--mercure-hub",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "real-time-notification": {
+                "main": "../public/controllers/real_time_notification_controller.js",
+                "name": "ea-extensions--real-time-notification",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "notification-list-update": {
+                "main": "../public/controllers/notification_list_update_controller.js",
+                "name": "ea-extensions--notification-list-update",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "notification-read-update": {
+                "main": "../public/controllers/notification_read_update_controller.js",
+                "name": "ea-extensions--notification-read-update",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "notification-toggle": {
+                "main": "../public/controllers/notification_toggle_controller.js",
+                "name": "ea-extensions--notification-toggle",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "notification-toggle-label": {
+                "main": "../public/controllers/notification_toggle_label_controller.js",
+                "name": "ea-extensions--notification-toggle-label",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "refresh-choices-on-related-field-change": {
+                "main": "../public/controllers/refresh_choices_on_related_field_change_controller.js",
+                "name": "coop-tilleuls--ea-extensions--refresh-choices-on-related-field-change",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "refresh-values-on-related-field-change": {
+                "main": "../public/controllers/refresh_values_on_related_field_change_controller.js",
+                "name": "coop-tilleuls--ea-extensions--refresh-values-on-related-field-change",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "toggle-display-on-field-change": {
+                "main": "../public/controllers/toggle_display_on_field_change_controller.js",
+                "name": "coop-tilleuls--ea-extensions--toggle-display-on-field-change",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "toggle-display-on-multiple-select": {
+                "main": "../public/controllers/toggle_display_on_multiple_select_controller.js",
+                "name": "coop-tilleuls--ea-extensions--toggle-display-on-multiple-select",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "display-field-on-boolean-field-change": {
+                "main": "../public/controllers/display_field_on_boolean_field_change_controller.js",
+                "name": "coop-tilleuls--ea-extensions--display-field-on-boolean-field-change",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "select-all-options": {
+                "main": "../public/controllers/select_all_options_controller.js",
+                "name": "coop-tilleuls--ea-extensions--select-all-options",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "add-button-select": {
+                "main": "../public/controllers/add_button_select_controller.js",
+                "name": "coop-tilleuls--ea-extensions--add-button-select",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "tomselect-optgroups": {
+                "main": "../public/controllers/tomselect_optgroups_controller.js",
+                "name": "coop-tilleuls--ea-extensions--tomselect-optgroups",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "collection-field-required": {
+                "main": "../public/controllers/collection_field_required_controller.js",
+                "name": "coop-tilleuls--ea-extensions--collection-field-required",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "tab-navigation": {
+                "main": "../public/controllers/tab_navigation_controller.js",
+                "name": "coop-tilleuls--ea-extensions--tab-navigation",
+                "fetch": "lazy",
+                "enabled": false
+            },
+            "back-to-top": {
+                "main": "../public/controllers/back_to_top_controller.js",
+                "name": "coop-tilleuls--ea-extensions--back-to-top",
+                "fetch": "lazy",
+                "enabled": false
+            }
+        }
+    }
+}
