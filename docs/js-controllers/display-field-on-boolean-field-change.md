@@ -13,7 +13,7 @@ via EasyAdmin's own `Crud::setFormOptions()` (no bundle-specific wiring needed f
 
 | Target         | Element                                                                                  |
 |----------------|---------------------------------------------------------------------------------------------|
-| `field`        | the element whose container is shown or hidden                                          |
+| `field`        | the element whose container is shown or hidden — can be set on several elements          |
 | `fieldToListen`| the boolean (checkbox) field to listen to — also needs its own `data-action` (see below) |
 
 ## Values
@@ -50,6 +50,22 @@ Crud::new()
 ```
 
 Here, `homeAddress`'s `.form-group` is only shown while `isRemote` is checked.
+
+### Several dependent fields
+
+A single `fieldToListen` can drive several `field` targets: put the `field` target on each
+dependent field, and they are all shown or hidden together. A `field` target with no ancestor
+matching `container` is skipped with a console warning, without blocking the others.
+
+```php
+BooleanField::new('isRemote')
+    ->setHtmlAttribute('data-coop-tilleuls--ea-extensions--display-field-on-boolean-field-change-target', 'fieldToListen')
+    ->setHtmlAttribute('data-action', 'change->coop-tilleuls--ea-extensions--display-field-on-boolean-field-change#toggleDisplay'),
+TextField::new('homeAddress')
+    ->setHtmlAttribute('data-coop-tilleuls--ea-extensions--display-field-on-boolean-field-change-target', 'field'),
+TextField::new('homePhone')
+    ->setHtmlAttribute('data-coop-tilleuls--ea-extensions--display-field-on-boolean-field-change-target', 'field'),
+```
 
 Equivalent EasyAdmin field configuration:
 

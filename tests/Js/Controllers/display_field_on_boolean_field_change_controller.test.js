@@ -54,6 +54,69 @@ describe('display-field-on-boolean-field-change controller', () => {
         });
     });
 
+    describe('several field targets driven by one checkbox', () => {
+        function mount(checked) {
+            return mountDOM(`
+                <form data-controller="${IDENTIFIER}">
+                    <input type="checkbox" ${checked ? 'checked' : ''}
+                           data-${IDENTIFIER}-target="fieldToListen"
+                           data-action="change->${IDENTIFIER}#toggleDisplay">
+                    <div class="form-group">
+                        <input data-${IDENTIFIER}-target="field">
+                    </div>
+                    <div class="form-group">
+                        <input data-${IDENTIFIER}-target="field">
+                    </div>
+                    <div class="form-group">
+                        <input data-${IDENTIFIER}-target="field">
+                    </div>
+                </form>
+            `);
+        }
+
+        it('toggles every field group together', async () => {
+            const container = mount(false);
+            start();
+
+            const groups = [...container.querySelectorAll('.form-group')];
+            await waitFor(() => groups.forEach((group) => expect(group.classList.contains('d-none')).toBe(true)));
+
+            fireEvent.click(container.querySelector('input[type="checkbox"]'));
+            await waitFor(() => groups.forEach((group) => expect(group.classList.contains('d-none')).toBe(false)));
+
+            fireEvent.click(container.querySelector('input[type="checkbox"]'));
+            await waitFor(() => groups.forEach((group) => expect(group.classList.contains('d-none')).toBe(true)));
+        });
+
+        it('warns about a field without matching container and still toggles the other fields', async () => {
+            const container = mountDOM(`
+                <form data-controller="${IDENTIFIER}">
+                    <input type="checkbox"
+                           data-${IDENTIFIER}-target="fieldToListen"
+                           data-action="change->${IDENTIFIER}#toggleDisplay">
+                    <input id="orphan" data-${IDENTIFIER}-target="field">
+                    <div class="form-group">
+                        <input data-${IDENTIFIER}-target="field">
+                    </div>
+                </form>
+            `);
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            start();
+
+            const group = container.querySelector('.form-group');
+            await waitFor(() => expect(group.classList.contains('d-none')).toBe(true));
+            expect(warnSpy).toHaveBeenCalledWith(
+                expect.stringContaining('".form-group"'),
+                container.querySelector('#orphan'),
+            );
+
+            fireEvent.click(container.querySelector('input[type="checkbox"]'));
+            await waitFor(() => expect(group.classList.contains('d-none')).toBe(false));
+
+            warnSpy.mockRestore();
+        });
+    });
+
     describe('inverted mode with a custom container', () => {
         function mount(checked) {
             return mountDOM(`

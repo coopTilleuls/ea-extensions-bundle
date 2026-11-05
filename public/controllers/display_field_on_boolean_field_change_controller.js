@@ -9,7 +9,8 @@ import { Controller } from '@hotwired/stimulus';
  *
  * I/O:
  *   targets:
- *      - field: the element whose container is shown or hidden
+ *      - field: the element(s) whose container is shown or hidden — several `field` targets
+ *        are all driven by the same `fieldToListen`
  *      - fieldToListen: the boolean (checkbox) field to listen to — wire
  *        `data-action="change-><identifier>#toggleDisplay"` on it yourself
  *   values:
@@ -41,6 +42,18 @@ export default class extends Controller {
     updateVisibility(checked) {
         const visible = this.invertValue ? !checked : checked;
 
-        this.fieldTarget.closest(this.containerValue).classList.toggle('d-none', !visible);
+        this.fieldTargets.forEach((field) => {
+            const container = field.closest(this.containerValue);
+
+            // A field rendered outside of any matching container (e.g. on another form layout)
+            // must not prevent the remaining targets from being toggled.
+            if (null === container) {
+                console.warn(`No container matching "${this.containerValue}" found for field target:`, field);
+
+                return;
+            }
+
+            container.classList.toggle('d-none', !visible);
+        });
     }
 }
