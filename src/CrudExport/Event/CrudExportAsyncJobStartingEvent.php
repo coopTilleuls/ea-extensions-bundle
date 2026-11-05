@@ -15,12 +15,14 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event;
 final readonly class CrudExportAsyncJobStartingEvent
 {
     /**
-     * @param class-string $crudControllerFqcn
+     * @param class-string               $crudControllerFqcn
+     * @param array<string, scalar|null> $context            see CrudExportContextProviderInterface
      */
     public function __construct(
         public string $crudControllerFqcn,
         public string $exportName,
         public string $requesterId,
+        public array $context,
     ) {
     }
 }

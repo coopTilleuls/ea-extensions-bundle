@@ -1,10 +1,11 @@
 # CRUD index export
 
-Adds an "Exporter" action to any CRUD's index page, exporting exactly the rows currently
+Adds an "Exporter" action to the index page of opted-in CRUD controllers, exporting exactly the rows currently
 matched by the visitor's filters/search (CSV by default, XLSX optionally) as a synchronous
 download or, for large result sets, an asynchronous background job. The current sort order
 is **not** preserved — the export query drops it and returns rows unordered — only the
-filter/search criteria carry over. Works on any `AbstractCrudController`.
+filter/search criteria carry over. Works on any `AbstractCrudController` implementing
+`CrudExportConfigurationInterface` — export is **opt-in per controller** (see below).
 
 **Disabled by default**, like every other feature in this bundle — this one additionally has a
 mandatory setting (`storage_service_id`, see below) with no bundle-owned default, so enabling it
@@ -71,7 +72,20 @@ coop_tilleuls_ea_extensions:
 
 ## Basic usage
 
-Nothing to do — the "Exporter" button appears on every index page automatically.
+Export is **opt-in per controller**: a controller gets the "Exporter" button only once it
+implements `CrudExportConfigurationInterface`. `CrudExportConfigurationTrait` provides the
+defaults, so opting in takes two lines:
+
+```php
+final class ProductCrudController extends AbstractCrudController implements CrudExportConfigurationInterface
+{
+    use CrudExportConfigurationTrait; // enabled, same permission as the index page, CSV,
+                                      // name from the entity label, sync/async by row count
+}
+```
+
+A controller not implementing the interface has no button, and the export flag is ignored
+even if added to its URL by hand.
 
 - Below `async_threshold` rows: the file downloads immediately.
 - At or above `async_threshold` (and at or below `max_limit`): the export runs in the
@@ -81,36 +95,36 @@ Nothing to do — the "Exporter" button appears on every index page automaticall
 
 ## Restricting, disabling, or naming exports per controller
 
-Implement `CrudExportConfigurationInterface` on a CRUD controller — entirely optional,
-its absence just means "enabled, same permission as the index page, CSV, name from the
-entity label":
+Override only the trait methods whose default does not fit:
 
 ```php
 final class ProductCrudController extends AbstractCrudController implements CrudExportConfigurationInterface
 {
+    use CrudExportConfigurationTrait;
+
     public static function isExportEnabled(): bool
     {
         return true; // false removes the "Exporter" button AND ignores the export flag
-                      // even if requested directly through the URL — use this to opt a
-                      // specific controller out, instead of the bundle-wide
-                      // `crud_export.enabled` flag which turns it off everywhere.
+                      // even if requested directly through the URL — e.g. to switch
+                      // export off on a condition.
     }
 
     public static function getExportPermission(): string|Expression|null
     {
-        return new Expression('is_granted("EXPORT_PRODUCT")');
+        return new Expression('is_granted("EXPORT_PRODUCT")'); // null: same as the index page
     }
 
     public static function getExportName(AdminContext $context): ?string
     {
         // $context carries the current filters/search/entity, so the name can vary
         // with what's actually being exported instead of being a fixed string.
+        // Null falls back to the entity's plural label, lowercased.
         return 'products-'.($context->getRequest()->query->get('categoryId') ?? 'all');
     }
 
     public static function getExportFormat(): string
     {
-        return CrudExportFormat::CSV; // or ::XLSX, or your own format key — see below
+        return CrudExportFormat::XLSX; // default ::CSV, or your own format key — see below
     }
 
     public static function getExportMode(): ?CrudExportMode
@@ -133,6 +147,10 @@ coop_tilleuls_ea_extensions:
             with_bom: true    # default false — prepends a UTF-8 BOM (e.g. for Excel on Windows)
 ```
 
+The "Exporter" action is always a primary action, rendered right after the controller's
+default (secondary) global actions and before its other primary ones — whatever order the
+controller gives its own actions.
+
 These apply to the built-in CSV writer only (`CrudExportFormat::CSV`); the intermediate CSV
 XLSX export converts from is unaffected.
 
@@ -146,7 +164,7 @@ it from `configureFields()`:
 ```php
 final class PriceExportResolver implements CrudExportFieldResolverInterface
 {
-    public function __invoke(object $entity): mixed
+    public function __invoke(object $entity, array $context): mixed
     {
         return sprintf('%.2f €', $entity->getPriceCents() / 100);
     }
@@ -157,6 +175,52 @@ final class PriceExportResolver implements CrudExportFieldResolverInterface
 MoneyField::new('priceCents')
     ->setCustomOption(CrudExportColumn::OPTION_VALUE_RESOLVER, PriceExportResolver::class);
 ```
+
+`$context` is the export context described below — empty unless the app registers a
+`CrudExportContextProviderInterface`.
+
+When the exported value only needs to come from another property or getter — typically a
+column whose displayed value is computed with `formatValue()` — point the column at it
+instead of writing a resolver:
+
+```php
+TextField::new('lastName')
+    ->formatValue(static fn ($value, Author $author): string => $author->getDisplayName())
+    ->setCustomOption(CrudExportColumn::OPTION_PROPERTY_PATH, 'displayName'); // getDisplayName()
+```
+
+The path accepts dotted relations (`'user.address.label'`) and is resolved like any other
+column (getter, public property, translatable/date/collection formatting). A value resolver,
+when also set, takes precedence.
+
+## Carrying request context to async exports
+
+An async export runs in a Messenger worker: no session, no security token, no current
+request. A resolver whose value depends on *who* exports — e.g. a status computed relative
+to the profile the visitor is currently acting under — cannot read that from a
+request-scoped service there. Capture it instead while the request is still available, by
+registering a context provider:
+
+```php
+final class CurrentProfileExportContextProvider implements CrudExportContextProviderInterface
+{
+    public function __construct(private readonly ProfileInterface $profile) {}
+
+    public function provide(AdminContext $context): array
+    {
+        return ['profileId' => $this->profile->getCurrentId()];
+    }
+}
+```
+
+Alias it to `CrudExportContextProviderInterface`. The bundle calls it once per export, before
+choosing sync or async, and hands the returned array unchanged to every field resolver
+(`__invoke(object $entity, array $context)`) and to every event below (`$event->context`),
+for sync and async exports alike — so a resolver behaves the same either way.
+
+Return scalars only (`array<string, scalar|null>`): the context travels inside
+`ExportCrudMessage` and must survive whichever serializer the app's transport uses. Pass
+identifiers and reload what you need from them, never entities.
 
 ## CSV vs. XLSX
 
@@ -242,10 +306,14 @@ final class UserPassphraseCrudExportPasswordProvider implements CrudExportPasswo
 
 Register it and alias it to `CrudExportPasswordProviderInterface`.
 
-## Reacting to a finished or failed export
+## Reacting to a requested, finished or failed export
 
 The bundle sends no notification itself — it dispatches events instead:
 
+- `CrudExportRequestedEvent` — fired once the export is accepted (permission granted,
+  `max_limit` not exceeded), still within the triggering request, right before the file is
+  generated (sync) or the job is queued (async). Carries `rowCount` and `async` — e.g. to
+  keep an audit log of who exported what.
 - `CrudExportAsyncJobStartingEvent` — fired at the very start of the async message
   handler, before the export query runs. A Messenger worker is a separate process from
   the HTTP request that triggered the export, so anything that request's own listeners set
@@ -265,8 +333,11 @@ The bundle sends no notification itself — it dispatches events instead:
   ```
 - `CrudExportFileReadyEvent` — fired for both sync and async exports, once the file is
   written to storage. Carries `downloadUrl` (only set for async exports).
-- `CrudExportFailedEvent` — fired when an async export throws, right before the exception
-  is rethrown (Messenger's own retry/failure-transport handling still applies).
+- `CrudExportFailedEvent` — fired once an async export has definitively failed, when
+  Messenger gives up and no retry is left. Not fired on each retry.
+
+All four carry the export context (`$event->context`, see above) — e.g. to notify the
+requester under the profile they exported from, not just as a user.
 
 ```php
 #[AsEventListener(event: CrudExportFileReadyEvent::class)]

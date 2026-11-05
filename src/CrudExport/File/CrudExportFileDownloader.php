@@ -8,6 +8,7 @@ use League\Flysystem\FilesystemOperator;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 
 final readonly class CrudExportFileDownloader
 {
@@ -35,9 +36,25 @@ final readonly class CrudExportFileDownloader
         $response->headers->set('Content-Type', $mimeType);
         // $filename ultimately derives from the app-supplied CrudExportConfigurationInterface::
         // getExportName(), which can carry request data — never hand-roll this header from it.
-        $response->headers->set('Content-Disposition', HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $filename));
+        $response->headers->set('Content-Disposition', HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $filename, $this->asciiFallback($filename)));
         $response->headers->set('Content-Length', (string) $this->storage->fileSize($storagePath));
 
         return $response;
+    }
+
+    /**
+     * makeDisposition() requires an ASCII fallback for clients that ignore filename*: a non-ASCII
+     * filename is transliterated (e.g. "export_syndiqué·es.csv" → "export_syndique_es.csv").
+     */
+    private function asciiFallback(string $filename): string
+    {
+        if (1 !== preg_match('/[^\x20-\x7E]/', $filename)) {
+            return $filename;
+        }
+
+        $extension = pathinfo($filename, \PATHINFO_EXTENSION);
+        $fallback = (string) new AsciiSlugger()->slug(pathinfo($filename, \PATHINFO_FILENAME), '_');
+
+        return '' === $extension ? $fallback : $fallback.'.'.$extension;
     }
 }

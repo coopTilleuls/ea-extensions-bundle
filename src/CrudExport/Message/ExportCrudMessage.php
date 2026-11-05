@@ -13,9 +13,10 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportColumn;
 final readonly class ExportCrudMessage
 {
     /**
-     * @param class-string           $crudControllerFqcn
-     * @param array<string, mixed>   $parameters         normalized via CrudExportParameterNormalizer
-     * @param list<CrudExportColumn> $columns
+     * @param class-string               $crudControllerFqcn
+     * @param array<string, mixed>       $parameters         normalized via CrudExportParameterNormalizer
+     * @param list<CrudExportColumn>     $columns
+     * @param array<string, scalar|null> $context            see CrudExportContextProviderInterface
      */
     public function __construct(
         public string $crudControllerFqcn,
@@ -25,6 +26,7 @@ final readonly class ExportCrudMessage
         public string $requesterId,
         public array $columns,
         public string $format,
+        public array $context,
     ) {
     }
 }

@@ -62,7 +62,7 @@ final class CustomizableColumnsFieldsFilterTest extends TestCase
         $filter = $this->createFilter(new Request());
 
         try {
-            $filter->withoutFiltering(static fn () => throw new \RuntimeException());
+            $filter->withoutFiltering(static fn (): never => throw new \RuntimeException());
         } catch (\RuntimeException) {
         }
 

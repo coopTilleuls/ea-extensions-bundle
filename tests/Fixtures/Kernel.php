@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures;
 
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Context\CrudExportContextProviderInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\EAExtensionsBundle;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationRecipientInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationRecipientResolverInterface;
@@ -168,11 +169,14 @@ class Kernel extends BaseKernel
         $services->set(FixtureItemCrudController::class)->public();
         $services->set(FixtureItemCrudControllerWithConfiguration::class)->public();
         $services->set(FixtureItemCrudControllerDisabled::class)->public();
+        $services->set(FixtureItemCrudControllerWithoutExportConfiguration::class)->public();
         $services->set(FixtureItemCrudControllerForcedAsync::class)->public();
         $services->set(FixtureItemCrudControllerForcedSync::class)->public();
         $services->set(FixtureIndexOnlySearchCrudController::class)->public();
         $services->set(FixtureTabbedCrudController::class)->public();
         $services->set(FixtureAmountExportResolver::class);
+        $services->set(FixtureExportContextProvider::class);
+        $services->alias(CrudExportContextProviderInterface::class, FixtureExportContextProvider::class);
 
         $services->set('fixture.crud_export_storage', Filesystem::class)
             ->args([new Reference('fixture.crud_export_storage.adapter')])

@@ -23,7 +23,7 @@ return static function (ContainerConfigurator $container): void {
     // instantiated regardless, and Format/{Csv,Xlsx}CrudExportFormatWriter.php are the two
     // built-in implementations, so they must stay in to be registered as services.
     $services->load('CoopTilleuls\\Bundle\\EAExtensionsBundle\\CrudExport\\', __DIR__.'/../src/CrudExport/')
-        ->exclude(__DIR__.'/../src/CrudExport/{Controller,Event,Message,CrudExportColumn.php,CrudExportAction.php,CrudExportFormat.php,CrudExportSettings.php,CrudExportConfigurationInterface.php,Password/CrudExportPasswordProviderInterface.php,Requester/CrudExportRequesterResolverInterface.php,Xlsx/CsvToXlsxConverter.php}')
+        ->exclude(__DIR__.'/../src/CrudExport/{Controller,Event,Message,CrudExportColumn.php,CrudExportAction.php,CrudExportFormat.php,CrudExportSettings.php,CrudExportConfigurationInterface.php,Context/CrudExportContextProviderInterface.php,Password/CrudExportPasswordProviderInterface.php,Requester/CrudExportRequesterResolverInterface.php,Xlsx/CsvToXlsxConverter.php}')
     ;
 
     $services->set(CrudExportDownloadController::class)

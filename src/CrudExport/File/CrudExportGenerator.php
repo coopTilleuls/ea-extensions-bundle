@@ -27,9 +27,10 @@ final readonly class CrudExportGenerator
     }
 
     /**
-     * @param Query<null, mixed>     $query
-     * @param class-string           $crudControllerFqcn
-     * @param list<CrudExportColumn> $columns
+     * @param Query<null, mixed>         $query
+     * @param class-string               $crudControllerFqcn
+     * @param list<CrudExportColumn>     $columns
+     * @param array<string, scalar|null> $context
      *
      * @return array{storagePath: string, filename: string}
      */
@@ -40,27 +41,29 @@ final readonly class CrudExportGenerator
         string $requesterId,
         string $exportName,
         string $format,
+        array $context,
     ): array {
         $headers = array_map($this->valueResolver->resolveHeader(...), $columns);
-        $rows = $this->resolveRows($query, $columns);
+        $rows = $this->resolveRows($query, $columns, $context);
 
         return $this->fileWriter->write($headers, $rows, $requesterId, $exportName, $format, $crudControllerFqcn);
     }
 
     /**
-     * @param Query<null, mixed>     $query
-     * @param list<CrudExportColumn> $columns
+     * @param Query<null, mixed>         $query
+     * @param list<CrudExportColumn>     $columns
+     * @param array<string, scalar|null> $context
      *
      * @return \Generator<list<mixed>>
      */
-    private function resolveRows(Query $query, array $columns): \Generator
+    private function resolveRows(Query $query, array $columns, array $context): \Generator
     {
         $query->setHint(Query::HINT_READ_ONLY, true);
         $processedRows = 0;
 
         try {
             foreach ($query->toIterable() as $entity) {
-                yield array_map(fn (CrudExportColumn $column): mixed => $this->valueResolver->resolveValue($entity, $column), $columns);
+                yield array_map(fn (CrudExportColumn $column): mixed => $this->valueResolver->resolveValue($entity, $column, $context), $columns);
 
                 if (0 === ++$processedRows % self::ENTITY_MANAGER_CLEAR_BATCH_SIZE) {
                     $this->clearEntityManager();

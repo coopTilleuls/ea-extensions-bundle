@@ -15,5 +15,11 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 #[AutoconfigureTag]
 interface CrudExportFieldResolverInterface
 {
-    public function __invoke(object $entity): mixed;
+    /**
+     * @param array<string, scalar|null> $context captured by CrudExportContextProviderInterface
+     *                                            when the export was requested (empty if none is
+     *                                            registered) — read it instead of request-scoped
+     *                                            services, which are unavailable in an async export
+     */
+    public function __invoke(object $entity, array $context): mixed;
 }

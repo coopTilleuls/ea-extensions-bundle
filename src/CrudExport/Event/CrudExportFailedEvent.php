@@ -5,20 +5,22 @@ declare(strict_types=1);
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event;
 
 /**
- * Dispatched when an async export fails to generate, right before the exception is
- * rethrown (so Messenger's own retry/failure-transport handling still applies — this
- * is only a side channel for a consuming app to surface/log the failure to the user).
+ * Dispatched once an async export has definitively failed, i.e. Messenger gives up and
+ * no retry is left (see DispatchCrudExportFailedEventListener). Lets a consuming app log
+ * the failure or notify the requester.
  */
 final readonly class CrudExportFailedEvent
 {
     /**
-     * @param class-string $crudControllerFqcn
+     * @param class-string               $crudControllerFqcn
+     * @param array<string, scalar|null> $context            see CrudExportContextProviderInterface
      */
     public function __construct(
         public string $crudControllerFqcn,
         public string $exportName,
         public string $requesterId,
         public \Throwable $exception,
+        public array $context,
     ) {
     }
 }

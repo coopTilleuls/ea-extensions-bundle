@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\EasyAdmin;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\ColumnResolver;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Context\CrudExportContextProviderInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportAction;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportColumn;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportConfigurationInterface;
-use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportFormat;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportMode;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportSettings;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event\CrudExportFileReadyEvent;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event\CrudExportRequestedEvent;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportFileDownloader;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportGenerator;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Message\ExportCrudMessage;
@@ -61,6 +62,7 @@ final readonly class CrudExportSubscriber
         private AdminUrlGeneratorInterface $adminUrlGenerator,
         private TranslatorInterface $translator,
         private Security $security,
+        private ?CrudExportContextProviderInterface $contextProvider = null,
     ) {
     }
 
@@ -88,11 +90,12 @@ final readonly class CrudExportSubscriber
 
         // Not routed through CrudExportActionsExtension (no button) on its own — this is
         // the actual enforcement, since the export flag could still be crafted by hand.
-        if (null !== $configured && !$configured::isExportEnabled()) {
+        // Export is opt-in: a controller not implementing the interface never exports.
+        if (null === $configured || !$configured::isExportEnabled()) {
             return;
         }
 
-        $permission = null !== $configured ? $configured::getExportPermission() : null;
+        $permission = $configured::getExportPermission();
         if (null !== $permission && !$this->security->isGranted($permission)) {
             throw new AccessDeniedException('You are not allowed to export this list.');
         }
@@ -104,9 +107,9 @@ final readonly class CrudExportSubscriber
 
         [$query, $count] = $this->queryBuilder->build($context, $controller);
 
-        $format = (null !== $configured ? $configured::getExportFormat() : null) ?? CrudExportFormat::CSV;
+        $format = $configured::getExportFormat();
         $requesterId = $this->requesterResolver->resolve($context);
-        $exportName = (null !== $configured ? $configured::getExportName($context) : null) ?? $this->defaultExportName($context);
+        $exportName = $configured::getExportName($context) ?? $this->defaultExportName($context);
 
         if ($count > $this->settings->maxLimit) {
             $event->setResponse($this->redirectWithFlash(
@@ -122,16 +125,26 @@ final readonly class CrudExportSubscriber
         }
 
         $columns = $this->columnResolver->resolve($this->resolveFields($event, $controller));
+        $exportContext = $this->contextProvider?->provide($context) ?? [];
 
-        $mode = null !== $configured ? $configured::getExportMode() : null;
+        $mode = $configured::getExportMode();
         $shouldRunAsync = match ($mode) {
             CrudExportMode::Sync => false,
             CrudExportMode::Async => true,
             null => $count >= $this->settings->asyncThreshold,
         };
 
+        $this->eventDispatcher->dispatch(new CrudExportRequestedEvent(
+            crudControllerFqcn: $crudControllerFqcn,
+            exportName: $exportName,
+            requesterId: $requesterId,
+            rowCount: $count,
+            async: $shouldRunAsync,
+            context: $exportContext,
+        ));
+
         if ($shouldRunAsync) {
-            $this->dispatchAsync($query, $columns, $crudControllerFqcn, $requesterId, $exportName, $format);
+            $this->dispatchAsync($query, $columns, $crudControllerFqcn, $requesterId, $exportName, $format, $exportContext);
 
             $event->setResponse($this->redirectWithFlash(
                 $request,
@@ -142,7 +155,7 @@ final readonly class CrudExportSubscriber
             return;
         }
 
-        $written = $this->generator->generate($query, $columns, $crudControllerFqcn, $requesterId, $exportName, $format);
+        $written = $this->generator->generate($query, $columns, $crudControllerFqcn, $requesterId, $exportName, $format, $exportContext);
 
         $this->eventDispatcher->dispatch(new CrudExportFileReadyEvent(
             crudControllerFqcn: $crudControllerFqcn,
@@ -152,17 +165,19 @@ final readonly class CrudExportSubscriber
             filename: $written['filename'],
             async: false,
             downloadUrl: null,
+            context: $exportContext,
         ));
 
         $event->setResponse($this->downloader->download($written['storagePath'], $written['filename']));
     }
 
     /**
-     * @param Query<null, mixed>     $query
-     * @param class-string           $crudControllerFqcn
-     * @param list<CrudExportColumn> $columns
+     * @param Query<null, mixed>         $query
+     * @param class-string               $crudControllerFqcn
+     * @param list<CrudExportColumn>     $columns
+     * @param array<string, scalar|null> $exportContext
      */
-    private function dispatchAsync(Query $query, array $columns, string $crudControllerFqcn, string $requesterId, string $exportName, string $format): void
+    private function dispatchAsync(Query $query, array $columns, string $crudControllerFqcn, string $requesterId, string $exportName, string $format, array $exportContext): void
     {
         $dql = $query->getDQL() ?? throw new \RuntimeException('Unable to retrieve the DQL for the export query.');
 
@@ -171,7 +186,7 @@ final readonly class CrudExportSubscriber
             $parameters[$parameter->getName()] = $this->normalizer->normalizeParameterValue($parameter->getValue());
         }
 
-        $this->messageBus->dispatch(new ExportCrudMessage($crudControllerFqcn, $dql, $parameters, $exportName, $requesterId, $columns, $format));
+        $this->messageBus->dispatch(new ExportCrudMessage($crudControllerFqcn, $dql, $parameters, $exportName, $requesterId, $columns, $format, $exportContext));
     }
 
     /**

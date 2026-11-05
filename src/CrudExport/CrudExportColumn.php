@@ -13,6 +13,8 @@ final readonly class CrudExportColumn
      */
     public const string OPTION_VALUE_RESOLVER = 'crudExportValueResolver';
 
+    public const string OPTION_PROPERTY_PATH = 'crudExportPropertyPath';
+
     public function __construct(
         public string $propertyName,
         public bool|string|TranslatableInterface|null $label,

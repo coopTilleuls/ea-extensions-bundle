@@ -68,7 +68,7 @@ final class CrudExportValueResolverTest extends TestCase
         $entity = new ValueResolverFixtureEntity(name: 'hello');
         $column = new CrudExportColumn('name', 'Name');
 
-        self::assertSame('hello', $this->createResolver()->resolveValue($entity, $column));
+        self::assertSame('hello', $this->createResolver()->resolveValue($entity, $column, []));
     }
 
     public function testResolveValueTraversesRelationDotPath(): void
@@ -76,7 +76,7 @@ final class CrudExportValueResolverTest extends TestCase
         $entity = new ValueResolverFixtureEntity(relation: new ValueResolverFixtureRelation('nested'));
         $column = new CrudExportColumn('relation.label', 'Relation');
 
-        self::assertSame('nested', $this->createResolver()->resolveValue($entity, $column));
+        self::assertSame('nested', $this->createResolver()->resolveValue($entity, $column, []));
     }
 
     public function testResolveValueReturnsNullWhenRelationIsNull(): void
@@ -84,7 +84,7 @@ final class CrudExportValueResolverTest extends TestCase
         $entity = new ValueResolverFixtureEntity();
         $column = new CrudExportColumn('relation.label', 'Relation');
 
-        self::assertNull($this->createResolver()->resolveValue($entity, $column));
+        self::assertNull($this->createResolver()->resolveValue($entity, $column, []));
     }
 
     public function testResolveValueFormatsDateTime(): void
@@ -92,7 +92,7 @@ final class CrudExportValueResolverTest extends TestCase
         $entity = new ValueResolverFixtureEntity(createdAt: new \DateTimeImmutable('2026-01-02 03:04:05'));
         $column = new CrudExportColumn('createdAt', 'Created');
 
-        self::assertSame('02/01/2026 03:04:05', $this->createResolver()->resolveValue($entity, $column));
+        self::assertSame('02/01/2026 03:04:05', $this->createResolver()->resolveValue($entity, $column, []));
     }
 
     public function testResolveValueImplodesArray(): void
@@ -100,7 +100,7 @@ final class CrudExportValueResolverTest extends TestCase
         $entity = new ValueResolverFixtureEntity(tags: ['a', 'b', 'c']);
         $column = new CrudExportColumn('tags', 'Tags');
 
-        self::assertSame('a, b, c', $this->createResolver()->resolveValue($entity, $column));
+        self::assertSame('a, b, c', $this->createResolver()->resolveValue($entity, $column, []));
     }
 
     public function testResolveValueImplodesCollection(): void
@@ -111,7 +111,7 @@ final class CrudExportValueResolverTest extends TestCase
         ]));
         $column = new CrudExportColumn('items', 'Items');
 
-        self::assertSame('x, y', $this->createResolver()->resolveValue($entity, $column));
+        self::assertSame('x, y', $this->createResolver()->resolveValue($entity, $column, []));
     }
 
     public function testResolveValueReturnsNullForAPrivatePropertyWithoutAGetter(): void
@@ -123,18 +123,18 @@ final class CrudExportValueResolverTest extends TestCase
         $entity = new ValueResolverFixtureEntity();
         $column = new CrudExportColumn('secret', 'Secret');
 
-        self::assertNull($this->createResolver()->resolveValue($entity, $column));
+        self::assertNull($this->createResolver()->resolveValue($entity, $column, []));
     }
 
-    public function testResolveValueDelegatesToCustomResolver(): void
+    public function testResolveValueDelegatesToCustomResolverWithTheExportContext(): void
     {
         $entity = new ValueResolverFixtureEntity();
         $column = new CrudExportColumn('name', 'Name', resolverFqcn: 'App\\Some\\Resolver');
 
         $customResolver = new class implements CrudExportFieldResolverInterface {
-            public function __invoke(object $entity): mixed
+            public function __invoke(object $entity, array $context): mixed
             {
-                return 'custom-value';
+                return 'custom-value-'.$context['tenant'];
             }
         };
 
@@ -144,7 +144,7 @@ final class CrudExportValueResolverTest extends TestCase
 
         $resolver = new CrudExportValueResolver($locator, $translator);
 
-        self::assertSame('custom-value', $resolver->resolveValue($entity, $column));
+        self::assertSame('custom-value-acme', $resolver->resolveValue($entity, $column, ['tenant' => 'acme']));
     }
 
     public function testResolveHeaderFallsBackToPropertyNameWhenLabelIsFalseOrEmpty(): void

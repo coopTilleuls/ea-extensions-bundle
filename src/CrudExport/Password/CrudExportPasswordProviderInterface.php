@@ -10,7 +10,7 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Password;
  *
  * Deliberately takes no AdminContext: this is also called from the async message handler,
  * after the original request/context is gone — $requesterId (see CrudExportRequesterResolverInterface)
- * is the only per-request identity that survives the Messenger boundary.
+ * identifies who requested the export.
  */
 interface CrudExportPasswordProviderInterface
 {

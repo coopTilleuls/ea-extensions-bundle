@@ -57,9 +57,10 @@ final readonly class CrudExportFileWriter
 
             // $exportName comes from CrudExportConfigurationInterface::getExportName(), which the
             // bundle's own docs encourage building from request data (e.g. the active filter) — it
-            // must never be trusted verbatim as a path segment, the same way $requesterId already
-            // isn't (see SecurityUserCrudExportRequesterResolver::sanitize()).
-            $safeExportName = preg_replace('/[^a-zA-Z0-9_.-]/', '_', $exportName) ?? 'export';
+            // must never be trusted verbatim as a path segment. Only what is unsafe in a storage
+            // path or a header is replaced, so accents and typographic characters are kept
+            // (e.g. "syndiqué·es").
+            $safeExportName = preg_replace('/[\/\\\\"%\p{C}]|\.{2,}/u', '_', $exportName) ?: 'export';
             $filename = sprintf('export_%s_%s.%s', $safeExportName, new \DateTimeImmutable()->format('Ymd_His'), $writer->getFileExtension());
             $storagePath = sprintf('%s/%s', $requesterId, $filename);
 

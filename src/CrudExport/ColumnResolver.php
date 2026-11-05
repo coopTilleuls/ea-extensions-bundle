@@ -28,7 +28,7 @@ final class ColumnResolver
 
         foreach ($fields as $field) {
             $columns[] = new CrudExportColumn(
-                propertyName: $field->getPropertyNameWithSuffix(),
+                propertyName: $field->getCustomOption(CrudExportColumn::OPTION_PROPERTY_PATH) ?? $field->getPropertyNameWithSuffix(),
                 label: $field->getLabel(),
                 resolverFqcn: $field->getCustomOption(CrudExportColumn::OPTION_VALUE_RESOLVER),
             );

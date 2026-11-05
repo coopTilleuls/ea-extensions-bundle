@@ -12,7 +12,8 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event;
 final readonly class CrudExportFileReadyEvent
 {
     /**
-     * @param class-string $crudControllerFqcn
+     * @param class-string               $crudControllerFqcn
+     * @param array<string, scalar|null> $context            see CrudExportContextProviderInterface
      */
     public function __construct(
         public string $crudControllerFqcn,
@@ -22,6 +23,7 @@ final readonly class CrudExportFileReadyEvent
         public string $filename,
         public bool $async,
         public ?string $downloadUrl,
+        public array $context,
     ) {
     }
 }

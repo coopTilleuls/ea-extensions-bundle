@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\MessageHandler;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event\CrudExportAsyncJobStartingEvent;
-use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event\CrudExportFailedEvent;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event\CrudExportFileReadyEvent;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\File\CrudExportGenerator;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Message\ExportCrudMessage;
@@ -31,31 +30,20 @@ final readonly class ExportCrudMessageHandler
             crudControllerFqcn: $message->crudControllerFqcn,
             exportName: $message->exportName,
             requesterId: $message->requesterId,
+            context: $message->context,
         ));
 
         $query = $this->normalizer->rebuildQuery($message->dql, $message->parameters);
 
-        try {
-            $written = $this->generator->generate(
-                query: $query,
-                columns: $message->columns,
-                crudControllerFqcn: $message->crudControllerFqcn,
-                requesterId: $message->requesterId,
-                exportName: $message->exportName,
-                format: $message->format,
-            );
-        } catch (\Throwable $exception) {
-            $this->eventDispatcher->dispatch(new CrudExportFailedEvent(
-                crudControllerFqcn: $message->crudControllerFqcn,
-                exportName: $message->exportName,
-                requesterId: $message->requesterId,
-                exception: $exception,
-            ));
-
-            // Messenger's own retry/failure-transport handling still applies —
-            // the event above is only a side channel, never a substitute for it.
-            throw $exception;
-        }
+        $written = $this->generator->generate(
+            query: $query,
+            columns: $message->columns,
+            crudControllerFqcn: $message->crudControllerFqcn,
+            requesterId: $message->requesterId,
+            exportName: $message->exportName,
+            format: $message->format,
+            context: $message->context,
+        );
 
         $downloadUrl = $this->urlGenerator->generate('ea_extensions_crud_export_download', [
             'requesterId' => $message->requesterId,
@@ -70,6 +58,7 @@ final readonly class ExportCrudMessageHandler
             filename: $written['filename'],
             async: true,
             downloadUrl: $downloadUrl,
+            context: $message->context,
         ));
     }
 }

@@ -32,6 +32,18 @@ final class ColumnResolverTest extends TestCase
         self::assertSame('App\\Some\\Resolver', $columns[1]->resolverFqcn);
     }
 
+    public function testResolveReadsThePropertyPathOptionInsteadOfTheFieldProperty(): void
+    {
+        $fields = new FieldCollection([
+            TextField::new('author')
+                ->setCustomOption(CrudExportColumn::OPTION_PROPERTY_PATH, 'author.displayName'),
+        ]);
+
+        $columns = new ColumnResolver()->resolve($fields);
+
+        self::assertSame('author.displayName', $columns[0]->propertyName);
+    }
+
     public function testResolveOnEmptyCollectionReturnsEmptyList(): void
     {
         self::assertSame([], new ColumnResolver()->resolve(new FieldCollection([])));

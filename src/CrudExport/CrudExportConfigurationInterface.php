@@ -8,16 +8,17 @@ use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use Symfony\Component\ExpressionLanguage\Expression;
 
 /**
- * Optional per-controller fine-tuning for CrudExport. Implementing it is never required:
- * its absence means "same permission as the index page itself, CSV format, name derived
- * from the entity label" — never "export disabled".
+ * Opts a CRUD controller into CrudExport: a controller not implementing it has no
+ * "Exporter" action, and the export flag is ignored even if requested directly through
+ * the URL. Use CrudExportConfigurationTrait for the defaults (enabled, same permission as
+ * the index page, CSV, name derived from the entity label) and override only what differs.
  */
 interface CrudExportConfigurationInterface
 {
     /**
      * False disables the "Exporter" action entirely for this controller — no button,
      * and the export flag is ignored even if requested directly through the URL. Not
-     * implementing the interface at all is equivalent to always returning true.
+     * implementing the interface at all is equivalent to always returning false.
      */
     public static function isExportEnabled(): bool;
 

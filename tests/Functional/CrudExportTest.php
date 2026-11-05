@@ -7,16 +7,20 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Functional;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\CrudExportAction;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event\CrudExportAsyncJobStartingEvent;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event\CrudExportFileReadyEvent;
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Event\CrudExportRequestedEvent;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\Message\ExportCrudMessage;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CrudExport\MessageHandler\ExportCrudMessageHandler;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\Entity\FixtureItem;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureExportContextProvider;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureItemCrudController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureItemCrudControllerDisabled;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureItemCrudControllerForcedAsync;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureItemCrudControllerForcedSync;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureItemCrudControllerWithConfiguration;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureItemCrudControllerWithoutExportConfiguration;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Flysystem\FilesystemOperator;
+use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
@@ -47,6 +51,82 @@ final class CrudExportTest extends AbstractFunctionalTestCase
         self::assertStringContainsString('1.00', $content);
     }
 
+    public function testSyncExportCarriesTheProvidedContextOnTheFileReadyEvent(): void
+    {
+        $this->client->loginUser(new InMemoryUser('user', 'user', ['ROLE_USER']));
+        $this->createItems(1);
+
+        $readyEvents = [];
+        $listener = static function (CrudExportFileReadyEvent $event) use (&$readyEvents): void {
+            $readyEvents[] = $event;
+        };
+        /** @var EventDispatcherInterface $eventDispatcher */
+        $eventDispatcher = static::getContainer()->get(EventDispatcherInterface::class);
+        $eventDispatcher->addListener(CrudExportFileReadyEvent::class, $listener);
+
+        $this->client->request('GET', $this->crudUrl(FixtureItemCrudController::class, extraParams: [
+            CrudExportAction::QUERY_PARAM_TRIGGER => '1',
+            FixtureExportContextProvider::QUERY_PARAM => 'acme',
+        ]));
+
+        $eventDispatcher->removeListener(CrudExportFileReadyEvent::class, $listener);
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $readyEvents);
+        self::assertFalse($readyEvents[0]->async);
+        self::assertSame(['tenant' => 'acme'], $readyEvents[0]->context);
+    }
+
+    public function testSyncExportDispatchesTheRequestedEventWithTheRowCount(): void
+    {
+        $this->client->loginUser(new InMemoryUser('user', 'user', ['ROLE_USER']));
+        $this->createItems(2);
+
+        $requestedEvents = $this->recordRequestedEvents(fn (): Crawler => $this->client->request('GET', $this->crudUrl(FixtureItemCrudController::class, extraParams: [
+            CrudExportAction::QUERY_PARAM_TRIGGER => '1',
+            FixtureExportContextProvider::QUERY_PARAM => 'acme',
+        ])));
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $requestedEvents);
+        self::assertSame(FixtureItemCrudController::class, $requestedEvents[0]->crudControllerFqcn);
+        self::assertSame(2, $requestedEvents[0]->rowCount);
+        self::assertFalse($requestedEvents[0]->async);
+        self::assertSame(['tenant' => 'acme'], $requestedEvents[0]->context);
+    }
+
+    public function testAsyncExportDispatchesTheRequestedEventBeforeQueueingTheJob(): void
+    {
+        $this->client->loginUser(new InMemoryUser('user', 'user', ['ROLE_USER']));
+
+        // async_threshold=3, max_limit=10 in the fixture kernel
+        $this->createItems(5);
+
+        $requestedEvents = $this->recordRequestedEvents(fn (): Crawler => $this->client->request('GET', $this->crudUrl(FixtureItemCrudController::class, extraParams: [
+            CrudExportAction::QUERY_PARAM_TRIGGER => '1',
+        ])));
+
+        self::assertResponseRedirects();
+        self::assertCount(1, $requestedEvents);
+        self::assertSame(5, $requestedEvents[0]->rowCount);
+        self::assertTrue($requestedEvents[0]->async);
+    }
+
+    public function testExportAboveMaxLimitDispatchesNoRequestedEvent(): void
+    {
+        $this->client->loginUser(new InMemoryUser('user', 'user', ['ROLE_USER']));
+
+        // max_limit=10 in the fixture kernel
+        $this->createItems(11);
+
+        $requestedEvents = $this->recordRequestedEvents(fn (): Crawler => $this->client->request('GET', $this->crudUrl(FixtureItemCrudController::class, extraParams: [
+            CrudExportAction::QUERY_PARAM_TRIGGER => '1',
+        ])));
+
+        self::assertResponseRedirects();
+        self::assertCount(0, $requestedEvents);
+    }
+
     public function testExportAboveMaxLimitIsRejected(): void
     {
         $this->client->loginUser(new InMemoryUser('user', 'user', ['ROLE_USER']));
@@ -72,6 +152,7 @@ final class CrudExportTest extends AbstractFunctionalTestCase
 
         $this->client->request('GET', $this->crudUrl(FixtureItemCrudController::class, extraParams: [
             CrudExportAction::QUERY_PARAM_TRIGGER => '1',
+            FixtureExportContextProvider::QUERY_PARAM => 'acme',
         ]));
 
         self::assertResponseRedirects();
@@ -84,6 +165,8 @@ final class CrudExportTest extends AbstractFunctionalTestCase
         $message = $envelopes[0]->getMessage();
         self::assertInstanceOf(ExportCrudMessage::class, $message);
         self::assertSame(FixtureItemCrudController::class, $message->crudControllerFqcn);
+        // Captured while the triggering request was still available — the worker has none.
+        self::assertSame(['tenant' => 'acme'], $message->context);
 
         // The above only proves the message was queued — dispatching to a transport never
         // runs the handler by itself, that requires a `messenger:consume` worker to pull it
@@ -106,6 +189,7 @@ final class CrudExportTest extends AbstractFunctionalTestCase
         self::assertCount(1, $readyEvents);
         self::assertTrue($readyEvents[0]->async);
         self::assertNotNull($readyEvents[0]->downloadUrl);
+        self::assertSame(['tenant' => 'acme'], $readyEvents[0]->context);
 
         /** @var FilesystemOperator $storage */
         $storage = static::getContainer()->get('fixture.crud_export_storage');
@@ -176,6 +260,56 @@ final class CrudExportTest extends AbstractFunctionalTestCase
         $response = $this->client->getResponse();
         self::assertResponseIsSuccessful();
         self::assertStringNotContainsString('text/csv', (string) $response->headers->get('Content-Type'));
+
+        /** @var InMemoryTransport $transport */
+        $transport = static::getContainer()->get('messenger.transport.async');
+        self::assertCount(0, $transport->getSent());
+    }
+
+    public function testIndexShowsTheExportActionOnAnOptedInController(): void
+    {
+        $this->client->loginUser(new InMemoryUser('user', 'user', ['ROLE_USER']));
+
+        $this->client->request('GET', $this->crudUrl(FixtureItemCrudController::class));
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString(CrudExportAction::QUERY_PARAM_TRIGGER.'=1', (string) $this->client->getResponse()->getContent());
+    }
+
+    public function testExportActionIsPrimaryAndRenderedRightAfterTheDefaultGlobalActions(): void
+    {
+        $this->client->loginUser(new InMemoryUser('user', 'user', ['ROLE_USER']));
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureItemCrudController::class));
+
+        self::assertResponseIsSuccessful();
+        $globalActionNames = $crawler->filter('.global-actions [data-action-name]')->each(
+            static fn (Crawler $node): string => (string) $node->attr('data-action-name'),
+        );
+        // Without automatic ordering, EasyAdmin renders global actions in reverse order of
+        // addition: the export action, added last by the bundle, would come first.
+        self::assertSame([CrudExportAction::ACTION_NAME, 'new'], array_slice($globalActionNames, -2));
+        self::assertContains(FixtureItemCrudController::SECONDARY_GLOBAL_ACTION, array_slice($globalActionNames, 0, -2));
+        self::assertStringContainsString('btn-primary', (string) $crawler->filter('.global-actions [data-action-name="'.CrudExportAction::ACTION_NAME.'"]')->attr('class'));
+    }
+
+    public function testControllerWithoutExportConfigurationHasNoExportActionAndIgnoresTheFlag(): void
+    {
+        $this->client->loginUser(new InMemoryUser('user', 'user', ['ROLE_USER']));
+
+        $this->createItems(1);
+
+        $this->client->request('GET', $this->crudUrl(FixtureItemCrudControllerWithoutExportConfiguration::class));
+
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString(CrudExportAction::QUERY_PARAM_TRIGGER.'=1', (string) $this->client->getResponse()->getContent());
+
+        $this->client->request('GET', $this->crudUrl(FixtureItemCrudControllerWithoutExportConfiguration::class, extraParams: [
+            CrudExportAction::QUERY_PARAM_TRIGGER => '1',
+        ]));
+
+        self::assertResponseIsSuccessful();
+        self::assertStringNotContainsString('text/csv', (string) $this->client->getResponse()->headers->get('Content-Type'));
 
         /** @var InMemoryTransport $transport */
         $transport = static::getContainer()->get('messenger.transport.async');
@@ -268,6 +402,28 @@ final class CrudExportTest extends AbstractFunctionalTestCase
         $this->client->request('GET', '/_ea-extensions/crud-export/download/user/'.$filename);
 
         self::assertResponseIsSuccessful();
+    }
+
+    /**
+     * @return list<CrudExportRequestedEvent>
+     */
+    private function recordRequestedEvents(callable $request): array
+    {
+        $requestedEvents = [];
+        $listener = static function (CrudExportRequestedEvent $event) use (&$requestedEvents): void {
+            $requestedEvents[] = $event;
+        };
+        /** @var EventDispatcherInterface $eventDispatcher */
+        $eventDispatcher = static::getContainer()->get(EventDispatcherInterface::class);
+        $eventDispatcher->addListener(CrudExportRequestedEvent::class, $listener);
+
+        try {
+            $request();
+        } finally {
+            $eventDispatcher->removeListener(CrudExportRequestedEvent::class, $listener);
+        }
+
+        return $requestedEvents;
     }
 
     private function createItems(int $count): void

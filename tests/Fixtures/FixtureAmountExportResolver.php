@@ -9,7 +9,7 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\Entity\FixtureItem;
 
 final class FixtureAmountExportResolver implements CrudExportFieldResolverInterface
 {
-    public function __invoke(object $entity): mixed
+    public function __invoke(object $entity, array $context): mixed
     {
         \assert($entity instanceof FixtureItem);
 

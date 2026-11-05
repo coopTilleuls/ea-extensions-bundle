@@ -36,13 +36,16 @@ final readonly class CrudExportValueResolver
         return (string) ($label ?: $column->propertyName);
     }
 
-    public function resolveValue(object $entity, CrudExportColumn $column): mixed
+    /**
+     * @param array<string, scalar|null> $context
+     */
+    public function resolveValue(object $entity, CrudExportColumn $column, array $context): mixed
     {
         if (null !== $column->resolverFqcn) {
             /** @var CrudExportFieldResolverInterface $resolver */
             $resolver = $this->resolverLocator->get($column->resolverFqcn);
 
-            return $resolver($entity);
+            return $resolver($entity, $context);
         }
 
         $propertyParts = explode('.', $column->propertyName);
