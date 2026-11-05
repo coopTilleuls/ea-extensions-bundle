@@ -26,6 +26,7 @@ TomSelect offers), except for the "single required result" auto-select behavior 
 | `comparisonEqual` | String  | no       | —                 | When set, also sends `?<comparisonEqual>=%3D` on every fetch.                                                |
 | `defaultEnable`   | Boolean | no       | `false`           | Keep the target enabled (without filtering) while the listened field is empty, instead of disabling it.      |
 | `emptyOnLoad`     | Boolean | no       | `true`            | Drop the target's pre-existing options on first load instead of merging them with the freshly fetched ones.  |
+| `keepValueOnLoad` | Boolean | no       | `false`           | Keep a server-side pre-filled value as long as the listened field has never had a value (see below).         |
 
 `listen`, `listenFallback` and `extraFilter` are all matched against the DOM the same way:
 `foo` matches `form[foo]`, `form[foo][]`, `form[foo][autocomplete]` or `form[foo][autocomplete][]`.
@@ -75,6 +76,17 @@ returns exactly one result, that result is automatically selected and the field 
 If the target's `<select>` sits next to a sibling element with the `.select-all` class (a
 "select all" button for a multi-select), that button is enabled/disabled together with the
 target field itself.
+
+## Keeping a pre-filled value: `keepValueOnLoad`
+
+By default, while the listened field is empty and the target is disabled, the target's selection
+is cleared on every refresh, so a disabled field never carries a stale value. This also wipes a
+value pre-filled server-side (e.g. a "create from" form that pre-selects the target) when the
+listened field starts empty.
+
+With `keepValueOnLoad` set to `true`, the target's selection is kept as long as the listened field
+has never had a value since the controller connected. Once the listened field has been filled in
+once, emptying it again clears the target as usual.
 
 ## `filterName` isn't limited to "filter to matches"
 

@@ -22,6 +22,8 @@ import waitForTomSelect from './utils/wait_for_tom_select.js';
  *        filtering while the listened field is empty
  *      - emptyOnLoad (Boolean, optional, default true): drop the target's pre-existing options
  *        on first load instead of merging them with the fetched ones
+ *      - keepValueOnLoad (Boolean, optional, default false): keep a server-side pre-filled value
+ *        as long as the listened field has never had a value
  *
  * A field name is matched against the DOM the same way for "listen", "listenFallback" and
  * "extraFilter": `foo` matches `form[foo]`, `form[foo][]`, `form[foo][autocomplete]` or
@@ -37,6 +39,7 @@ export default class extends Controller {
         comparisonEqual: String,
         defaultEnable: { type: Boolean, default: false },
         emptyOnLoad: { type: Boolean, default: true },
+        keepValueOnLoad: { type: Boolean, default: false },
     };
     static targets = ['field'];
 
@@ -53,6 +56,7 @@ export default class extends Controller {
         const fieldToListenFallback = this.hasListenFallbackValue ? this.findField(this.listenFallbackValue) : null;
         const extraFilter = this.hasExtraFilterValue ? this.findField(this.extraFilterValue) : null;
         let isInitialLoad = true;
+        let listenedFieldHasHadValue = false;
 
         // Wait for the target's own TomSelect before touching it below — EasyAdmin's
         // autocomplete initialization isn't ordered relative to Stimulus controller connection,
@@ -90,6 +94,9 @@ export default class extends Controller {
         };
 
         const refreshOptions = (formattedNewOptions) => {
+            listenedFieldHasHadValue ||= formattedNewOptions.some((value) => !!value);
+            const keepPrefilledValue = this.keepValueOnLoadValue && !listenedFieldHasHadValue;
+
             if (!this.defaultEnableValue) {
                 element.tomselect.disable();
                 toggleSelectAllButton(element);
@@ -141,7 +148,7 @@ export default class extends Controller {
                     }
 
                     // To avoid disabling a field with an item selected
-                    if (!formattedNewOptions[0] && element.disabled) {
+                    if (!formattedNewOptions[0] && element.disabled && !keepPrefilledValue) {
                         element.tomselect.clear();
                     }
 
@@ -186,7 +193,19 @@ export default class extends Controller {
             }
         });
 
+        // Resetting on blur reopens the dropdown right after a selection: defer the reset to the
+        // next time the user opens it.
+        let resetOnNextOpen = false;
+
         element.tomselect.on('blur', () => {
+            resetOnNextOpen = true;
+        });
+
+        element.tomselect.on('dropdown_open', () => {
+            if (!resetOnNextOpen) {
+                return;
+            }
+            resetOnNextOpen = false;
             this.resetTomSelect(element);
         });
 
