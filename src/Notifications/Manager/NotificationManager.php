@@ -10,12 +10,14 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Event\AfterNotification
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Event\BeforeNotificationPersistedEvent;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Event\BeforeNotificationPublishedEvent;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Publisher\NotificationPublisherInterface;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationDigestRecipientInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationRecipientInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Topic\NotificationTopicResolverInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
 use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 class NotificationManager
@@ -27,11 +29,13 @@ class NotificationManager
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly NotificationPublisherInterface $publisher,
         private readonly NotificationTopicResolverInterface $topicResolver,
+        #[Autowire(param: 'coop_tilleuls_ea_extensions.notifications.crud_controller')]
+        private readonly string $crudControllerFqcn = NotificationCrudController::class,
     ) {
     }
 
     /**
-     * @param list<NotificationRecipientInterface> $recipients
+     * @param array<NotificationRecipientInterface> $recipients
      *
      * @return list<Notification>
      */
@@ -44,7 +48,8 @@ class NotificationManager
         $notifications = [];
         foreach ($recipients as $recipient) {
             $notificationToSend = clone $notification;
-            $notificationToSend->setRecipient($recipient);
+            $notificationToSend->setRecipient($recipient)
+                ->setPendingDigest($recipient instanceof NotificationDigestRecipientInterface && $recipient->receivesNotificationDigest());
             if (null !== $notificationToSend->getTreatment() && !$notification->isTreatmentShared()) {
                 $notificationToSend->setTreatment(clone $notificationToSend->getTreatment());
             }
@@ -64,15 +69,24 @@ class NotificationManager
 
             // Publishing needs a persisted id (used in the payload's detail URL), so it can only
             // happen once we know a flush actually ran.
-            foreach ($notifications as $notificationToSend) {
-                $this->publish($notificationToSend);
-            }
+            $this->publish(...$notifications);
         }
 
         return $notifications;
     }
 
-    private function publish(Notification $notification): void
+    /**
+     * Publishes notifications that send() persisted without flushing. Their identifier must already
+     * be known: call it after your own flush, unless identifiers are assigned on persist (sequences).
+     */
+    public function publish(Notification ...$notifications): void
+    {
+        foreach ($notifications as $notification) {
+            $this->publishOne($notification);
+        }
+    }
+
+    private function publishOne(Notification $notification): void
     {
         $topic = $this->topicResolver->resolve($notification->getRecipient());
 
@@ -80,7 +94,7 @@ class NotificationManager
             'topic' => $topic,
             'url' => $this->adminUrlGenerator
                 ->unsetAll()
-                ->setController(NotificationCrudController::class)
+                ->setController($this->crudControllerFqcn)
                 ->setAction(Action::DETAIL)
                 ->set('entityId', $notification->getId())
                 ->generateUrl(),

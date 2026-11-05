@@ -54,11 +54,9 @@ final class NotificationsMercureTest extends AbstractFunctionalTestCase
     }
 
     /**
-     * The other half of the private-update fix: _notification_popover.html.twig's mercure() call
-     * must actually request a subscriber JWT scoped to the current recipient's own topic — that's
-     * what makes symfony/mercure's Authorization::setCookie() attach the cookie a browser needs
-     * to receive that (now private) update at all. Without this, the fix above would silently
-     * stop working (the popover would just never receive anything) with nothing catching it.
+     * Notifications are published as private updates: the popover must request a subscriber JWT
+     * scoped to the current recipient's own topic (through the default
+     * NotificationSubscriptionAuthorizerInterface), or it never receives anything.
      */
     public function testThePopoverRequestsASubscriberCookieScopedToTheCurrentRecipientsOwnTopic(): void
     {

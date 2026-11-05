@@ -14,11 +14,11 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationR
 final class StubNotificationRecipient implements NotificationRecipientInterface
 {
     public function __construct(
-        private readonly int|string $id,
+        private readonly int|string|null $id,
     ) {
     }
 
-    public function getId(): int|string
+    public function getId(): int|string|null
     {
         return $this->id;
     }

@@ -10,6 +10,8 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Repository\Column
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Storage\ColumnPreferenceStorageInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Storage\SecurityUserColumnPreferenceStorage;
 use CoopTilleuls\Bundle\EAExtensionsBundle\MenuOverrides\EasyAdmin\RecursiveMenuItemMatcher;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\EasyAdmin\NotificationCrudController;
+use EasyCorp\Bundle\EasyAdminBundle\Contracts\Controller\CrudControllerInterface;
 use League\Flysystem\FilesystemOperator;
 use Symfony\Bundle\MercureBundle\MercureBundle;
 use Symfony\Component\Config\Definition\Configurator\DefinitionConfigurator;
@@ -91,6 +93,32 @@ final class EAExtensionsBundle extends AbstractBundle
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->booleanNode('enabled')->defaultFalse()->end()
+                        ->scalarNode('crud_controller')
+                            ->info('The CRUD controller showing "my notifications": the bundle\'s own, or the host app\'s when it needs more than the bundle\'s.')
+                            ->defaultValue(NotificationCrudController::class)
+                            ->cannotBeEmpty()
+                            ->beforeNormalization()
+                                ->ifString()
+                                ->then(static fn (string $fqcn): string => ltrim($fqcn, '\\'))
+                            ->end()
+                            ->validate()
+                                ->ifTrue(static fn (string $fqcn): bool => !is_a($fqcn, CrudControllerInterface::class, true))
+                                ->thenInvalid('%s is not an EasyAdmin CRUD controller.')
+                            ->end()
+                        ->end()
+                        ->arrayNode('types')
+                            ->info('Label (translation key or text) of each notification type, by type: shown instead of the raw type, and turns the CRUD\'s type filter into a choice list.')
+                            ->useAttributeAsKey('type')
+                            ->scalarPrototype()->cannotBeEmpty()->end()
+                        ->end()
+                        ->scalarNode('timezone')
+                            ->info('Timezone the bundle\'s CRUD shows notification dates in, instead of the dashboard\'s.')
+                            ->defaultNull()
+                            ->validate()
+                                ->ifTrue(static fn (?string $timezone): bool => null !== $timezone && !\in_array($timezone, \DateTimeZone::listIdentifiers(), true))
+                                ->thenInvalid('%s is not a valid timezone.')
+                            ->end()
+                        ->end()
                         ->arrayNode('mercure')
                             ->addDefaultsIfNotSet()
                             ->children()
@@ -273,8 +301,17 @@ final class EAExtensionsBundle extends AbstractBundle
 
         if ($config['notifications']['enabled']) {
             $builder->setParameter('coop_tilleuls_ea_extensions.notifications.mercure.enabled', $config['notifications']['mercure']['enabled']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.notifications.crud_controller', $config['notifications']['crud_controller']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.notifications.types', $config['notifications']['types']);
+            $builder->setParameter('coop_tilleuls_ea_extensions.notifications.timezone', $config['notifications']['timezone']);
 
             $container->import('../config/notifications_services.php');
+
+            // A host app's own CRUD replaces the bundle's: left registered, EasyAdmin would still
+            // generate routes for it, exposing a second "my notifications" screen.
+            if (NotificationCrudController::class !== $config['notifications']['crud_controller']) {
+                $builder->removeDefinition(NotificationCrudController::class);
+            }
 
             if ($config['notifications']['mercure']['enabled']) {
                 // symfony/mercure and symfony/mercure-bundle are suggested, not required, so apps

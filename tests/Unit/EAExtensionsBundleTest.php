@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Unit;
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\EAExtensionsBundle;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\EasyAdmin\NotificationCrudController;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\Entity\FixtureNotificationRecipient;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureNotificationCrudController;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Config\Definition\Exception\InvalidConfigurationException;
 use Symfony\Component\Config\Definition\Processor;
@@ -124,6 +127,40 @@ final class EAExtensionsBundleTest extends TestCase
         $config = $this->processNotificationsConfig(['mercure' => ['enabled' => true]]);
 
         self::assertTrue($config['mercure']['enabled']);
+    }
+
+    public function testNotificationsCrudControllerDefaultsToTheBundlesOwn(): void
+    {
+        self::assertSame(NotificationCrudController::class, $this->processNotificationsConfig([])['crud_controller']);
+    }
+
+    public function testNotificationsCrudControllerIgnoresALeadingBackslash(): void
+    {
+        $config = $this->processNotificationsConfig(['crud_controller' => '\\'.FixtureNotificationCrudController::class]);
+
+        self::assertSame(FixtureNotificationCrudController::class, $config['crud_controller']);
+    }
+
+    public function testNotificationTypesHaveNoLabelAndDatesNoTimezoneByDefault(): void
+    {
+        $config = $this->processNotificationsConfig([]);
+
+        self::assertSame([], $config['types']);
+        self::assertNull($config['timezone']);
+    }
+
+    public function testAnInvalidNotificationsTimezoneIsRejected(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->processNotificationsConfig(['timezone' => 'Europe/Nowhere']);
+    }
+
+    public function testNotificationsCrudControllerMustBeAnEasyAdminCrudController(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->processNotificationsConfig(['crud_controller' => FixtureNotificationRecipient::class]);
     }
 
     /**

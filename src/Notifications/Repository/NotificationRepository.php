@@ -68,4 +68,37 @@ class NotificationRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * @return list<int|string>
+     */
+    public function findRecipientIdsPendingDigest(): array
+    {
+        /** @var list<int|string> $recipientIds */
+        $recipientIds = $this->createQueryBuilder('n')
+            ->select('DISTINCT IDENTITY(n.recipient)')
+            ->andWhere('n.pendingDigest = TRUE')
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        return $recipientIds;
+    }
+
+    /**
+     * @return list<Notification>
+     */
+    public function findPendingDigest(int|string $recipientId): array
+    {
+        /* @var list<Notification> */
+        return $this->createQueryBuilder('n')
+            ->addSelect('recipient')
+            ->join('n.recipient', 'recipient')
+            ->andWhere('n.pendingDigest = TRUE')
+            ->andWhere('IDENTITY(n.recipient) = :recipient')
+            ->setParameter('recipient', $recipientId)
+            ->orderBy('n.date', 'ASC')
+            ->addOrderBy('n.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

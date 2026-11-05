@@ -4,6 +4,7 @@
 
 <div class="btn border-0 shadow-none bg-transparent form-check ea-switch-check"
     data-controller="ea-extensions--notification-toggle ea-extensions--notification-toggle-label"
+    data-action="change->ea-extensions--notification-toggle#toggle:capture:stop"
     data-ea-extensions--notification-toggle-toggle-url-value="{{ action.linkUrl }}"
     data-ea-extensions--notification-toggle-field-value="{{ action.name }}"
     data-ea-extensions--notification-toggle-reload-value="{{ action.name == 'treatment.pending' ? 'true' : 'false' }}"
@@ -15,7 +16,7 @@
         <twig:ea:Switch
             id="{{ action.name }}"
             checked="{{ currentValue == true }}"
-            data-action="change->ea-extensions--notification-toggle#toggle input->ea-extensions--notification-toggle-label#update"
+            data-action="input->ea-extensions--notification-toggle-label#update"
         />
         <span data-ea-extensions--notification-toggle-label-target="text">{{ action.htmlAttributes['data-label-' ~ (currentValue ? 'true' : 'false')]|trans({}, 'EAExtensionsBundle', 'fr') }}</span>
     </label>

@@ -10,10 +10,10 @@ import { Controller } from '@hotwired/stimulus'
  * On the index page specifically, field-boolean.js's own `document.querySelectorAll('.field-boolean
  * .ea-switch input[type="checkbox"]')` still matches this field's switch regardless (that CSS class
  * pairing comes from the field type, set before any custom template override) and wires up its own
- * competing "change" listener there. fields/notification_status.html.twig sets a real `data-toggle-
- * url` (the same URL this controller uses) so that listener's own request succeeds instead of always
- * 404ing on a missing attribute and disabling the switch right after this controller's own request
- * already handled the toggle.
+ * competing "change" listener on the input. Both templates therefore bind `toggle` on this
+ * controller's element with `:capture:stop`: it runs before the event reaches the input, then stops
+ * it there, so only this controller's request is sent. Two concurrent requests for the same switch
+ * could otherwise both see the state change server-side and dispatch its event twice.
  */
 export default class extends Controller {
     static values = {

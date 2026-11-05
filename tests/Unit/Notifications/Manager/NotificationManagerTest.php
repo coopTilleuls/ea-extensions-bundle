@@ -12,6 +12,8 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Manager\NotificationMan
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Publisher\NotificationPublisherInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationRecipientInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Topic\NotificationTopicResolverInterface;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\FixtureCrudController;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\StubDigestNotificationRecipient;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\StubNotificationRecipient;
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
@@ -170,6 +172,20 @@ final class NotificationManagerTest extends TestCase
         self::assertSame(['/notifications/recipient-1', '/notifications/recipient-2'], $publishedTopics);
     }
 
+    public function testNotificationsSentWithoutFlushCanBePublishedOnceFlushed(): void
+    {
+        $sent = $this->manager->send(new Notification('information', 'Title'), [$this->recipient1, $this->recipient2]);
+
+        $publishedTopics = [];
+        $this->publisher->method('publish')->willReturnCallback(static function (string $topic) use (&$publishedTopics): void {
+            $publishedTopics[] = $topic;
+        });
+
+        $this->manager->publish(...$sent);
+
+        self::assertSame(['/notifications/recipient-1', '/notifications/recipient-2'], $publishedTopics);
+    }
+
     public function testSendDoesNotPublishWithoutFlush(): void
     {
         $notification = new Notification('information', 'Title');
@@ -194,5 +210,31 @@ final class NotificationManagerTest extends TestCase
         $this->publisher->expects(self::never())->method('publish');
 
         $this->manager->send($notification, [$this->recipient1], flush: true);
+    }
+
+    public function testSendFlagsTheNotificationForTheDigestOfRecipientsWhoReceiveOne(): void
+    {
+        $notification = new Notification('information', 'Title');
+
+        $sent = $this->manager->send($notification, [
+            new StubDigestNotificationRecipient('digest', true),
+            new StubDigestNotificationRecipient('instant', false),
+            $this->recipient1,
+        ]);
+
+        self::assertSame([true, false, false], array_map(static fn (Notification $sent): bool => $sent->isPendingDigest(), $sent));
+    }
+
+    public function testPublishedDetailUrlTargetsTheConfiguredCrudController(): void
+    {
+        $this->adminUrlGenerator = $this->createMock(AdminUrlGeneratorInterface::class);
+        $this->adminUrlGenerator->method('unsetAll')->willReturnSelf();
+        $this->adminUrlGenerator->expects(self::once())->method('setController')->with(FixtureCrudController::class)->willReturnSelf();
+        $this->adminUrlGenerator->method('setAction')->willReturnSelf();
+        $this->adminUrlGenerator->method('set')->willReturnSelf();
+        $this->adminUrlGenerator->method('generateUrl')->willReturn('/admin/fixture/1');
+
+        $manager = new NotificationManager($this->entityManager, new MockClock(), $this->adminUrlGenerator, $this->eventDispatcher, $this->publisher, $this->topicResolver, FixtureCrudController::class);
+        $manager->send(new Notification('information', 'Title'), [$this->recipient1], flush: true);
     }
 }

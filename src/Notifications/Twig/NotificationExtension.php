@@ -14,6 +14,9 @@ use Twig\TwigFunction;
 
 final class NotificationExtension extends AbstractExtension
 {
+    /**
+     * @param array<string, string> $types
+     */
     public function __construct(
         private readonly NotificationRecipientResolverInterface $recipientResolver,
         private readonly NotificationTopicResolverInterface $topicResolver,
@@ -21,6 +24,10 @@ final class NotificationExtension extends AbstractExtension
         private readonly PropertyAccessorInterface $propertyAccessor,
         #[Autowire(param: 'coop_tilleuls_ea_extensions.notifications.mercure.enabled')]
         private readonly bool $mercureEnabled,
+        #[Autowire(param: 'coop_tilleuls_ea_extensions.notifications.crud_controller')]
+        private readonly string $crudControllerFqcn,
+        #[Autowire(param: 'coop_tilleuls_ea_extensions.notifications.types')]
+        private readonly array $types,
     ) {
     }
 
@@ -32,6 +39,8 @@ final class NotificationExtension extends AbstractExtension
         return [
             new TwigFunction('ea_extensions_notification_topic', $this->getCurrentRecipientTopic(...)),
             new TwigFunction('ea_extensions_notifications_mercure_enabled', fn (): bool => $this->mercureEnabled),
+            new TwigFunction('ea_extensions_notification_crud_controller', fn (): string => $this->crudControllerFqcn),
+            new TwigFunction('ea_extensions_notification_type_label', fn (string $type): string => $this->types[$type] ?? $type),
             new TwigFunction('ea_extensions_notification_unread_count', $this->getCurrentRecipientUnreadCount(...)),
             new TwigFunction('ea_extensions_access_attribute', fn (object $object, string $attribute): mixed => $this->propertyAccessor->getValue($object, $attribute)),
         ];

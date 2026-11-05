@@ -11,9 +11,8 @@ use Twig\Environment;
 /**
  * Stands in for a host app's own dashboard layout, which is where
  * notifications/components/_notification_popover.html.twig actually gets rendered in a real
- * app (see notification_bar.html.twig) — needed to exercise its mercure() call (and the
- * subscriber-authorization cookie it sets as a side effect) inside a real HTTP response, which
- * the bundle's own routes never render on their own.
+ * app (see notification_bar.html.twig) — needed to exercise the subscriber-authorization cookie
+ * it requests inside a real HTTP response, which the bundle's own routes never render on their own.
  */
 final class FixturePopoverController
 {

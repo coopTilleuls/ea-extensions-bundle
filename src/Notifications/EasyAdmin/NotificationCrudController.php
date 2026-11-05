@@ -10,7 +10,6 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Repository\Notification
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Security\NotificationVoter;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
-use EasyCorp\Bundle\EasyAdminBundle\Attribute\AdminRoute;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FieldCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Collection\FilterCollection;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
@@ -21,15 +20,18 @@ use EasyCorp\Bundle\EasyAdminBundle\Controller\AbstractCrudController;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\EntityDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\SearchDto;
 use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\ChoiceField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\TextField;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\BooleanFilter;
+use EasyCorp\Bundle\EasyAdminBundle\Filter\ChoiceFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\DateTimeFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Filter\TextFilter;
 use EasyCorp\Bundle\EasyAdminBundle\Router\AdminUrlGeneratorInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\ExpressionLanguage\Expression;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 /**
@@ -46,12 +48,19 @@ final class NotificationCrudController extends AbstractCrudController
     public const ACTION_TREATMENT = 'treatment.pending';
     public const ACTION_READ = 'read';
 
+    /**
+     * @param array<string, string> $types
+     */
     public function __construct(
         private readonly AdminUrlGeneratorInterface $adminUrlGenerator,
         private readonly RequestStack $requestStack,
         private readonly CsrfTokenManagerInterface $csrfTokenManager,
         private readonly NotificationRepository $notificationRepository,
         private readonly NotificationRecipientResolverInterface $recipientResolver,
+        #[Autowire(param: 'coop_tilleuls_ea_extensions.notifications.types')]
+        private readonly array $types = [],
+        #[Autowire(param: 'coop_tilleuls_ea_extensions.notifications.timezone')]
+        private readonly ?string $timezone = null,
     ) {
     }
 
@@ -69,6 +78,10 @@ final class NotificationCrudController extends AbstractCrudController
             NotificationIndexTemplateExtension::REQUEST_ATTRIBUTE_PARENT_INDEX_TEMPLATE,
             $crud->getAsDto()->getOverriddenTemplates()['crud/index'] ?? '@EasyAdmin/crud/index.html.twig',
         );
+
+        if (null !== $this->timezone) {
+            $crud->setTimezone($this->timezone);
+        }
 
         return $crud
             ->setEntityLabelInSingular('Notification')
@@ -162,9 +175,9 @@ final class NotificationCrudController extends AbstractCrudController
         $filters = parent::configureFilters($filters);
 
         return $filters
-            ->add(DateTimeFilter::new('date', 'Date'))
-            ->add(TextFilter::new('type', 'Type'))
-            ->add(TextFilter::new('title', 'Titre'))
+            ->add(DateTimeFilter::new('date', 'Date')->setFormTypeOption('value_type', DateType::class))
+            ->add([] === $this->types ? TextFilter::new('type', 'Type') : ChoiceFilter::new('type', 'Type')->setChoices(array_flip($this->types)))
+            ->add(CaseInsensitiveTextFilter::new('title', 'Titre'))
             ->add(BooleanFilter::new(self::ACTION_READ, 'Statut')->setFormTypeOption('choices', [
                 'Lu' => true,
                 'Non lu' => false,
@@ -177,7 +190,7 @@ final class NotificationCrudController extends AbstractCrudController
     {
         yield DateTimeField::new('date', 'Date')
             ->setFormat("dd/MM/yyyy - HH'h'mm");
-        yield TextField::new('type', 'Type');
+        yield [] === $this->types ? TextField::new('type', 'Type') : ChoiceField::new('type', 'Type')->setChoices(array_flip($this->types));
         yield TextField::new('title', 'Titre');
         yield BooleanField::new(self::ACTION_READ, 'Statut')
             ->setTextAlign('left')
@@ -202,6 +215,11 @@ final class NotificationCrudController extends AbstractCrudController
     public function createIndexQueryBuilder(SearchDto $searchDto, EntityDto $entityDto, FieldCollection $fields, FilterCollection $filters): QueryBuilder
     {
         $qb = parent::createIndexQueryBuilder($searchDto, $entityDto, $fields, $filters);
+        // sorting on the "treatment.pending" column already makes EasyAdmin join it under this alias
+        if (!\in_array('treatment', $qb->getAllAliases(), true)) {
+            $qb->leftJoin($qb->getRootAliases()[0].'.treatment', 'treatment');
+        }
+        $qb->addSelect('treatment');
 
         return $this->notificationRepository->forRecipients($qb, $this->recipientResolver->resolveCurrentRecipients());
     }
@@ -222,11 +240,5 @@ final class NotificationCrudController extends AbstractCrudController
             $entityManager->remove($treatment);
             $entityManager->flush();
         }
-    }
-
-    #[AdminRoute('/unread-count', name: 'unread_count')]
-    public function unreadCount(): Response
-    {
-        return new Response((string) $this->notificationRepository->getUnreadCount($this->recipientResolver->resolveCurrentRecipients()));
     }
 }

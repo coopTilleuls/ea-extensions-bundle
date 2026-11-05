@@ -8,7 +8,7 @@
                 <p class="d-flex align-items-center my-0">
                     <a href="{{ ea_url()
                         .unsetAll()
-                        .setController('CoopTilleuls\\Bundle\\EAExtensionsBundle\\Notifications\\EasyAdmin\\NotificationCrudController')
+                        .setController(ea_extensions_notification_crud_controller())
                         .setAction('index') }}" class="action-detail"><span class="action-label">{{ 'notifications.card.see_all'|trans({}, 'EAExtensionsBundle', 'fr') }}</span></a>
                 </p>
             </div>
@@ -24,7 +24,7 @@
                                 </div>
                                 <div class="col text-truncate">
                                     <div class="d-flex flex-column text-start">
-                                        <span class="d-inline-block text-truncate">{{ notification.type|trans }} - {{ notification.title }}</span>
+                                        <span class="d-inline-block text-truncate">{{ ea_extensions_notification_type_label(notification.type)|trans }} - {{ notification.title }}</span>
                                         <span class="text-secondary fw-medium small">
                                             <i class="fa-solid fa-calendar"></i> {{ notification.date|date('d/m/y - H\\hi') }}
                                         </span>
@@ -33,7 +33,7 @@
                                 <div class="col-auto">
                                     <a href="{{ ea_url()
                                         .unsetAll()
-                                        .setController('CoopTilleuls\\Bundle\\EAExtensionsBundle\\Notifications\\EasyAdmin\\NotificationCrudController')
+                                        .setController(ea_extensions_notification_crud_controller())
                                         .setAction('detail')
                                         .set('entityId', notification.id) }}"
                                        class="btn btn-secondary">{{ 'notifications.card.view'|trans({}, 'EAExtensionsBundle', 'fr') }}

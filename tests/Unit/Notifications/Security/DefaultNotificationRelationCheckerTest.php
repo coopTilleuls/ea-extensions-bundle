@@ -42,6 +42,13 @@ final class DefaultNotificationRelationCheckerTest extends TestCase
         self::assertFalse($this->isRelated($notification, []));
     }
 
+    public function testDeniesAccessBetweenRecipientsThatAreNotPersistedYet(): void
+    {
+        $notification = new Notification('information', 'Title')->setRecipient(new StubNotificationRecipient(null));
+
+        self::assertFalse($this->isRelated($notification, [new StubNotificationRecipient(null)]));
+    }
+
     /**
      * @param list<StubNotificationRecipient> $currentRecipients
      */

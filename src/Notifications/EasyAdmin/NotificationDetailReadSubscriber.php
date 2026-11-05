@@ -9,6 +9,7 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Event\NotificationMarke
 use Doctrine\ORM\EntityManagerInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
 use EasyCorp\Bundle\EasyAdminBundle\Event\AfterCrudActionEvent;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
@@ -16,6 +17,8 @@ use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 final class NotificationDetailReadSubscriber
 {
     public function __construct(
+        #[Autowire(param: 'coop_tilleuls_ea_extensions.notifications.crud_controller')]
+        private readonly string $crudControllerFqcn,
         private readonly EntityManagerInterface $entityManager,
         private readonly EventDispatcherInterface $eventDispatcher,
     ) {
@@ -24,7 +27,7 @@ final class NotificationDetailReadSubscriber
     public function __invoke(AfterCrudActionEvent $event): void
     {
         $crud = $event->getAdminContext()?->getCrud();
-        if (NotificationCrudController::class !== $crud?->getControllerFqcn() || Crud::PAGE_DETAIL !== $crud->getCurrentPage()) {
+        if ($this->crudControllerFqcn !== $crud?->getControllerFqcn() || Crud::PAGE_DETAIL !== $crud->getCurrentPage()) {
             return;
         }
 

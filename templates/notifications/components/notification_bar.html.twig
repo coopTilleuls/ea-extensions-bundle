@@ -1,13 +1,9 @@
 {% set notificationLink = ea_url()
     .unsetAll()
-    .setController('CoopTilleuls\\Bundle\\EAExtensionsBundle\\Notifications\\EasyAdmin\\NotificationCrudController')
+    .setController(ea_extensions_notification_crud_controller())
     .setAction('index')
     .generateUrl() %}
-{% set unreadCountUrl = ea_url()
-    .unsetAll()
-    .setController('CoopTilleuls\\Bundle\\EAExtensionsBundle\\Notifications\\EasyAdmin\\NotificationCrudController')
-    .setAction('unreadCount')
-    .generateUrl() %}
+{% set unreadCountUrl = path('ea_extensions_notifications_unread_count') %}
 
 {% set mercureLive = ea_extensions_notifications_mercure_enabled() and ea_extensions_notification_topic() %}
 <div class="ea-extensions-notification-bar me-2"
@@ -26,7 +22,9 @@
     </a>
 </div>
 
-{% if mercureLive %}
+{# include_popover: false when the bar is rendered more than once on a page (e.g. mobile + desktop
+   headers) — the popover, and the subscription it authorizes, must only be rendered once. #}
+{% if mercureLive and (include_popover ?? true) %}
     {# see _notification_popover.html.twig for why this is a separate, only-included-here file #}
     {{ include('@EAExtensions/notifications/components/_notification_popover.html.twig') }}
 {% endif %}

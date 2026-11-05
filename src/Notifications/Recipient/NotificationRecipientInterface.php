@@ -14,5 +14,8 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient;
  */
 interface NotificationRecipientInterface
 {
-    public function getId(): int|string;
+    /**
+     * Null until the recipient is persisted.
+     */
+    public function getId(): int|string|null;
 }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Controller\LatestNotificationsController;
+use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Controller\UnreadNotificationsCountController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\EasyAdmin\NotificationCrudController;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Publisher\NotificationPublisherInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Publisher\NullNotificationPublisher;
@@ -26,6 +27,7 @@ return static function (ContainerConfigurator $container): void {
             __DIR__.'/../src/Notifications/{Entity,Controller}',
             __DIR__.'/../src/Notifications/Publisher/MercureNotificationPublisher.php',
             __DIR__.'/../src/Notifications/Twig/NotificationMercureExtension.php',
+            __DIR__.'/../src/Notifications/Subscription/CookieNotificationSubscriptionAuthorizer.php',
             __DIR__.'/../src/Notifications/**/*Interface.php',
         ])
     ;
@@ -36,6 +38,11 @@ return static function (ContainerConfigurator $container): void {
     ;
 
     $services->set(LatestNotificationsController::class)
+        ->tag('controller.service_arguments')
+        ->public()
+    ;
+
+    $services->set(UnreadNotificationsCountController::class)
         ->tag('controller.service_arguments')
         ->public()
     ;

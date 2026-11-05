@@ -20,8 +20,13 @@ final class DefaultNotificationRelationChecker implements NotificationRelationCh
 
     public function isRelated(Notification $notification): bool
     {
+        $recipientId = $notification->getRecipient()->getId();
+        if (null === $recipientId) {
+            return false;
+        }
+
         foreach ($this->recipientResolver->resolveCurrentRecipients() as $recipient) {
-            if ($notification->getRecipient()->getId() === $recipient->getId()) {
+            if ($recipientId === $recipient->getId()) {
                 return true;
             }
         }

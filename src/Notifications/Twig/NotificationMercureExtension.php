@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Twig;
 
+use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Subscription\NotificationSubscriptionAuthorizerInterface;
 use Symfony\Component\Mercure\HubInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -16,6 +17,7 @@ final class NotificationMercureExtension extends AbstractExtension
 {
     public function __construct(
         private readonly HubInterface $hub,
+        private readonly NotificationSubscriptionAuthorizerInterface $subscriptionAuthorizer,
     ) {
     }
 
@@ -26,6 +28,7 @@ final class NotificationMercureExtension extends AbstractExtension
     {
         return [
             new TwigFunction('ea_extensions_notifications_mercure_protocol_version', $this->getProtocolVersion(...)),
+            new TwigFunction('ea_extensions_notification_authorize_subscription', $this->subscriptionAuthorizer->authorize(...)),
         ];
     }
 

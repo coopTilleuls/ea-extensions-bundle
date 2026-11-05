@@ -17,6 +17,7 @@ use Doctrine\ORM\Mapping as ORM;
  * delete on the recipient side).
  */
 #[ORM\Index(fields: ['title'])]
+#[ORM\Index(name: 'ea_extensions_notification_pending_digest_idx', columns: ['recipient_id'], options: ['where' => '(pending_digest = true)'])]
 #[ORM\Entity(repositoryClass: NotificationRepository::class)]
 #[ORM\Table(name: 'ea_extensions_notification')]
 class Notification
@@ -75,6 +76,14 @@ class Notification
 
     #[ORM\Column(nullable: false, options: ['default' => false])]
     private bool $displayInNewCard = false;
+
+    /**
+     * Set by {@see \CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Manager\NotificationManager::send()}
+     * when the recipient asked for a periodic digest ({@see \CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Recipient\NotificationDigestRecipientInterface}),
+     * and cleared by the host app once that digest has been sent.
+     */
+    #[ORM\Column(name: 'pending_digest', nullable: false, options: ['default' => false])]
+    private bool $pendingDigest = false;
 
     /**
      * Transient: read only by {@see \CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Manager\NotificationManager::send()}
@@ -289,6 +298,18 @@ class Notification
     public function setDisplayInNewCard(bool $displayInNewCard): self
     {
         $this->displayInNewCard = $displayInNewCard;
+
+        return $this;
+    }
+
+    public function isPendingDigest(): bool
+    {
+        return $this->pendingDigest;
+    }
+
+    public function setPendingDigest(bool $pendingDigest): self
+    {
+        $this->pendingDigest = $pendingDigest;
 
         return $this;
     }

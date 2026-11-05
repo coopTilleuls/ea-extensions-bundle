@@ -7,6 +7,7 @@ namespace CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\EasyAdmin;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Entity\Notification;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Event\BeforeCrudActionEvent;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
@@ -22,11 +23,17 @@ use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 #[AsEventListener(event: BeforeCrudActionEvent::class)]
 final class NotificationTreatmentEditGuard
 {
+    public function __construct(
+        #[Autowire(param: 'coop_tilleuls_ea_extensions.notifications.crud_controller')]
+        private readonly string $crudControllerFqcn,
+    ) {
+    }
+
     public function __invoke(BeforeCrudActionEvent $event): void
     {
         $context = $event->getAdminContext();
         $crud = $context?->getCrud();
-        if (NotificationCrudController::class !== $crud?->getControllerFqcn() || Action::EDIT !== $crud->getCurrentAction()) {
+        if ($this->crudControllerFqcn !== $crud?->getControllerFqcn() || Action::EDIT !== $crud->getCurrentAction()) {
             return;
         }
 

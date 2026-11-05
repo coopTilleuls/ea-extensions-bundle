@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Unit\Notifications\Twig;
 
+use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Subscription\NotificationSubscriptionAuthorizerInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Notifications\Twig\NotificationMercureExtension;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -31,6 +32,22 @@ final class NotificationMercureExtensionTest extends TestCase
         $hub = $this->createStub(HubInterface::class);
         $hub->method('getProtocolVersion')->willReturn(\constant(ProtocolVersion::class.'::'.$case));
 
-        self::assertSame($expected, new NotificationMercureExtension($hub)->getProtocolVersion());
+        self::assertSame($expected, new NotificationMercureExtension($hub, $this->createStub(NotificationSubscriptionAuthorizerInterface::class))->getProtocolVersion());
+    }
+
+    public function testAuthorizingTheSubscriptionDelegatesToTheAuthorizer(): void
+    {
+        $authorizer = $this->createMock(NotificationSubscriptionAuthorizerInterface::class);
+        $authorizer->expects(self::once())->method('authorize')->with('/notifications/42');
+
+        $extension = new NotificationMercureExtension($this->createStub(HubInterface::class), $authorizer);
+        $functions = [];
+        foreach ($extension->getFunctions() as $function) {
+            $functions[$function->getName()] = $function->getCallable();
+        }
+
+        self::assertArrayHasKey('ea_extensions_notification_authorize_subscription', $functions);
+        \assert(\is_callable($functions['ea_extensions_notification_authorize_subscription']));
+        $functions['ea_extensions_notification_authorize_subscription']('/notifications/42');
     }
 }

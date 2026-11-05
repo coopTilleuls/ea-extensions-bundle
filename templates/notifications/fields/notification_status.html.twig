@@ -7,6 +7,7 @@
     {% if field.value is not null %}
         <div class="form-check ea-switch-check"
             data-controller="ea-extensions--notification-toggle ea-extensions--notification-toggle-label"
+            data-action="change->ea-extensions--notification-toggle#toggle:capture:stop"
             data-ea-extensions--notification-toggle-toggle-url-value="{{ field.customOptions.get('toggleUrl') }}"
             data-ea-extensions--notification-toggle-field-value="{{ field.property }}"
             data-ea-extensions--notification-toggle-reload-value="{{ field.property == 'treatment.pending' ? 'true' : 'false' }}"
@@ -18,8 +19,7 @@
                     id="{{ field.uniqueId }}"
                     checked="{{ field.value == true }}"
                     disabled="{{ field.formTypeOption('disabled') == true }}"
-                    data-toggle-url="{{ field.customOptions.get('toggleUrl') }}"
-                    data-action="change->ea-extensions--notification-toggle#toggle input->ea-extensions--notification-toggle-label#update"
+                    data-action="input->ea-extensions--notification-toggle-label#update"
                     {{ ...field.getFormTypeOption('attr') }}
                 />
                 {% if field.formTypeOption('row_attr.custom-labels') is defined %}
