@@ -75,4 +75,27 @@ final class CrudFieldUrlResolverTest extends TestCase
 
         self::assertSame('/explicit', $resolver->resolveSeeAllUrl('/explicit', '/filtered', '/bare'));
     }
+
+    public function testResolveSeeAllUrlMarksItsFiltersAsHiddenWhenForcingThem(): void
+    {
+        $resolver = new CrudFieldUrlResolver();
+
+        $url = $resolver->resolveSeeAllUrl(null, '/filtered?filters%5Bbook%5D=5', '/bare', true);
+
+        self::assertSame('/filtered?filters%5Bbook%5D=5&hiddenFilters%5B0%5D=book', $url);
+    }
+
+    public function testResolveSeeAllUrlLeavesItsFiltersVisibleByDefault(): void
+    {
+        $resolver = new CrudFieldUrlResolver();
+
+        self::assertSame('/filtered?filters%5Bbook%5D=5', $resolver->resolveSeeAllUrl(null, '/filtered?filters%5Bbook%5D=5', '/bare'));
+    }
+
+    public function testResolveSeeAllUrlForcingFiltersIsANoOpWithoutFilters(): void
+    {
+        $resolver = new CrudFieldUrlResolver();
+
+        self::assertSame('/bare', $resolver->resolveSeeAllUrl(null, null, '/bare', true));
+    }
 }

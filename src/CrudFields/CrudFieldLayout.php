@@ -19,6 +19,9 @@ use Symfony\Component\HttpFoundation\Request;
  * This is a one-time, app-wide setup step (not something every embeddable CrudController needs
  * to declare) — the same category as the bundle registration/importmap entry already required
  * for other features in this bundle.
+ *
+ * Outside an embed, a request carrying hiddenFilters (a "voir tout" link built with
+ * addIndexAction(forceFilters: true)) gets the same filters patch and form theme, and nothing else.
  */
 final class CrudFieldLayout
 {
@@ -26,21 +29,33 @@ final class CrudFieldLayout
 
     public static function applyIfEmbedded(Crud $crud, ?Request $request): Crud
     {
-        if (null === $request || !$request->query->getBoolean(CrudField::QUERY_PARAM_CLEAN_LAYOUT)) {
+        if (null === $request) {
             return $crud;
         }
 
-        // Captured before overriding "crud/index" below, so embedded_index.html.twig can still
+        if ($request->query->getBoolean(CrudField::QUERY_PARAM_CLEAN_LAYOUT)) {
+            self::overrideIndexTemplate($crud, $request, '@EAExtensions/crud_fields/embedded_index.html.twig');
+            $crud->overrideTemplate('layout', '@EAExtensions/crud_fields/embedded_layout.html.twig');
+        } elseif ([] !== $request->query->all(CrudField::QUERY_PARAM_HIDDEN_FILTERS)) {
+            self::overrideIndexTemplate($crud, $request, '@EAExtensions/crud_fields/forced_filters_index.html.twig');
+        } else {
+            return $crud;
+        }
+
+        $crud->addFormTheme('@EAExtensions/crud_fields/filters_form_theme.html.twig');
+
+        return $crud;
+    }
+
+    private static function overrideIndexTemplate(Crud $crud, Request $request, string $template): void
+    {
+        // Captured before overriding "crud/index", so the bundle's index templates can still
         // extend whichever crud/index would otherwise have been used (vendor's, or a theme's).
         $request->attributes->set(
             self::REQUEST_ATTRIBUTE_PARENT_INDEX_TEMPLATE,
             $crud->getAsDto()->getOverriddenTemplates()['crud/index'] ?? '@EasyAdmin/crud/index.html.twig',
         );
 
-        $crud->overrideTemplate('layout', '@EAExtensions/crud_fields/embedded_layout.html.twig');
-        $crud->overrideTemplate('crud/index', '@EAExtensions/crud_fields/embedded_index.html.twig');
-        $crud->addFormTheme('@EAExtensions/crud_fields/filters_form_theme.html.twig');
-
-        return $crud;
+        $crud->overrideTemplate('crud/index', $template);
     }
 }

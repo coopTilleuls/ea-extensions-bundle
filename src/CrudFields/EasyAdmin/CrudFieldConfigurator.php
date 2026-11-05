@@ -58,6 +58,7 @@ final class CrudFieldConfigurator implements FieldConfiguratorInterface
             $field->getCustomOption(CrudField::OPTION_SEE_ALL_URL),
             $overrideIndexUrl,
             $bareIndexUrl,
+            (bool) $field->getCustomOption(CrudField::OPTION_FORCE_SEE_ALL_FILTERS),
         );
 
         $defaultActionTemplatePath = $context->getTemplatePath('crud/action');
@@ -67,6 +68,10 @@ final class CrudFieldConfigurator implements FieldConfiguratorInterface
             if (CrudField::ACTION_SEE_ALL === $action->getName()) {
                 $action->setUrl($seeAllUrl);
                 $action->setLinkUrl($seeAllUrl);
+            } elseif (\is_string($url = $action->getUrl())) {
+                // An addAction() action never went through EasyAdmin's own ActionFactory, so its
+                // linkUrl is still null while crud/action.html.twig reads it as a plain string.
+                $action->setLinkUrl($url);
             }
 
             $action->setTemplatePath($action->getTemplatePath() ?? $defaultActionTemplatePath);

@@ -47,6 +47,16 @@ final class EAExtensionsBundleTest extends TestCase
         ]);
     }
 
+    public function testNonPositiveEmbeddedPageSizeIsRejected(): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+
+        $this->processPaginationConfig([
+            'enabled' => true,
+            'embedded_page_size' => 0,
+        ]);
+    }
+
     public function testMenuOverridesIsDisabledByDefault(): void
     {
         self::assertFalse($this->processDefaultConfig()['menu_overrides']['enabled']);

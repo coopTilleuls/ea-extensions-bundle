@@ -81,6 +81,65 @@ final class CrudFieldsTest extends AbstractFunctionalTestCase
         self::assertStringContainsString('filters%5Btitle%5D%5Bvalue%5D=fixture', $seeAllLink);
     }
 
+    public function testDomainActionKeepsTheUrlItWasLinkedTo(): void
+    {
+        $entityId = $this->persistFixtureEntity('Fixture title');
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureEmbeddingCrudController::class, Action::DETAIL, [
+            'entityId' => (string) $entityId,
+        ]));
+
+        // An addAction() action never goes through EasyAdmin's own ActionFactory: left without a
+        // linkUrl, crud/action.html.twig fails on a null where it expects a string.
+        self::assertResponseIsSuccessful();
+        self::assertSame(1, $crawler->filter('.ea-crud-field-global-actions a[href="/domain-action"]')->count());
+    }
+
+    public function testEmbedDoesNotRepeatTheTargetControllerPageTitle(): void
+    {
+        $entityId = $this->persistFixtureEntity('Fixture title');
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureEmbeddingCrudController::class, Action::DETAIL, [
+            'entityId' => (string) $entityId,
+        ]));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(0, $crawler->filter('.card-body h1.title')->count());
+    }
+
+    public function testFieldNameBecomesTheAnchorIdAndFallsBackToTheController(): void
+    {
+        $entityId = $this->persistFixtureEntity('Fixture title');
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureEmbeddingCrudController::class, Action::DETAIL, [
+            'entityId' => (string) $entityId,
+        ]));
+
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('#crudEmbedLazy'));
+        self::assertCount(1, $crawler->filter('#crudEmbedDomainAction'));
+
+        // Every embed here targets the same controller: without a name they would all share one id.
+        self::assertCount(1, $crawler->filter('#crudFixtureEmbeddedTargetCrudController'));
+    }
+
+    public function testCrudFieldLabelUsesTheFieldsetHeaderMarkup(): void
+    {
+        $entityId = $this->persistFixtureEntity('Fixture title');
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureEmbeddingCrudController::class, Action::DETAIL, [
+            'entityId' => (string) $entityId,
+        ]));
+
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString('Plain embed', $crawler->filter('.form-fieldset-title-content')->text());
+        self::assertGreaterThan(0, $crawler->filter('.form-fieldset-title-content .page-actions .action-see-all')->count());
+    }
+
     public function testLazyEmbedDefersInitialLoad(): void
     {
         $entityId = $this->persistFixtureEntity('Fixture title');
@@ -201,6 +260,52 @@ final class CrudFieldsTest extends AbstractFunctionalTestCase
         self::assertResponseIsSuccessful();
         self::assertSame(0, $filtersFormCrawler->filter('.filter-field[data-filter-property="title"]')->count());
         self::assertGreaterThan(0, $filtersFormCrawler->filter('input[type="hidden"][name*="title"]')->count());
+    }
+
+    public function testForcedSeeAllLinkKeepsItsFilterForcedOnTheFullPageIndex(): void
+    {
+        $entityId = $this->persistFixtureEntity('Fixture title');
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $crawler = $this->client->request('GET', $this->crudUrl(FixtureEmbeddingCrudController::class, Action::DETAIL, [
+            'entityId' => (string) $entityId,
+        ]));
+        self::assertResponseIsSuccessful();
+
+        $seeAllLinks = $crawler->filter('.action-see-all')->each(static fn ($link): ?string => $link->attr('href'));
+        self::assertCount(2, $seeAllLinks);
+        self::assertStringNotContainsString('hiddenFilters', (string) $seeAllLinks[0]);
+        self::assertStringContainsString('hiddenFilters%5B0%5D=title', (string) $seeAllLinks[1]);
+
+        $indexCrawler = $this->client->request('GET', (string) $seeAllLinks[1]);
+        self::assertResponseIsSuccessful();
+        self::assertSame(1, $indexCrawler->filter('body[data-ea-sidebar-width]')->count());
+        self::assertSame(0, $indexCrawler->filter('.action-filters-button.action-filters-applied')->count());
+        self::assertSame(0, $indexCrawler->filter('.action-filters-reset')->count());
+
+        $filterButtonHref = $indexCrawler->filter('.action-filters-button')->attr('data-href');
+        self::assertNotNull($filterButtonHref);
+
+        $filtersFormCrawler = $this->client->request('GET', $filterButtonHref);
+        self::assertResponseIsSuccessful();
+        self::assertSame(0, $filtersFormCrawler->filter('.filter-field[data-filter-property="title"]')->count());
+        self::assertGreaterThan(0, $filtersFormCrawler->filter('input[type="hidden"][name*="title"]')->count());
+        self::assertGreaterThan(0, $filtersFormCrawler->filter('input[type="hidden"][name="hiddenFilters[0]"][value="title"]')->count());
+    }
+
+    public function testFullPageIndexWithoutForcedFiltersKeepsTheVendorFilterBehavior(): void
+    {
+        $this->persistFixtureEntity('fixture');
+        $this->client->loginUser(new InMemoryUser('admin', 'admin', ['ROLE_ADMIN']));
+
+        $indexCrawler = $this->client->request('GET', $this->crudUrl(FixtureEmbeddedTargetCrudController::class, extraParams: [
+            'filters[title][comparison]' => '=',
+            'filters[title][value]' => 'fixture',
+        ]));
+
+        self::assertResponseIsSuccessful();
+        self::assertSame(1, $indexCrawler->filter('.action-filters-button.action-filters-applied')->count());
+        self::assertSame(1, $indexCrawler->filter('.action-filters-reset')->count());
     }
 
     private function persistFixtureEntity(string $title): int

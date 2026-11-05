@@ -32,8 +32,10 @@ final class CrudField implements FieldInterface
     public const OPTION_LABEL = 'label';
     public const OPTION_CRUD_CONTROLLER = 'crudControllerFqcn';
     public const OPTION_CRUD_CONTROLLER_NAME = 'crudControllerName';
+    public const OPTION_ANCHOR = 'anchor';
     public const OPTION_OVERRIDE_INDEX_URL = 'overrideIndexUrl';
     public const OPTION_SEE_ALL_URL = 'seeAllUrl';
+    public const OPTION_FORCE_SEE_ALL_FILTERS = 'forceSeeAllFilters';
     public const OPTION_HIDE_GLOBAL_ACTIONS = 'hideGlobalActions';
     public const OPTION_HIDE_ENTITY_ACTIONS = 'hideEntityActions';
     public const OPTION_ADDITIONAL_ACTIONS = 'additionalActions';
@@ -44,10 +46,17 @@ final class CrudField implements FieldInterface
     public const OPTION_HELP = 'help';
     public const OPTION_OPEN_ACTIONS_IN_MODAL = 'openActionsInModal';
 
+    /**
+     * $propertyName names the embed rather than a property of the entity: the field carries no
+     * value of its own, and EasyAdmin only needs its property to be unique. It becomes the id of
+     * the rendered block, so two embeds of the same controller on one page can be told apart —
+     * left empty, the id falls back to the target controller's own name.
+     */
     public static function new(string $propertyName, TranslatableInterface|string|bool|null $label = null): self
     {
         return new self()
             ->setProperty('ea_crud_field_'.new Ulid())
+            ->setCustomOption(self::OPTION_ANCHOR, '' !== $propertyName ? ucfirst($propertyName) : null)
             ->setLabel(false)
             ->setTemplatePath('@EAExtensions/crud_fields/field_crud.html.twig')
             ->setFormType(CrudFieldType::class)
@@ -57,6 +66,7 @@ final class CrudField implements FieldInterface
             ->setCustomOption(self::OPTION_HIDE_ENTITY_ACTIONS, false)
             ->setCustomOption(self::OPTION_DISPLAY_AS_CARD, false)
             ->setCustomOption(self::OPTION_ADDITIONAL_ACTIONS, [])
+            ->setCustomOption(self::OPTION_FORCE_SEE_ALL_FILTERS, false)
             ->setCustomOption(self::OPTION_LAZY, false)
             ->setCustomOption(self::OPTION_SHOW_FILTERS, false)
             ->setCustomOption(self::OPTION_CRUD_COLUMNS, [])
@@ -96,8 +106,14 @@ final class CrudField implements FieldInterface
         return $this;
     }
 
-    public function addIndexAction(): self
+    /**
+     * With $forceFilters, the filters of the "voir tout" URL are forced on the full-page index
+     * too: hidden from the "Filtrer" modal, and neither counted nor removed by its reset link.
+     */
+    public function addIndexAction(bool $forceFilters = false): self
     {
+        $this->setCustomOption(self::OPTION_FORCE_SEE_ALL_FILTERS, $forceFilters);
+
         return $this->addAction(
             Action::new(self::ACTION_SEE_ALL, 'Voir tout')
                 ->createAsGlobalAction()

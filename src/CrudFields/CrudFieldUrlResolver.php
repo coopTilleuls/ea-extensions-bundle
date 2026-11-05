@@ -38,9 +38,9 @@ final class CrudFieldUrlResolver
             // Filters already baked into $baseUrl (e.g. via overrideIndexUrl()) are "forced":
             // the user didn't apply them and shouldn't be able to remove them via the embed's
             // own filter UI, so they're excluded from the "applied filters" count/reset link.
-            parse_str((string) parse_url($baseUrl, PHP_URL_QUERY), $existingParams);
-            if (!empty($existingParams['filters']) && is_array($existingParams['filters'])) {
-                $params[CrudField::QUERY_PARAM_HIDDEN_FILTERS] = array_keys($existingParams['filters']);
+            $forcedFilters = self::filterKeys($baseUrl);
+            if ([] !== $forcedFilters) {
+                $params[CrudField::QUERY_PARAM_HIDDEN_FILTERS] = $forcedFilters;
             }
         }
 
@@ -53,9 +53,29 @@ final class CrudFieldUrlResolver
      * when overrideIndexUrl() was never called. setSeeAllUrl() always takes precedence, for the
      * cases where the two genuinely should differ.
      */
-    public function resolveSeeAllUrl(?string $explicitSeeAllUrl, ?string $overrideIndexUrl, string $bareIndexUrl): string
+    public function resolveSeeAllUrl(?string $explicitSeeAllUrl, ?string $overrideIndexUrl, string $bareIndexUrl, bool $forceFilters = false): string
     {
-        return $explicitSeeAllUrl ?? $overrideIndexUrl ?? $bareIndexUrl;
+        $url = $explicitSeeAllUrl ?? $overrideIndexUrl ?? $bareIndexUrl;
+
+        $forcedFilters = $forceFilters ? self::filterKeys($url) : [];
+        if ([] === $forcedFilters) {
+            return $url;
+        }
+
+        return self::appendQuery($url, [CrudField::QUERY_PARAM_HIDDEN_FILTERS => $forcedFilters]);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function filterKeys(string $url): array
+    {
+        parse_str((string) parse_url($url, PHP_URL_QUERY), $params);
+        if (empty($params['filters']) || !is_array($params['filters'])) {
+            return [];
+        }
+
+        return array_map(strval(...), array_keys($params['filters']));
     }
 
     /**

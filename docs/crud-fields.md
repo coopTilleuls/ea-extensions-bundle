@@ -29,6 +29,21 @@ Call `CrudFieldLayout::applyIfEmbedded()` once from your `DashboardController`'s
    }
    ```
 
+## Naming an embed
+
+The first argument of `CrudField::new()` names the embed rather than a property of the entity:
+the field carries no value of its own. It becomes the id of the rendered block —
+`CrudField::new('reviews', …)` renders inside `#crudReviews` — which is what lets a deep link,
+a stylesheet or a test address one embed among several.
+
+Left empty, the id falls back to the target controller's own name. Two embeds of the same
+controller on one page would then share it, so name them:
+
+```php
+CrudField::new('pendingReviews', 'Pending')->setController(ReviewCrudController::class);
+CrudField::new('publishedReviews', 'Published')->setController(ReviewCrudController::class);
+```
+
 ## Basic usage
 
 ```php
@@ -60,6 +75,18 @@ CrudField::new('reviews', 'Reviews')
     )
     ->addIndexAction();
 ```
+
+On the full-page index, the filters of the "voir tout" URL show up as regular filters: the user
+sees them in the "Filtrer" modal and can remove them. Pass `forceFilters: true` when they have
+no visible equivalent on that index and must stay applied:
+
+```php
+    ->addIndexAction(forceFilters: true);
+```
+
+They are then hidden from the modal (and kept when it's submitted), and neither counted nor
+removed by the reset link — the same treatment the embed itself gives them. This relies on
+`CrudFieldLayout::applyIfEmbedded()`, already called from your dashboard's `configureCrud()`.
 
 ## Adding domain actions
 

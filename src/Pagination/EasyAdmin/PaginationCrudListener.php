@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CoopTilleuls\Bundle\EAExtensionsBundle\Pagination\EasyAdmin;
 
+use CoopTilleuls\Bundle\EAExtensionsBundle\CrudFields\CrudField;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Pagination\AvailablePageSizesProviderInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Pagination\DefaultPageSizeProviderInterface;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Pagination\PageSizeResolver;
@@ -42,6 +43,8 @@ final class PaginationCrudListener
         private readonly array $defaultAvailablePageSizes,
         #[Autowire(param: 'coop_tilleuls_ea_extensions.pagination.autocomplete_page_size')]
         private readonly ?int $autocompletePageSize = null,
+        #[Autowire(param: 'coop_tilleuls_ea_extensions.pagination.embedded_page_size')]
+        private readonly ?int $embeddedPageSize = null,
     ) {
     }
 
@@ -75,7 +78,12 @@ final class PaginationCrudListener
             throw new \LogicException(sprintf('%s::getDefaultPageSize() returned %d, which is not one of the available page sizes (%s).', $crudControllerFqcn, $controllerDefault, implode(', ', $effectiveAvailablePageSizes)));
         }
 
-        $this->setPageSize($context, $this->resolver->resolve($context->getRequest(), $controllerDefault, $availablePageSizes));
+        $pageSize = $controllerDefault;
+        if (null !== $this->embeddedPageSize && $context->getRequest()->query->getBoolean(CrudField::QUERY_PARAM_CLEAN_LAYOUT)) {
+            $pageSize = $this->embeddedPageSize;
+        }
+
+        $this->setPageSize($context, $this->resolver->resolve($context->getRequest(), $pageSize, $availablePageSizes));
 
         $context->getRequest()->attributes->set(
             self::REQUEST_ATTRIBUTE_AVAILABLE_PAGE_SIZES,

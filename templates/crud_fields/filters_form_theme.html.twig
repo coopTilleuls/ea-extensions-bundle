@@ -1,9 +1,10 @@
 {#
     Overrides EasyAdmin's own ea_filters_widget form-theme block, added as an extra form theme
-    (see CrudFieldLayout::applyIfEmbedded()'s addFormTheme() call) only for embedded requests.
+    (see CrudFieldLayout::applyIfEmbedded()'s addFormTheme() call) only for embedded requests and
+    "voir tout" links that force their filters.
     Every filter field renders exactly as vendor's own block would (copied verbatim below) EXCEPT
     fields flagged "hidden_filter" by HiddenFilterTypeExtension (forced filters baked into the
-    embed's fetch URL via overrideIndexUrl()) — those render as an invisible <input type="hidden">
+    embed's fetch URL or "voir tout" link via overrideIndexUrl()) — those render as an invisible <input type="hidden">
     instead of the normal checkbox+collapsible filter row, so they can't be seen or removed from
     the "Filtrer" modal.
 #}

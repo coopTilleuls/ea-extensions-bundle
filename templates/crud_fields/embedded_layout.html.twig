@@ -4,10 +4,10 @@
 
     crud/index.html.twig (vendor's, or a theme's own override) keeps rendering 100% normally
     and unmodified — it still {% extends %} "layout" (this file, once overridden) and fills in
-    its content_title/page_actions/main blocks exactly as it would on a real standalone page,
-    so the table, action buttons, dropdowns, pagination and filters button all keep their real
-    markup/CSS/icons. Only the surrounding chrome (html/head/sidebar/topbar/search) is stripped,
-    by reproducing just the two small wrapper elements those blocks normally render into.
+    its page_actions/main blocks exactly as it would on a real standalone page, so the table,
+    action buttons, dropdowns, pagination and filters button all keep their real markup/CSS/icons.
+    Only the surrounding chrome (html/head/sidebar/topbar/search) and the page title are stripped,
+    by reproducing just the small wrapper elements those blocks normally render into.
 
     The four "configured_*" blocks below must exist (even empty) because crud/index.html.twig
     calls {{ parent() }} on each of them.
@@ -18,12 +18,18 @@
 {% block configured_javascripts %}{% endblock %}
 
 {% block body %}
-    <section class="content-header">
-        <div class="content-header-title">
-            <h1 class="title">{% block content_title %}{% endblock %}</h1>
-        </div>
-        <div class="page-actions">{% block page_actions %}{% endblock %}</div>
-    </section>
+    {# No content_title: an embed is not a standalone page, and CrudField already renders its own
+       label above it. Rendering the target controller's page title here would show it twice.
+       The header is skipped when the embed has nothing left to put in it — vendor's own
+       "global_actions"/"batch_actions" blocks always render their wrapper div, empty or not. #}
+    {# This layout also serves the new/edit pages a CrudField opens in a modal, which get none of
+       those variables: there the header always renders, with its own save/cancel buttons. #}
+    {% if global_actions is not defined
+        or ea_extensions_crud_field_has_page_actions(global_actions, batch_actions, filters) %}
+        <section class="content-header">
+            <div class="page-actions">{% block page_actions %}{% endblock %}</div>
+        </section>
+    {% endif %}
     <section id="main" class="content-body">
         {% block main %}{% endblock %}
     </section>

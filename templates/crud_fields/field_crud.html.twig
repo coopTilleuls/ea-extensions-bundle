@@ -5,17 +5,32 @@
 {% set actions = customOptions.get('additionalActions') %}
 {% set label = customOptions.get('label') %}
 
-<div class="{{ customOptions.get('displayAsCard') ? 'card' }} {{ field.cssClass|default('') }}">
+{# A stable anchor for deep links and tests: an embed is otherwise unidentifiable on a page
+   holding several of them. Name the field to tell two embeds of the same controller apart. #}
+<div id="crud{{ customOptions.get('anchor') ?? customOptions.get('crudControllerName') }}" class="{{ customOptions.get('displayAsCard') ? 'card' }} {{ field.cssClass|default('') }}">
     <div class="card-body">
+        {# EasyAdmin's own fieldset header markup: an embed sits among the fieldsets of a detail
+           page, so its label reads as a section title like theirs, and the actions pick up the
+           same styling as any other page actions. #}
         {% if (label is not null and label is not same as(false)) or actions|length > 0 %}
-            <div class="d-flex w-100 mb-2">
-                <p class="flex-grow-1 mb-0">
-                    {% if label is not null and label is not same as(false) %}{{ label|trans }}{% endif %}
-                </p>
-                <div class="ea-crud-field-global-actions d-flex">
-                    {% for action in actions %}
-                        {{ include(action.templatePath, { action: action }, with_context = false) }}
-                    {% endfor %}
+            <div class="form-fieldset-header px-0">
+                <div class="form-fieldset-title">
+                    <div class="not-collapsible form-fieldset-title-content">
+                        <div class="d-flex w-100">
+                            <p class="flex-grow-1 mb-0">
+                                {% if label is not null and label is not same as(false) %}{{ label|trans }}{% endif %}
+                            </p>
+                            <div class="page-actions">
+                                {# ea-crud-field-global-actions is what the eager controller relocates the
+                                   filters button into — see crud_field_eager_controller.js. #}
+                                <div class="ea-crud-field-global-actions global-actions d-flex">
+                                    {% for action in actions %}
+                                        {{ include(action.templatePath, { action: action }, with_context = false) }}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         {% endif %}

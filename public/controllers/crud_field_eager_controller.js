@@ -36,8 +36,17 @@ export default class extends Controller {
             return;
         }
 
+        const embeddedHeader = filterGroup.closest('.content-header');
+
         globalActions.querySelectorAll('.datagrid-filters').forEach((stale) => stale.remove());
         globalActions.prepend(filterGroup);
+
+        // The header only existed to carry that button: left in place it shows as an empty bar
+        // above the table, since vendor's own global/batch action blocks always render their
+        // (possibly empty) wrapper div.
+        if (embeddedHeader && !embeddedHeader.querySelector('a, button, form')) {
+            embeddedHeader.remove();
+        }
     }
 
     registerListener() {
@@ -259,6 +268,7 @@ export default class extends Controller {
         const modalElement = template.content.firstElementChild.cloneNode(true);
         modalElement.querySelector('.modal-body-content').innerHTML = bodyHtml;
         document.body.appendChild(modalElement);
+        this.initializeInjectedWidgets(modalElement);
         modalElement.addEventListener('hidden.bs.modal', () => modalElement.remove());
 
         return modalElement;
@@ -272,9 +282,20 @@ export default class extends Controller {
         const modalElement = template.content.firstElementChild.cloneNode(true);
         modalElement.querySelector('.modal-body-content').innerHTML = bodyHtml;
         document.body.appendChild(modalElement);
+        this.initializeInjectedWidgets(modalElement);
         modalElement.addEventListener('hidden.bs.modal', () => modalElement.remove());
 
         return modalElement;
+    }
+
+    // Vendor's app.js builds its autocomplete widgets once, on page load, so markup injected
+    // afterwards (a modal body fetched above) keeps plain <select> elements unless asked. Its
+    // listener sits on document and simply rescans, hence a bubbling event from the modal.
+    initializeInjectedWidgets(modalElement) {
+        modalElement.dispatchEvent(new CustomEvent('ea.collection.item-added', {
+            bubbles: true,
+            detail: { newElement: modalElement },
+        }));
     }
 
     // Submitted via fetch() so a validation failure can be redisplayed inside the modal

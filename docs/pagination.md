@@ -21,6 +21,7 @@ coop_tilleuls_ea_extensions:
         available_page_sizes: [10, 25, 50, 100]
         max_page_size: null             # optional hard cap; any requested/declared value above it is clamped
         autocomplete_page_size: null    # page size of autocomplete requests, see "Autocomplete requests" below
+        embedded_page_size: null        # page size of embedded CrudFields listings, see "Interaction with CrudFields" below
 ```
 
 `default_page_size` must be one of `available_page_sizes` — otherwise the selector never shows
@@ -137,3 +138,15 @@ still caps the value.
 The selector automatically hides itself inside an embedded CrudFields listing (the same
 `cleanLayout` query flag used to detect an embed) — no configuration needed to combine the
 two features.
+
+An embed's page size comes from, in order:
+
+1. the `itemsPerPage` query parameter, e.g. set on the URL passed to `overrideIndexUrl()`
+   (ignored when the controller locks its page size);
+2. `embedded_page_size`, if set;
+3. the controller's `getDefaultPageSize()`, then the bundle-wide `default_page_size`.
+
+`embedded_page_size` wins over the controller default because that default is meant for the
+controller's own full-page index: a detail page embedding a few short listings usually wants
+fewer rows than that. Like autocompletes, an embed has no selector, so `embedded_page_size`
+doesn't have to be one of the available sizes. `max_page_size` still caps it.
