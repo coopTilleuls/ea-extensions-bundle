@@ -57,7 +57,7 @@ export default class extends Controller {
 
             const listenTomSelect = await waitForTomSelect(fieldToListen);
             listenTomSelect.on('change', () => {
-                this.refreshOptions(true);
+                this.refreshOptions();
             });
 
             const fieldToListenValue = Array.isArray(listenTomSelect.getValue())
@@ -68,9 +68,9 @@ export default class extends Controller {
 
         this.refreshIsEnabled();
 
+        // TomSelect loads the typed query itself through settings.load: reloading here would race
+        // with it and mix unfiltered results into the search ones.
         this.fieldTarget.tomselect.on('type', (str) => {
-            this.refreshOptions();
-
             if (str === '') {
                 this.resetTomSelect();
             }
@@ -116,7 +116,9 @@ export default class extends Controller {
         this.fieldTarget.tomselect.load();
     }
 
-    refreshOptions(fromFieldToListen = false) {
+    refreshOptions() {
+        this.resetChoicesOnLoad = true;
+
         this.fieldTarget.tomselect.settings.load = async (query, callback) => {
             const url = new URL(this.fieldTarget.dataset.eaAutocompleteEndpointUrl);
             url.searchParams.delete(this.filterNameValue);
@@ -178,7 +180,14 @@ export default class extends Controller {
                 ? allResults[0].filter((r) => intersection.includes(r.entityId))
                 : [];
 
-            this.enableTarget(fromFieldToListen);
+            // Search results are partial: only an unfiltered load may drop the selected items no
+            // longer allowed.
+            const resetChoices = this.resetChoicesOnLoad && !query;
+            if (!query) {
+                this.resetChoicesOnLoad = false;
+            }
+
+            this.enableTarget(resetChoices);
             callback(this.fetchedFilteredResults);
         };
 

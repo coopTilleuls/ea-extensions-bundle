@@ -242,6 +242,57 @@ describe('refresh-choices-on-related-field-change controller', () => {
             expect(fieldTomSelect.clearOptions).toHaveBeenCalled();
             expect(fieldTomSelect.load).toHaveBeenCalled();
         });
+
+        it('does not start an unfiltered load while typing', async () => {
+            const { fieldElement, listenElement } = mountSingleField();
+            const fieldTomSelect = createMockTomSelect();
+            fieldElement.tomselect = fieldTomSelect;
+            listenElement.tomselect = createMockTomSelect({ value: '10', items: ['10'] });
+
+            global.fetch = vi.fn().mockResolvedValue({ json: vi.fn().mockResolvedValue({ results: [] }) });
+
+            start();
+
+            await waitFor(() => expect(fieldTomSelect.on).toHaveBeenCalledWith('type', expect.any(Function)));
+
+            const typeHandler = fieldTomSelect.on.mock.calls.find(([event]) => event === 'type')[1];
+            fieldTomSelect.load.mockClear();
+
+            typeHandler('nu');
+
+            expect(fieldTomSelect.load).not.toHaveBeenCalled();
+        });
+
+        it('keeps selected items missing from search results, and drops them on the next unfiltered load', async () => {
+            const { fieldElement, listenElement } = mountSingleField();
+            const fieldTomSelect = createMockTomSelect({ value: ['5'] });
+            const listenTomSelect = createMockTomSelect({ value: '10', items: ['10'] });
+            fieldElement.tomselect = fieldTomSelect;
+            listenElement.tomselect = listenTomSelect;
+
+            global.fetch = vi.fn().mockResolvedValue({
+                json: vi.fn().mockResolvedValue({ results: [{ entityId: '5', text: 'Five' }] }),
+            });
+
+            start();
+
+            await waitFor(() => expect(fieldTomSelect.enable).toHaveBeenCalled());
+            fieldTomSelect.removeItem.mockClear();
+
+            global.fetch = vi.fn().mockResolvedValue({
+                json: vi.fn().mockResolvedValue({ results: [{ entityId: '1', text: 'One' }] }),
+            });
+
+            const callback = vi.fn();
+            await fieldTomSelect.settings.load('nu', callback);
+
+            expect(callback).toHaveBeenCalledWith([{ entityId: '1', text: 'One' }]);
+            expect(fieldTomSelect.removeItem).not.toHaveBeenCalled();
+
+            listenTomSelect.trigger('change', ['10']);
+
+            await waitFor(() => expect(fieldTomSelect.removeItem).toHaveBeenCalledWith('5'));
+        });
     });
 
     describe('TomSelect not yet initialized at connect time', () => {
