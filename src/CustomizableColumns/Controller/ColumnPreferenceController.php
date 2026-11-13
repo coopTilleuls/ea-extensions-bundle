@@ -9,6 +9,8 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\ColumnsConfigurat
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\ColumnSelectionResolver;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Form\ColumnPreferenceType;
 use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Storage\ColumnPreferenceStorageInterface;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
+use EasyCorp\Bundle\EasyAdminBundle\Generator\LabelGenerator;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -57,16 +59,18 @@ final class ColumnPreferenceController
 
         $columns = [];
         foreach ($orderedPickable as $property) {
-            $columns[$property] = $availableFields[$property]->getLabel();
+            // a field without a label gets the one EasyAdmin gives its column on the index page
+            $columns[$property] = $availableFields[$property]->getLabel() ?? LabelGenerator::humanize($property);
         }
 
         $redirectUrl = $request->query->getString('redirectUrl');
 
         $form = $this->formFactory->createNamed('columns', ColumnPreferenceType::class, null, [
-            'action' => $this->urlGenerator->generate('ea_extensions_customizable_columns_save', [
+            'action' => $this->urlGenerator->generate('ea_extensions_customizable_columns_save', array_filter([
                 'crudControllerFqcn' => $crudControllerFqcn,
+                EA::DASHBOARD_CONTROLLER_FQCN => $request->query->getString(EA::DASHBOARD_CONTROLLER_FQCN),
                 'redirectUrl' => $redirectUrl,
-            ]),
+            ], static fn (string $value): bool => '' !== $value)),
             'method' => 'POST',
             'columns' => $columns,
             'checked_columns' => $selectedColumns,
@@ -90,7 +94,7 @@ final class ColumnPreferenceController
         $save = '1' === ($submittedFields['save'] ?? null);
         unset($submittedFields['save']);
 
-        $submittedColumns = array_keys($submittedFields);
+        $submittedColumns = array_map(ColumnPreferenceType::getProperty(...), array_keys($submittedFields));
         $columns = array_values(array_intersect(array_unique(array_merge($lockedColumns, $submittedColumns)), $availableProperties));
 
         if ($save) {

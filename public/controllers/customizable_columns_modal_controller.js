@@ -25,31 +25,15 @@ export default class extends Controller {
 
         const wrapper = document.createElement('div');
         wrapper.innerHTML = `
-            <div class="modal fade" id="ea-extensions-columns-modal" data-controller="ea-extensions--customizable-columns-modal" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-header justify-content-between">
-                            <h5 class="modal-title"><i class="fa fa-columns fa-fw"></i> Personnaliser les colonnes</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body"></div>
-                        <div class="modal-footer d-flex">
-                            <button type="button" class="btn btn-sm btn-outline-secondary me-auto" data-action="ea-extensions--customizable-columns-modal#reset">
-                                <i class="fa fa-rotate-right"></i> Réinitialiser
-                            </button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">
-                                <i class="fa fa-close"></i> Annuler
-                            </button>
-                            <button type="submit" form="ea-extensions-columns-form" class="btn btn-sm btn-primary">
-                                <i class="fa fa-check"></i> Appliquer
-                            </button>
-                        </div>
-                    </div>
+            <div class="modal fade" id="ea-extensions-columns-modal" data-controller="ea-extensions--customizable-columns-modal" tabindex="-1" aria-labelledby="ea-extensions-columns-modal-title" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content"></div>
                 </div>
             </div>
         `;
         const modalElement = wrapper.firstElementChild;
-        modalElement.querySelector('.modal-body').innerHTML = html;
+        // the header (title and buttons) and the body, see customizable_columns/render.html.twig
+        modalElement.querySelector('.modal-content').innerHTML = html;
         document.body.appendChild(modalElement);
 
         // eslint-disable-next-line no-undef

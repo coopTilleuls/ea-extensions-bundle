@@ -11,7 +11,9 @@ export default class extends Controller {
         const row = event.currentTarget.closest('[data-ea-extensions--column-handler-target="row"]');
         const previous = row?.previousElementSibling;
         if (row && previous) {
-            row.parentNode.insertBefore(row, previous);
+            // the sibling is the one moved (as in moveDown()): the clicked button stays in the
+            // document, so it keeps the focus and the row can go on moving with the keyboard
+            row.after(previous);
         }
     }
 

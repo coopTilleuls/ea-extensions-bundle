@@ -50,6 +50,26 @@ describe('add-button-select controller', () => {
         await waitFor(() => expect(container.querySelector('.add-to-select')?.textContent.trim()).toBe('Add'));
     });
 
+    // The markup of EasyAdmin's own buttons: on hover a link button underlines its label, not
+    // its SVG icon (it would underline an icon-font glyph).
+    it('renders the button as an SVG icon followed by its label', async () => {
+        const container = mountDOM(`
+            <div data-controller="${IDENTIFIER}">
+                <div class="form-widget">
+                    <select multiple></select>
+                </div>
+            </div>
+        `);
+        container.querySelector('select').tomselect = { open: vi.fn() };
+
+        start();
+
+        await waitFor(() => expect(container.querySelector('.add-to-select')).not.toBeNull());
+        const button = container.querySelector('.add-to-select');
+        expect(button.querySelector(':scope > .btn-icon:first-child > svg')).not.toBeNull();
+        expect(button.querySelector(':scope > .btn-icon + .btn-label').textContent).toBe('Add');
+    });
+
     it('uses the label value as the button text, escaped', async () => {
         const container = mountDOM(`
             <div data-controller="${IDENTIFIER}" data-${IDENTIFIER}-label-value="Ajouter &lt;b&gt;">
@@ -69,7 +89,7 @@ describe('add-button-select controller', () => {
         });
         expect(button.textContent.trim()).toBe('Ajouter <b>');
         expect(button.querySelector('b')).toBeNull();
-        expect(button.querySelector('i.fa-plus')).not.toBeNull();
+        expect(button.querySelector('.btn-icon svg')).not.toBeNull();
     });
 
     it('does not create a button for a select outside its own scope', async () => {

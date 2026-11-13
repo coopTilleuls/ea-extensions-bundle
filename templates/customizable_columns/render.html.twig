@@ -1,29 +1,47 @@
-{{ form_start(form, {attr: {id: 'ea-extensions-columns-form'}}) }}
-    <div class="ea-extensions-column-list" data-controller="ea-extensions--column-handler">
-        {% for child in form %}
-            {% if child.vars.name not in ['_token', 'save'] %}
-                <div class="ea-extensions-column-row d-flex align-items-center" data-ea-extensions--column-handler-target="row">
-                    <div class="form-check flex-grow-1">
-                        {{ form_widget(child) }}
-                        {{ form_label(child) }}
+{# The contents of the column picker modal, laid out like EasyAdmin's own "Filters" modal:
+   both actions in the header, around the title. The buttons are hand-written rather than
+   <twig:ea:Button>, whose props differ between the EasyAdmin versions this bundle supports. #}
+<div class="modal-header">
+    <button type="button" class="btn btn-sm btn-secondary" data-action="ea-extensions--customizable-columns-modal#reset">
+        <twig:ea:Icon name="fa fa-rotate-right" class="btn-icon" /><span class="btn-label">Réinitialiser</span>
+    </button>
+    <h5 class="modal-title" id="ea-extensions-columns-modal-title">
+        <twig:ea:Icon name="fa fa-columns" /> Personnaliser les colonnes
+    </h5>
+    <button type="submit" form="ea-extensions-columns-form" class="btn btn-sm btn-primary">
+        <twig:ea:Icon name="internal:check" class="btn-icon" /><span class="btn-label">Appliquer</span>
+    </button>
+</div>
+<div class="modal-body">
+    {{ form_start(form, {attr: {id: 'ea-extensions-columns-form', class: 'ea-extensions-columns-form'}}) }}
+        <div class="ea-extensions-column-list" data-controller="ea-extensions--column-handler">
+            {% for child in form %}
+                {% if child.vars.name not in ['_token', 'save'] %}
+                    {# written by hand: what form_widget()/form_label() render for a checkbox
+                       depends on the form theme of the application #}
+                    {% do child.setRendered %}
+                    {% set label = child.vars.label %}
+                    <div class="ea-extensions-column-row" data-ea-extensions--column-handler-target="row">
+                        <input type="checkbox" class="form-check-input" id="{{ child.vars.id }}" name="{{ child.vars.full_name }}" value="{{ child.vars.value }}"{{ child.vars.checked ? ' checked' }}>
+                        <label class="ea-extensions-column-label" for="{{ child.vars.id }}">
+                            {{- label is null or label is same as(false) ? child.vars.name|humanize : label|trans -}}
+                        </label>
+                        <div class="ea-extensions-column-order">
+                            <button type="button" class="ea-extensions-column-move ea-extensions-column-move-up" data-action="ea-extensions--column-handler#moveUp" aria-label="Monter" title="Monter">
+                                <twig:ea:Icon name="fa fa-chevron-up" />
+                            </button>
+                            <button type="button" class="ea-extensions-column-move ea-extensions-column-move-down" data-action="ea-extensions--column-handler#moveDown" aria-label="Descendre" title="Descendre">
+                                <twig:ea:Icon name="fa fa-chevron-down" />
+                            </button>
+                        </div>
                     </div>
-                    <div class="d-flex flex-column align-items-center ms-3 me-3">
-                        <button type="button" class="btn btn-sm px-2 py-0 text-body-secondary" data-action="ea-extensions--column-handler#moveUp" aria-label="Monter">
-                            <i class="fas fa-chevron-up"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm px-2 py-0 text-body-secondary" data-action="ea-extensions--column-handler#moveDown" aria-label="Descendre">
-                            <i class="fas fa-chevron-down"></i>
-                        </button>
-                    </div>
-                </div>
-            {% endif %}
-        {% endfor %}
-    </div>
-    {% if form.save is defined %}
-        {% do form.save.setRendered %}
-        <div class="card p-3 my-3 ea-extensions-save-switch">
-            <label class="d-flex align-items-center justify-content-between gap-3" for="{{ form.save.vars.id }}">
-                <span class="d-flex align-items-center"><i class="fas fa-star me-2"></i><span>{{ form.save.vars.label }}</span></span>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% if form.save is defined %}
+            {% do form.save.setRendered %}
+            <label class="ea-extensions-save-switch" for="{{ form.save.vars.id }}">
+                <span>{{ form.save.vars.label }}</span>
                 <twig:ea:Switch
                     name="{{ form.save.vars.full_name }}"
                     id="{{ form.save.vars.id }}"
@@ -31,6 +49,6 @@
                     :checked="form.save.vars.checked"
                 />
             </label>
-        </div>
-    {% endif %}
-{{ form_end(form) }}
+        {% endif %}
+    {{ form_end(form) }}
+</div>

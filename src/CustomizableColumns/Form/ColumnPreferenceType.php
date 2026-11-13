@@ -23,7 +23,7 @@ final class ColumnPreferenceType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         foreach ($options['columns'] as $property => $label) {
-            $builder->add($property, CheckboxType::class, [
+            $builder->add(self::getFieldName((string) $property), CheckboxType::class, [
                 'label' => $label,
                 'required' => false,
                 'data' => in_array($property, $options['checked_columns'], true),
@@ -34,6 +34,20 @@ final class ColumnPreferenceType extends AbstractType
             'label' => 'Enregistrer comme paramètres par défaut',
             'required' => false,
         ]);
+    }
+
+    /**
+     * A form field can't be named after the property of an associated entity ("author.name"):
+     * dots aren't allowed in form names, colons are (and can't be part of a property path).
+     */
+    public static function getFieldName(string $property): string
+    {
+        return str_replace('.', ':', $property);
+    }
+
+    public static function getProperty(string $fieldName): string
+    {
+        return str_replace(':', '.', $fieldName);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

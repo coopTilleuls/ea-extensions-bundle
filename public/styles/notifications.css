@@ -1,8 +1,71 @@
+/* The live notification panel: a floating surface like EasyAdmin's own (modal windows, menus),
+   drawn with its design tokens so it follows both color schemes and any theme. Each
+   notification in it is an EasyAdmin alert (.alert.alert-success), with the look of the
+   EasyAdmin version in use. */
 .ea-extensions-notification-popover {
+    animation: ea-extensions-notification-popover-enter 0.15s ease-out;
+    background: var(--modal-bg);
+    border: var(--border-width) solid var(--modal-border-color);
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    flex-direction: column;
     top: 70px;
     right: 20px;
     z-index: 1020;
     width: 380px;
     max-width: calc(100vw - 2rem);
     max-height: calc(100vh - 100px);
+}
+@keyframes ea-extensions-notification-popover-enter {
+    from {
+        opacity: 0;
+        scale: 0.95;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ea-extensions-notification-popover {
+        animation: none;
+    }
+}
+.ea-extensions-notification-popover-header {
+    align-items: center;
+    display: flex;
+    gap: var(--ea-sp-4);
+    justify-content: space-between;
+    padding: var(--ea-sp-6) var(--ea-sp-8);
+}
+.ea-extensions-notification-popover-title {
+    color: var(--text-color);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    margin: 0;
+}
+.ea-extensions-notification-popover-body {
+    overflow-y: auto;
+    padding: 0 var(--ea-sp-8) var(--ea-sp-8);
+}
+/* an alert that is a link: it keeps the text color of an alert, the hover is on its border */
+.ea-extensions-notification-popover-item,
+.ea-extensions-notification-popover-item:hover {
+    color: var(--text-color);
+    text-decoration: none;
+}
+.ea-extensions-notification-popover-item {
+    margin-block: 0 var(--ea-sp-4);
+    transition: border-color 0.15s;
+}
+.ea-extensions-notification-popover-item:last-child {
+    margin-block-end: 0;
+}
+.ea-extensions-notification-popover-item:hover,
+.ea-extensions-notification-popover-item:focus-visible {
+    border-color: var(--bs-alert-color);
+}
+
+/* From EasyAdmin 5.9, .ea-switch-check (the wrapper notification_status.html.twig puts around
+   the switch and its "Lu"/"Non lu" label) is a flex row, which ignores the centered text-align
+   of a boolean column. No effect on earlier versions, where the wrapper isn't a flex container. */
+.datagrid td.field-boolean .ea-switch-check {
+    justify-content: center;
 }

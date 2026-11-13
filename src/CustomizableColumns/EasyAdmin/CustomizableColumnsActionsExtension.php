@@ -8,6 +8,7 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\ColumnSelectionRe
 use EasyCorp\Bundle\EasyAdminBundle\Config\Action;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Actions;
 use EasyCorp\Bundle\EasyAdminBundle\Config\Crud;
+use EasyCorp\Bundle\EasyAdminBundle\Config\Option\EA;
 use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Action\ActionsExtensionInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Twig\Component\Option\ButtonType;
@@ -43,6 +44,7 @@ final class CustomizableColumnsActionsExtension implements ActionsExtensionInter
         $request = $context->getRequest();
         $url = $this->urlGenerator->generate('ea_extensions_customizable_columns_render', [
             'crudControllerFqcn' => $crudControllerFqcn,
+            EA::DASHBOARD_CONTROLLER_FQCN => $context->getDashboardControllerFqcn(),
             'redirectUrl' => $request->getUri(),
             ColumnSelectionResolver::QUERY_PARAM => $request->query->getString(ColumnSelectionResolver::QUERY_PARAM),
         ]);

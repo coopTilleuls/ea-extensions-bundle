@@ -95,6 +95,10 @@ public function configureFields(string $pageName): iterable
 
 The filter only acts on controllers implementing `CustomizableColumnsConfigurationInterface` and returns the fields untouched otherwise.
 
+## Which columns the picker offers
+
+The picker lists what the controller's `configureFields(Crud::PAGE_INDEX)` returns, filtered by field permissions. Its two routes aren't EasyAdmin routes, so the bundle builds EasyAdmin's admin context itself while the fields are configured, for the dashboard the index page was displayed in (the "Personnaliser les colonnes" button carries it; an application with a single dashboard doesn't need it). A controller that doesn't override `configureFields()` (EasyAdmin then guesses the fields from the entity) or that calls `$this->getContext()` in it therefore works like on the index page. Properties of associated entities (`author.name`) are supported.
+
 ## Applying vs. saving
 
 Choosing columns in the modal and clicking "Appliquer" is **transient** by default — it only changes the current page view, nothing is saved. To make a selection the new default, the user must check the "Enregistrer comme paramètres par défaut" switch in the modal before applying. "Réinitialiser" clears every checkbox except that switch, so it doesn't persist either unless the switch was already checked.

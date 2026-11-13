@@ -2,22 +2,24 @@
 {% set entity = ea().entity %}
 {% set currentValue = ea_extensions_access_attribute(entity.instance, action.name) %}
 
-<div class="btn border-0 shadow-none bg-transparent form-check ea-switch-check"
+{# A status switch among the page actions. The label itself is drawn as a default button, so
+   the switch and its state sit in a control with the height, border and hover of the buttons
+   next to it, and a click anywhere on it toggles the switch. No stylesheet of the bundle is
+   involved: these are EasyAdmin's button and switch classes. #}
+<label class="btn btn-secondary ea-extensions-notification-status-action" for="{{ action.name }}"
     data-controller="ea-extensions--notification-toggle ea-extensions--notification-toggle-label"
     data-action="change->ea-extensions--notification-toggle#toggle:capture:stop"
     data-ea-extensions--notification-toggle-toggle-url-value="{{ action.linkUrl }}"
     data-ea-extensions--notification-toggle-field-value="{{ action.name }}"
     data-ea-extensions--notification-toggle-reload-value="{{ action.name == 'treatment.pending' ? 'true' : 'false' }}"
-    {% for key, value in action.htmlAttributes %}{% if key not in ['data-label-true', 'data-label-false'] %}{{ key }}="{{ value|e('html_attr') }}"{% endif %}{% endfor %}
+    {% for key, value in action.htmlAttributes %}{% if key not in ['data-label-true', 'data-label-false'] %}{{ key }}="{{ value|e('html_attr') }}" {% endif %}{% endfor %}
     data-label-true="{{ action.htmlAttributes['data-label-true']|trans({}, 'EAExtensionsBundle', 'fr')|e('html_attr') }}"
     data-label-false="{{ action.htmlAttributes['data-label-false']|trans({}, 'EAExtensionsBundle', 'fr')|e('html_attr') }}"
 >
-    <label class="form-check-label" for="{{ action.name }}">
-        <twig:ea:Switch
-            id="{{ action.name }}"
-            checked="{{ currentValue == true }}"
-            data-action="input->ea-extensions--notification-toggle-label#update"
-        />
-        <span data-ea-extensions--notification-toggle-label-target="text">{{ action.htmlAttributes['data-label-' ~ (currentValue ? 'true' : 'false')]|trans({}, 'EAExtensionsBundle', 'fr') }}</span>
-    </label>
-</div>
+    <twig:ea:Switch
+        id="{{ action.name }}"
+        checked="{{ currentValue == true }}"
+        data-action="input->ea-extensions--notification-toggle-label#update"
+    />
+    <span class="btn-label" data-ea-extensions--notification-toggle-label-target="text">{{ action.htmlAttributes['data-label-' ~ (currentValue ? 'true' : 'false')]|trans({}, 'EAExtensionsBundle', 'fr') }}</span>
+</label>

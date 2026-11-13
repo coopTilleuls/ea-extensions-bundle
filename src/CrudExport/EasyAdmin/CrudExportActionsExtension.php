@@ -14,6 +14,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Context\AdminContext;
 use EasyCorp\Bundle\EasyAdminBundle\Contracts\Action\ActionsExtensionInterface;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\ActionDto;
 use EasyCorp\Bundle\EasyAdminBundle\Dto\ActionGroupDto;
+use EasyCorp\Bundle\EasyAdminBundle\Twig\Component\Option\ButtonColor;
 use EasyCorp\Bundle\EasyAdminBundle\Twig\Component\Option\ButtonVariant;
 use Symfony\Component\Translation\TranslatableMessage;
 
@@ -93,12 +94,26 @@ final class CrudExportActionsExtension implements ActionsExtensionInterface
         unset($indexActions[CrudExportAction::ACTION_NAME]);
 
         $position = array_search(true, array_map(
-            static fn (ActionDto|ActionGroupDto $action): bool => $action instanceof ActionDto && $action->isGlobalAction() && ButtonVariant::Default === $action->getVariant(),
+            static fn (ActionDto|ActionGroupDto $action): bool => $action instanceof ActionDto && $action->isGlobalAction() && self::hasDefaultColor($action),
             array_values($indexActions),
         ), true);
 
         $configDto->setActions(Crud::PAGE_INDEX, false === $position
             ? $indexActions + $exportAction
             : array_slice($indexActions, 0, $position, true) + $exportAction + array_slice($indexActions, $position, null, true));
+    }
+
+    /**
+     * EasyAdmin 5.9 split the color of a button out of its variant (now its style) and
+     * deprecated ActionDto::getVariant(); before 5.9, the variant is the color.
+     */
+    private static function hasDefaultColor(ActionDto $action): bool
+    {
+        // @phpstan-ignore function.alreadyNarrowedType (always true on the EasyAdmin version PHPStan runs against, not on the lowest supported one)
+        if (method_exists($action, 'getColor')) {
+            return ButtonColor::Default === $action->getColor();
+        }
+
+        return ButtonVariant::Default === $action->getVariant();
     }
 }

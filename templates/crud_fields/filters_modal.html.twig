@@ -17,9 +17,13 @@
             <h5 class="modal-title">
                 <twig:ea:Icon name="internal:filter" /> {{ 'filter.title'|trans(domain: 'EasyAdminBundle') }}
             </h5>
-            <twig:ea:Button type="button" variant="primary" size="sm" data-bs-dismiss="modal" class="btn btn-sm btn-primary ea-crud-field-filters-apply" formtarget="_self" icon="internal:check">
-                {{ 'filter.button.apply'|trans(domain: 'EasyAdminBundle') }}
-            </twig:ea:Button>
+            {# a plain <button>, not <twig:ea:Button>: its color moved from the "variant" prop to a
+               new "color" prop in EasyAdmin 5.9 (the old spelling is deprecated there, the new one
+               doesn't exist before), and this bundle supports both sides of that change #}
+            <button type="button" class="btn btn-sm btn-primary ea-crud-field-filters-apply" data-bs-dismiss="modal" formtarget="_self">
+                <twig:ea:Icon name="internal:check" class="btn-icon" />
+                <span class="btn-label">{{ 'filter.button.apply'|trans(domain: 'EasyAdminBundle') }}</span>
+            </button>
         </twig:block>
         <twig:block name="body"></twig:block>
     </twig:ea:Modal>
