@@ -1,0 +1,12 @@
+/* A CrudField's filters modal lists every filter of the embedded controller, which can outgrow
+   the screen. EasyAdmin lays .modal-content out on a grid whose body row grows to its full
+   content height: cap the modal and let the body row shrink and scroll instead, so the
+   Clear/Apply buttons of the header stay visible. */
+#ea-extensions-crud-field-filters-modal .modal-content {
+    max-height: 80vh;
+    grid-template-rows: auto minmax(0, 1fr);
+}
+
+#ea-extensions-crud-field-filters-modal .modal-body {
+    overflow-y: auto;
+}

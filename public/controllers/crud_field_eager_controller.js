@@ -1,4 +1,5 @@
 import { Controller } from '@hotwired/stimulus';
+import '../styles/crud_field.css';
 
 const FILTERS_MODAL_ID = 'ea-extensions-crud-field-filters-modal';
 const ACTION_MODAL_ID = 'ea-extensions-crud-field-action-modal';
