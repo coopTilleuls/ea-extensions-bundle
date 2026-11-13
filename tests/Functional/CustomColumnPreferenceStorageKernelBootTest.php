@@ -11,6 +11,7 @@ use CoopTilleuls\Bundle\EAExtensionsBundle\CustomizableColumns\Storage\SecurityU
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\CustomColumnPreferenceStorageKernel;
 use CoopTilleuls\Bundle\EAExtensionsBundle\Tests\Fixtures\InMemoryColumnPreferenceStorage;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -30,7 +31,15 @@ final class CustomColumnPreferenceStorageKernelBootTest extends KernelTestCase
         /** @var EntityManagerInterface $entityManager */
         $entityManager = $registry->getManager();
 
-        self::assertTrue($entityManager->getMetadataFactory()->isTransient(ColumnPreference::class));
+        // Not isTransient(): with doctrine-bundle's entity auto-discovery (3.4+), the default
+        // attribute driver reports any #[ORM\Entity] class as non-transient, even one it never
+        // registers. What matters is that the entity is not managed, so it gets no table.
+        $managedClasses = array_map(
+            static fn (ClassMetadata $metadata): string => $metadata->getName(),
+            $entityManager->getMetadataFactory()->getAllMetadata(),
+        );
+
+        self::assertNotContains(ColumnPreference::class, $managedClasses);
     }
 
     public function testConfiguredStorageReplacesTheDefaultOne(): void
